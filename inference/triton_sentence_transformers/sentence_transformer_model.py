@@ -2,7 +2,9 @@ import os
 import numpy as np
 import tritonclient.grpc as grpcclient
 from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer
 from ..model_client import TritonModelClient
+from ..common import get_model_name
 from .sentence_transformer_converting import (
     onnx_transformer_model,
     generate_text_sentence_transformer_config,
@@ -18,7 +20,7 @@ def create_model(
     model = SentenceTransformer(model_name)
     tokenizer = model.tokenizer
 
-    friendly_name = model_name.replace("/", "_")
+    friendly_name = get_model_name(model_name)
 
     os.makedirs(
         os.path.join(triton_model_repository_path, friendly_name, "1"), exist_ok=True
@@ -57,11 +59,16 @@ class TritonSentenceTransformersClient(TritonModelClient):
         triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
-        self.model_name, self.tokenizer = create_model(
-            model, triton_model_repository_path
-        )
 
-        self.triton_client.load_model(self.model_name)
+        self.model_name = get_model_name(model)
+
+        if not self.triton_client.is_model_ready(model):
+            _, self.tokenizer = create_model(
+                model, triton_model_repository_path
+            )
+            self.triton_client.load_model(self.model_name)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model)
 
         self.modalities = {"text"}
 

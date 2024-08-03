@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 import time
+import os
 import asyncio
 from inference.triton_open_clip.clip_model import TritonCLIPClient
 from inference.triton_sentence_transformers.sentence_transformer_model import (
@@ -20,13 +21,41 @@ app = FastAPI()
 MODEL_CACHE: Dict[Tuple[str, Union[str, None]], TritonCLIPClient] = {}
 MODEL_CACHE_LOCK = Lock()
 
-
 def client_from_cache(
     model_name: str, pretrained: Union[str, None]
-) -> Union[TritonCLIPClient, None]:
+) -> Union[TritonCLIPClient, TritonSentenceTransformersClient, None]:
     cache_key = (model_name, pretrained)
     if cache_key in MODEL_CACHE:
         return MODEL_CACHE[cache_key]
+    
+    nice_model_name = model_name.replace("/", "_")
+    if pretrained is not None:
+        nice_model_name += f"_{pretrained}"
+
+    if TRITON_CLIENT.is_model_ready(nice_model_name):
+        try:
+            client = TritonSentenceTransformersClient(
+                triton_grpc_url=TRITON_GRPC_URL,
+                model=model_name,
+                triton_model_repository_path="model_repository",
+            )
+            MODEL_CACHE[cache_key] = client
+            return client
+        except:
+            pass
+        
+        try:
+            client = TritonCLIPClient(
+                triton_grpc_url=TRITON_GRPC_URL,
+                model=model_name,
+                pretrained=pretrained,
+                triton_model_repository_path="model_repository",
+            )
+            MODEL_CACHE[cache_key] = client
+            return client
+        except:
+            pass
+
     return None
 
 

@@ -6,6 +6,7 @@ import pycurl
 from io import BytesIO
 import tritonclient.grpc as grpcclient
 from PIL import Image
+from ..common import get_model_name
 from ..model_client import TritonModelClient
 from .clip_converting import (
     script_open_clip_model,
@@ -15,24 +16,31 @@ from .clip_converting import (
 
 from typing import Tuple, Union, List
 
+def get_txt_image_names(model_name: str, pretrained: Union[str, None]):
+    friendly_name = get_model_name(model_name, pretrained)
+    friendly_text_name = friendly_name + "_text_encoder"
+    friendly_image_name = friendly_name + "_image_encoder"
+    return friendly_text_name, friendly_image_name
+
+def create_transforms(model_name: str, pretrained: Union[str, None]):
+    _, _, preprocess = open_clip.create_model_and_transforms(
+        model_name, pretrained=pretrained
+    )
+    tokenizer = open_clip.get_tokenizer(model_name)
+    friendly_text_name, friendly_image_name = get_txt_image_names(model_name, pretrained)
+    return friendly_text_name, friendly_image_name, preprocess, tokenizer
 
 def create_model_and_transforms_triton(
     model_name: str,
     pretrained: Union[str, None],
     triton_model_repository_path: str,
-    preferred_batch_sizes: List[int] = [4, 8, 16],
-    max_queue_delay_microseconds: int = 100,
 ):
     config = open_clip.get_model_config(model_name)
     model, _, preprocess = open_clip.create_model_and_transforms(
         model_name, pretrained=pretrained
     )
     tokenizer = open_clip.get_tokenizer(model_name)
-    friendly_name = model_name
-    if pretrained is not None:
-        friendly_name = friendly_name + "_" + pretrained
-    friendly_text_name = friendly_name + "_text_encoder"
-    friendly_image_name = friendly_name + "_image_encoder"
+    friendly_text_name, friendly_image_name = get_txt_image_names(model_name, pretrained)
     os.makedirs(
         os.path.join(triton_model_repository_path, friendly_text_name, "1"),
         exist_ok=True,
@@ -100,18 +108,24 @@ class TritonCLIPClient(TritonModelClient):
         max_queue_delay_microseconds: int = 100,
     ):
         super().__init__(triton_grpc_url)
-        self.text_model_name, self.image_model_name, self.preprocess, self.tokenizer = (
-            create_model_and_transforms_triton(
-                model,
-                pretrained,
-                triton_model_repository_path,
-                preferred_batch_sizes,
-                max_queue_delay_microseconds,
-            )
-        )
+        self.text_model_name, self.image_model_name = get_txt_image_names(model, pretrained)
 
-        self.triton_client.load_model(self.text_model_name)
-        self.triton_client.load_model(self.image_model_name)
+        if not self.triton_client.is_model_ready(self.text_model_name) or not self.triton_client.is_model_ready(self.image_model_name):
+            self.text_model_name, self.image_model_name, self.preprocess, self.tokenizer = (
+                create_model_and_transforms_triton(
+                    model,
+                    pretrained,
+                    triton_model_repository_path,
+                    preferred_batch_sizes,
+                    max_queue_delay_microseconds,
+                )
+            )
+            self.triton_client.load_model(self.text_model_name)
+            self.triton_client.load_model(self.image_model_name)
+        else:
+            self.text_model_name, self.image_model_name, self.preprocess, self.tokenizer = create_transforms(
+                model, pretrained
+            )
 
         self.modalities = {"text", "image"}
 

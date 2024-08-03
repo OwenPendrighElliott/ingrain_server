@@ -6,5 +6,7 @@ pycurl
 fastapi
 uvicorn
 validators
+transformers
 sentence_transformers
 onnx
+h11

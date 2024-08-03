@@ -50,13 +50,17 @@ dynamic_batching {{}}"""
 def onnx_transformer_model(
     model: SentenceTransformer, output_path: str
 ) -> torch.jit.ScriptModule:
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     wrapped_model = SentenceTransformerWrapper(model)
+    wrapped_model.to(device)
 
     dummy_input = {
         "input_ids": torch.tensor(
-            [[101, 2023, 2003, 1037, 1398, 102]], dtype=torch.int64
+            [[101, 2023, 2003, 1037, 1398, 102]], dtype=torch.int64, device=device
         ),
-        "attention_mask": torch.tensor([[1, 1, 1, 1, 1, 1]], dtype=torch.int64),
+        "attention_mask": torch.tensor([[1, 1, 1, 1, 1, 1]], dtype=torch.int64, device=device),
     }
 
     torch.onnx.export(
