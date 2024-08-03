@@ -78,8 +78,6 @@ def create_model_and_transforms_triton(
         friendly_text_name,
         tokenizer.context_length,
         config["embed_dim"],
-        preferred_batch_sizes,
-        max_queue_delay_microseconds,
     )
 
     generate_image_clip_config(
@@ -87,8 +85,6 @@ def create_model_and_transforms_triton(
         friendly_image_name,
         (3, *model.visual.preprocess_cfg["size"]),
         config["embed_dim"],
-        preferred_batch_sizes,
-        max_queue_delay_microseconds,
     )
     return friendly_text_name, friendly_image_name, preprocess, tokenizer
 

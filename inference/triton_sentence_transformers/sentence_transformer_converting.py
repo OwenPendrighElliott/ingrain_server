@@ -14,13 +14,11 @@ class SentenceTransformerWrapper(torch.nn.Module):
             "sentence_embedding"
         ]
 
+
 def generate_text_sentence_transformer_config(
     cfg_path: str,
     name: str,
-    context_length: int,
     embedding_dim: int,
-    preferred_batch_sizes: List[int],
-    max_queue_delay_microseconds: int,
 ) -> None:
     config = f"""name: "{name}"
 platform: "onnxruntime_onnx"
@@ -47,43 +45,6 @@ output [
 dynamic_batching {{}}"""
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
-
-# def generate_text_sentence_transformer_config(
-#     cfg_path: str,
-#     name: str,
-#     context_length: int,
-#     embedding_dim: int,
-#     preferred_batch_sizes: List[int],
-#     max_queue_delay_microseconds: int,
-# ) -> None:
-#     config = f"""name: "{name}"
-# platform: "onnxruntime_onnx"
-# max_batch_size: 32
-# input [
-#   {{
-#     name: "input_ids"
-#     data_type: TYPE_INT64
-#     dims: [ -1 ]
-#   }},
-#   {{
-#     name: "attention_mask"
-#     data_type: TYPE_INT64
-#     dims: [ -1 ]
-#   }}
-# ]
-# output [
-#   {{
-#     name: "sentence_embedding"
-#     data_type: TYPE_FP32
-#     dims: [ {embedding_dim} ]
-#   }}
-# ]
-# dynamic_batching {{
-#   preferred_batch_size: [ {", ".join([str(v) for v in preferred_batch_sizes])} ]
-#   max_queue_delay_microseconds: {max_queue_delay_microseconds}
-# }}"""
-#     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
-#         f.write(config)
 
 
 def onnx_transformer_model(

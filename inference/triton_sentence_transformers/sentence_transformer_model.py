@@ -14,8 +14,6 @@ from typing import Union, List
 def create_model(
     model_name: str,
     triton_model_repository_path: str,
-    preferred_batch_sizes: List[int] = [4, 8, 16],
-    max_queue_delay_microseconds: int = 100,
 ):
     model = SentenceTransformer(model_name)
     tokenizer = model.tokenizer
@@ -45,10 +43,7 @@ def create_model(
     generate_text_sentence_transformer_config(
         os.path.join(triton_model_repository_path, friendly_name),
         friendly_name,
-        tokenizer.model_max_length,
         model.get_sentence_embedding_dimension(),
-        preferred_batch_sizes,
-        max_queue_delay_microseconds,
     )
 
     return friendly_name, tokenizer
@@ -60,15 +55,10 @@ class TritonSentenceTransformersClient(TritonModelClient):
         triton_grpc_url: str,
         model: str,
         triton_model_repository_path: str,
-        preferred_batch_sizes: List[int] = [4, 8, 16],
-        max_queue_delay_microseconds: int = 100,
     ):
         super().__init__(triton_grpc_url)
         self.model_name, self.tokenizer = create_model(
-            model,
-            triton_model_repository_path,
-            preferred_batch_sizes,
-            max_queue_delay_microseconds,
+            model, triton_model_repository_path
         )
 
         self.triton_client.load_model(self.model_name)

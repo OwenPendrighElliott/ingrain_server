@@ -224,9 +224,8 @@ async def infer(request: Request):
         ]
 
     if images is not None:
-        image_embeddings = results[
-            -1
-        ]  # Whether it's index 1 or 0 depends on whether texts were provided
+        # Whether it's index 1 or 0 depends on whether texts were provided
+        image_embeddings = results[-1]
         response["image_embeddings"] = [
             embedding.tolist() for embedding in image_embeddings
         ]

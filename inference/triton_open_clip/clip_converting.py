@@ -27,8 +27,6 @@ def generate_image_clip_config(
     name: str,
     image_shape: Tuple[int, int, int],
     embedding_dim: int,
-    preferred_batch_sizes: List[int],
-    max_queue_delay_microseconds: int,
 ) -> None:
     config = f"""
 name: "{name}"
@@ -49,10 +47,7 @@ output [
     dims: [ {embedding_dim} ]
   }}
 ]
-dynamic_batching {{
-  preferred_batch_size: [ {", ".join([str(v) for v in preferred_batch_sizes])} ]
-  max_queue_delay_microseconds: {max_queue_delay_microseconds}
-}}"""
+dynamic_batching {{}}"""
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
 
@@ -62,8 +57,6 @@ def generate_text_clip_config(
     name: str,
     context_length: int,
     embedding_dim: int,
-    preferred_batch_sizes: List[int],
-    max_queue_delay_microseconds: int,
 ) -> None:
     config = f"""name: "{name}"
 platform: "pytorch_libtorch"
@@ -82,10 +75,7 @@ output [
     dims: [ {embedding_dim} ]
   }}
 ]
-dynamic_batching {{
-  preferred_batch_size: [ {", ".join([str(v) for v in preferred_batch_sizes])} ]
-  max_queue_delay_microseconds: {max_queue_delay_microseconds}
-}}"""
+dynamic_batching {{}}"""
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
 
