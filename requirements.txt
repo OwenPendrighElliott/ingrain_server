@@ -1,0 +1,10 @@
+tritonclient[all]
+open-clip-torch
+torch
+pillow
+pycurl
+fastapi
+uvicorn
+validators
+sentence_transformers
+onnx

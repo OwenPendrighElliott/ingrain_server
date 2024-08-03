@@ -1,0 +1,108 @@
+import os
+import numpy as np
+import tritonclient.grpc as grpcclient
+from sentence_transformers import SentenceTransformer
+from ..model_client import TritonModelClient
+from .sentence_transformer_converting import (
+    onnx_transformer_model,
+    generate_text_sentence_transformer_config,
+)
+
+from typing import Union, List
+
+
+def create_model(
+    model_name: str,
+    triton_model_repository_path: str,
+    preferred_batch_sizes: List[int] = [4, 8, 16],
+    max_queue_delay_microseconds: int = 100,
+):
+    model = SentenceTransformer(model_name)
+    tokenizer = model.tokenizer
+
+    friendly_name = model_name.replace("/", "_")
+
+    os.makedirs(
+        os.path.join(triton_model_repository_path, friendly_name, "1"), exist_ok=True
+    )
+
+    text_encoder_exists = os.path.exists(
+        os.path.join(triton_model_repository_path, friendly_name, "1", "model.onnx")
+    )
+    text_config_exists = os.path.exists(
+        os.path.join(triton_model_repository_path, friendly_name, "config.pbtxt")
+    )
+
+    # exit early if the models and configs already exist
+    if text_encoder_exists and text_config_exists:
+        return friendly_name, tokenizer
+
+    onnx_transformer_model(
+        model,
+        os.path.join(triton_model_repository_path, friendly_name, "1", "model.onnx"),
+    )
+
+    generate_text_sentence_transformer_config(
+        os.path.join(triton_model_repository_path, friendly_name),
+        friendly_name,
+        tokenizer.model_max_length,
+        model.get_sentence_embedding_dimension(),
+        preferred_batch_sizes,
+        max_queue_delay_microseconds,
+    )
+
+    return friendly_name, tokenizer
+
+
+class TritonSentenceTransformersClient(TritonModelClient):
+    def __init__(
+        self,
+        triton_grpc_url: str,
+        model: str,
+        triton_model_repository_path: str,
+        preferred_batch_sizes: List[int] = [4, 8, 16],
+        max_queue_delay_microseconds: int = 100,
+    ):
+        super().__init__(triton_grpc_url)
+        self.model_name, self.tokenizer = create_model(
+            model,
+            triton_model_repository_path,
+            preferred_batch_sizes,
+            max_queue_delay_microseconds,
+        )
+
+        self.triton_client.load_model(self.model_name)
+
+        self.modalities = {"text"}
+
+    def encode_text(
+        self, text: Union[str, List[str]], normalize: bool = True
+    ) -> np.ndarray:
+        tokens = self.tokenizer(text, return_tensors="np")
+        input_ids = tokens["input_ids"].astype(np.int64)
+        # input_ids = input_ids.astype(np.int64)
+        attention_mask = tokens["attention_mask"].astype(np.int64)
+        # attention_mask = attention_mask.astype(np.int64)
+
+        input_ids_tensor = grpcclient.InferInput("input_ids", input_ids.shape, "INT64")
+        attention_mask_tensor = grpcclient.InferInput(
+            "attention_mask", attention_mask.shape, "INT64"
+        )
+
+        input_ids_tensor.set_data_from_numpy(input_ids)
+        attention_mask_tensor.set_data_from_numpy(attention_mask)
+
+        outputs = self.triton_client.infer(
+            model_name=self.model_name, inputs=[input_ids_tensor, attention_mask_tensor]
+        ).as_numpy("sentence_embedding")
+
+        if normalize:
+            outputs = outputs / np.linalg.norm(outputs, axis=-1, keepdims=True)
+
+        return outputs
+
+    def _load(self):
+        self.triton_client.load_model(self.model_name)
+
+    def unload(self):
+        self.triton_client.unload_model(self.model_name)
