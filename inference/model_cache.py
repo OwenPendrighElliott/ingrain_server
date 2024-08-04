@@ -35,9 +35,13 @@ class LRUModelCache:
             self.misses += 1
             return None
         if not self.loaded[key]:
+            self.misses += 1
             self.data[key].load()
             self.loaded[key] = True
-        self.hits += 1
+        else:
+            self.hits += 1
+        if key not in self.usage_order:
+            self.put(key, self.data[key])
         self.usage_order.move_to_end(key)
         return self.data[key]
 
@@ -48,14 +52,11 @@ class LRUModelCache:
     ) -> None:
         if self.capacity <= 0:
             return
-        if key in self.data:
-            self.data[key] = value
-            self.loaded[key] = True
-        else:
-            if len(self.data) >= self.capacity:
-                self._unload_least_recently_used()
-            self.data[key] = value
-            self.loaded[key] = True
+
+        if len(self.data) >= self.capacity:
+            self._unload_least_recently_used()
+        self.data[key] = value
+        self.loaded[key] = True
         self.usage_order[key] = None
 
     def _unload_least_recently_used(self):

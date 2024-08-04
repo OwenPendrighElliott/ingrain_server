@@ -164,25 +164,14 @@ async def delete_model(request: GenericModelRequest):
     cache_key = (model_name, pretrained)
 
     with MODEL_CACHE_LOCK:
-        error = None
-        try:
-            delete_model_from_repo(model_name, pretrained, TRITON_MODEL_REPOSITORY_PATH)
-        except FileNotFoundError as e:
-            error = str(e)
-
+        delete_model_from_repo(model_name, pretrained, TRITON_MODEL_REPOSITORY_PATH)
         client = MODEL_CACHE.get(cache_key)
         if client is not None:
             client = MODEL_CACHE.remove(cache_key)
 
-        if error is not None:
-            return {
-                "message": f"Model {model_name} with checkpoint {pretrained} deleted successfully."
-            }
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Error removing model {model_name} with checkpoint {pretrained}, likely it does not exist in the cache. Original error: {error}",
-            )
+        return {
+            "message": f"Model {model_name} with checkpoint {pretrained} deleted successfully."
+        }
 
 
 @app.get("/loaded_models")
@@ -202,12 +191,9 @@ async def repository_models():
     repository_models = []
     for model in model_repo_information["models"]:
         model_data = {"name": model["name"]}
+        print(model)
         if "state" in model:
             model_data["state"] = model["state"]
-            model_data["reason"] = model["reason"]
-        else:
-            model_data["state"] = "AVAILABLE"
-            model_data["reason"] = "loaded"
 
         repository_models.append(model_data)
     return {"models": repository_models}
@@ -218,6 +204,7 @@ async def infer_text(request: TextInferenceRequest):
     model_name = request.model_name
     pretrained = request.pretrained
     text = request.text
+    normalize = request.normalize
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
@@ -233,7 +220,7 @@ async def infer_text(request: TextInferenceRequest):
         )
 
     start = time.perf_counter()
-    embedding = client.encode_text(text)
+    embedding = client.encode_text(text, normalize=normalize)
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
@@ -246,6 +233,7 @@ async def infer_text(request: ImageInferenceRequest):
     model_name = request.model_name
     pretrained = request.pretrained
     image = request.image
+    normalize = request.normalize
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
@@ -269,7 +257,7 @@ async def infer_text(request: ImageInferenceRequest):
         )
 
     start = time.perf_counter()
-    embedding = client.encode_image(image_data)
+    embedding = client.encode_image(image_data, normalize=normalize)
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
@@ -282,6 +270,7 @@ async def infer(request: InferenceRequest):
     pretrained = request.pretrained
     texts = request.text
     images = request.image
+    normalize = request.normalize
 
     client = client_from_cache(model_name, pretrained)
 
@@ -300,7 +289,9 @@ async def infer(request: InferenceRequest):
                 status_code=400,
                 detail=f"Model {model_name} with checkpoint {pretrained} does not support text inference.",
             )
-        tasks.append(asyncio.to_thread(client.encode_text, texts))
+        if isinstance(texts, str):
+            texts = [texts]
+        tasks.append(asyncio.to_thread(client.encode_text, texts, normalize))
 
     if images is not None:
         if "image" not in client.modalities:
@@ -308,8 +299,11 @@ async def infer(request: InferenceRequest):
                 status_code=400,
                 detail=f"Model {model_name} with checkpoint {pretrained} does not support image inference.",
             )
-        image_datas = [client.load_image(image) for image in images]
-        tasks.append(asyncio.to_thread(client.encode_image, image_datas))
+        if isinstance(images, str):
+            images = [images]
+        # image_datas = [client.load_image(image) for image in images]
+        image_datas = client.load_images_parallel(images)
+        tasks.append(asyncio.to_thread(client.encode_image, image_datas, normalize))
 
     start = time.perf_counter()
     results = await asyncio.gather(*tasks)

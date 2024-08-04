@@ -1,9 +1,18 @@
 import os
 import shutil
-from typing import Union
+from typing import Union, Tuple
 
 
 def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:
+    """Get the model name.
+
+    Args:
+        model_name (str): The model name.
+        pretrained (Union[str, None], optional): The pretrained checkpoint. Defaults to None.
+
+    Returns:
+        str: The model name.
+    """
     name = model_name.replace("/", "_")
     if pretrained is not None:
         name += f"_{pretrained}"
@@ -12,7 +21,16 @@ def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:
 
 def get_text_image_model_names(
     model_name: str, pretrained: Union[str, None] = None
-) -> str:
+) -> Tuple[str]:
+    """Get the text and image encoder model names.
+
+    Args:
+        model_name (str): The model name.
+        pretrained (Union[str, None], optional): The pretrained checkpoint. Defaults to None.
+
+    Returns:
+        Tuple[str]: The text and image encoder model names.
+    """
     name = model_name.replace("/", "_")
     if pretrained is not None:
         name += f"_{pretrained}"
@@ -25,6 +43,13 @@ def get_text_image_model_names(
 def delete_model_from_repo(
     model_name: str, pretrained: Union[str, None], triton_model_repository_path: str
 ) -> None:
+    """Delete the model from the Triton model repository.
+
+    Args:
+        model_name (str): The model name.
+        pretrained (Union[str, None]): The pretrained checkpoint.
+        triton_model_repository_path (str): The path to the Triton model repository.
+    """
     friendly_name = get_model_name(model_name, pretrained)
     model_path_sentence_transformer = os.path.join(
         triton_model_repository_path, friendly_name

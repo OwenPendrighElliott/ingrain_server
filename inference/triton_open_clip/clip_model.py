@@ -2,6 +2,7 @@ import os
 import open_clip
 import validators
 import numpy as np
+import base64
 import pycurl
 from io import BytesIO
 import tritonclient.grpc as grpcclient
@@ -16,7 +17,17 @@ from .clip_converting import (
 
 from typing import Tuple, Union, List
 
+
 def create_transforms(model_name: str, pretrained: Union[str, None]):
+    """Create the model and transforms.
+
+    Args:
+        model_name (str): The model name.
+        pretrained (Union[str, None]): The pretrained checkpoint.
+
+    Returns:
+        Tuple: The text and image model names, preprocess function, and tokenizer.
+    """
     _, _, preprocess = open_clip.create_model_and_transforms(
         model_name, pretrained=pretrained
     )
@@ -32,6 +43,16 @@ def create_model_and_transforms_triton(
     pretrained: Union[str, None],
     triton_model_repository_path: str,
 ):
+    """Create the model and transforms for Triton.
+
+    Args:
+        model_name (str): The model name.
+        pretrained (Union[str, None]): The pretrained checkpoint.
+        triton_model_repository_path (str): The path to the Triton model repository.
+
+    Returns:
+        Tuple: The text and image model names, preprocess function, and tokenizer.
+    """
     config = open_clip.get_model_config(model_name)
     model, _, preprocess = open_clip.create_model_and_transforms(
         model_name, pretrained=pretrained
@@ -96,13 +117,16 @@ def create_model_and_transforms_triton(
     return friendly_text_name, friendly_image_name, preprocess, tokenizer
 
 
+from concurrent.futures import ThreadPoolExecutor
+
+
 class TritonCLIPClient(TritonModelClient):
     def __init__(
         self,
         triton_grpc_url: str,
         model: str,
         pretrained: Union[str, None],
-        triton_model_repository_path: str
+        triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
         self.text_model_name, self.image_model_name = get_text_image_model_names(
@@ -118,9 +142,7 @@ class TritonCLIPClient(TritonModelClient):
                 self.preprocess,
                 self.tokenizer,
             ) = create_model_and_transforms_triton(
-                model,
-                pretrained,
-                triton_model_repository_path
+                model, pretrained, triton_model_repository_path
             )
             self.triton_client.load_model(self.text_model_name)
             self.triton_client.load_model(self.image_model_name)
@@ -160,8 +182,12 @@ class TritonCLIPClient(TritonModelClient):
         return Image.open(buffer)
 
     def decode_base64_image(self, base64_image: str) -> Image.Image:
+        if base64_image.startswith("data:image"):
+            base64_image = base64_image.split(",")[1]
+        # Decode the base64 string to bytes
+        image_data = base64.b64decode(base64_image)
         buffer = BytesIO()
-        buffer.write(base64_image)
+        buffer.write(image_data)
         buffer.seek(0)
         return Image.open(buffer)
 
@@ -173,6 +199,10 @@ class TritonCLIPClient(TritonModelClient):
             image_data = self.decode_base64_image(image)
 
         return image_data
+
+    def load_images_parallel(self, images: List[str]) -> List[Image.Image]:
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            return list(executor.map(self.load_image, images))
 
     def encode_image(
         self, image: Union[Image.Image, List[Image.Image]], normalize: bool = True

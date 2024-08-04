@@ -1,9 +1,8 @@
-import pytest
 from inference.common import (
     get_model_name,
     get_text_image_model_names,
-    delete_model_from_repo
 )
+
 
 def test_get_model_name():
     assert get_model_name("model/name") == "model_name"
