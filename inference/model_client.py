@@ -23,3 +23,9 @@ class TritonModelClient:
 
     def unload(self):
         raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
+
+    def is_ready(self) -> bool:
+        raise NotImplementedError

@@ -6,10 +6,10 @@ import statistics
 from io import BytesIO
 
 # Configuration
-# model_name = "intfloat/e5-base-v2"
-model_name = "Snowflake/snowflake-arctic-embed-m"
-num_threads = 600
-num_requests_per_thread = 100
+model_name = "intfloat/e5-large-v2"
+# model_name = "Snowflake/snowflake-arctic-embed-m"
+num_threads = 100
+num_requests_per_thread = 10
 delay_between_requests = 0
 
 # Load the model
@@ -19,13 +19,15 @@ load_model_data = json.dumps({"model_name": model_name})
 c = pycurl.Curl()
 c.setopt(c.URL, load_model_url)
 c.setopt(c.POSTFIELDS, load_model_data)
+c.setopt(c.HTTPHEADER, ['Content-Type: application/json'])
+
 buffer = BytesIO()
 c.setopt(c.WRITEDATA, buffer)
 c.perform()
 c.close()
 
-load_model_response = json.loads(buffer.getvalue().decode("utf-8"))
-print(load_model_response)
+response_body = buffer.getvalue().decode('utf-8')
+print(response_body)
 
 # Thread-safe structure to store response times
 response_times = []
@@ -42,6 +44,7 @@ def benchmark(thread_id):
         c = pycurl.Curl()
         c.setopt(c.URL, "http://localhost:8686/infer_text")
         c.setopt(c.POSTFIELDS, json.dumps({"model_name": model_name, "text": "a cat"}))
+        c.setopt(c.HTTPHEADER, ['Content-Type: application/json'])
         c.setopt(c.WRITEDATA, buffer)
         c.perform()
 

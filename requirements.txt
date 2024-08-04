@@ -1,6 +1,6 @@
 tritonclient[all]
 open-clip-torch
-torch
+torch --extra-index-url https://download.pytorch.org/whl/cu117
 pillow
 pycurl
 fastapi
@@ -9,4 +9,4 @@ validators
 transformers
 sentence_transformers
 onnx
-h11
+pydantic

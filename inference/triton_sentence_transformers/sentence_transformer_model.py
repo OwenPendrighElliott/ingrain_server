@@ -63,9 +63,7 @@ class TritonSentenceTransformersClient(TritonModelClient):
         self.model_name = get_model_name(model)
 
         if not self.triton_client.is_model_ready(model):
-            _, self.tokenizer = create_model(
-                model, triton_model_repository_path
-            )
+            _, self.tokenizer = create_model(model, triton_model_repository_path)
             self.triton_client.load_model(self.model_name)
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -98,8 +96,11 @@ class TritonSentenceTransformersClient(TritonModelClient):
 
         return outputs
 
-    def _load(self):
+    def load(self):
         self.triton_client.load_model(self.model_name)
 
     def unload(self):
         self.triton_client.unload_model(self.model_name)
+
+    def is_ready(self) -> bool:
+        return self.triton_client.is_model_ready(self.model_name)
