@@ -119,7 +119,7 @@ Run the Docker container:
 docker run --name inference_server -d --rm -p 8686:8686 --gpus all inference-server
 ```
 
-## Performance text
+## Performance test
 
 You can run the benchmark script to test the performance of the server:
 
