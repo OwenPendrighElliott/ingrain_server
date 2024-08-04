@@ -135,14 +135,13 @@ Benchmark results:
 Concurrent threads: 500
 Requests per thread: 20
 Total requests: 10000
-Total benchmark time: 18.91 seconds
-QPS: 528.92
-Mean response time: 0.8423 seconds
-Median response time: 0.7081 seconds
-Standard deviation of response times: 0.6054 seconds
-Mean inference time: 10.4264 ms
-Median inference time: 9.7684 ms
-Standard deviation of inference times: 3.3518 ms
+Total benchmark time: 17.28 seconds
+QPS: 578.56
+Mean response time: 0.7786 seconds
+Median response time: 0.6470 seconds
+Standard deviation of response times: 0.5563 seconds
+Median inference time: 9.0256 ms
+Standard deviation of inference times: 3.0925 ms
 ```
 
 ## Development Setup
