@@ -13,14 +13,14 @@ It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUP
 ### Example Requests and Responses
 
 ##### Loading a sentence transformer model `POST /load_sentence_transformer_model`:
-```json
+```
 {
     "model_name": "intfloat/e5-small-v2",
 }
 ```
 
 ##### Loading a CLIP model `POST /load_clip_model`:
-```json
+```
 {
     "model_name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k"
@@ -28,7 +28,7 @@ It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUP
 ```
 
 ##### Inference request `POST /infer`:
-```json
+```
 {
     "model_name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k",
@@ -37,7 +37,7 @@ It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUP
 }
 ```
 Response
-```json
+```
 {
     "text_embeddings": [
         [0.1, ..., 0.4],
@@ -54,8 +54,8 @@ Response
 
 ##### Get inference metrics `GET /metrics`:
 Details omitted for brevity.
-```json
-
+```
+{
   "model_stats": [
     {
       "name": "ViT-B-32_laion2b_s34b_b79k_image_encoder",
@@ -90,7 +90,7 @@ Details omitted for brevity.
 ```
 
 ##### Unloading a model `POST /unload_model`:
-```json
+```
 {
     "model_name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k"
@@ -98,7 +98,7 @@ Details omitted for brevity.
 ```
 
 ##### Delete a model `POST /delete_model`:
-```json
+```
 {
     "model_name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k"
