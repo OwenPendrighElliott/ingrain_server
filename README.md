@@ -8,7 +8,7 @@ This server handles all the model loading, tracing, ONNX conversion, memory mana
 
 ## How does it perform?
 
-It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~560 QPS, `intfloat/e5-base-v2` to 500 clients at ~500 QPS, or `intfloat/e5-large-v2` to 500 clients at ~500 QPS.
+It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~560 QPS, or `intfloat/e5-base-v2` to 500 clients at ~500 QPS.
 
 ### Example Requests and Responses
 
