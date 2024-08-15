@@ -3,6 +3,7 @@ import open_clip
 import validators
 import numpy as np
 import base64
+import certifi
 import pycurl
 from io import BytesIO
 import tritonclient.grpc as grpcclient
@@ -176,6 +177,7 @@ class TritonCLIPClient(TritonModelClient):
         c = pycurl.Curl()
         c.setopt(c.URL, url)
         c.setopt(c.WRITEDATA, buffer)
+        c.setopt(pycurl.CAINFO, certifi.where())
         c.perform()
         c.close()
         buffer.seek(0)

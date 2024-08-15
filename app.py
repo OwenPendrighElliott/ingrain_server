@@ -91,7 +91,7 @@ async def health():
 
 @app.post("/load_clip_model")
 async def load_clip_model(request: OpenCLIPModelRequest):
-    model_name = request.model_name
+    model_name = request.name
     pretrained = request.pretrained
     cache_key = (model_name, pretrained)
 
@@ -117,7 +117,7 @@ async def load_clip_model(request: OpenCLIPModelRequest):
 
 @app.post("/load_sentence_transformer_model")
 async def load_sentence_transformer_model(request: SentenceTransformerModelRequest):
-    model_name = request.model_name
+    model_name = request.name
 
     cache_key = (model_name, None)
 
@@ -138,7 +138,7 @@ async def load_sentence_transformer_model(request: SentenceTransformerModelReque
 
 @app.post("/unload_model")
 async def unload_model(request: GenericModelRequest):
-    model_name = request.model_name
+    model_name = request.name
     pretrained = request.pretrained
 
     cache_key = (model_name, pretrained)
@@ -158,7 +158,7 @@ async def unload_model(request: GenericModelRequest):
 
 @app.post("/delete_model")
 async def delete_model(request: GenericModelRequest):
-    model_name = request.model_name
+    model_name = request.name
     pretrained = request.pretrained
 
     cache_key = (model_name, pretrained)
@@ -191,7 +191,6 @@ async def repository_models():
     repository_models = []
     for model in model_repo_information["models"]:
         model_data = {"name": model["name"]}
-        print(model)
         if "state" in model:
             model_data["state"] = model["state"]
 
@@ -201,7 +200,7 @@ async def repository_models():
 
 @app.post("/infer_text")
 async def infer_text(request: TextInferenceRequest):
-    model_name = request.model_name
+    model_name = request.name
     pretrained = request.pretrained
     text = request.text
     normalize = request.normalize
@@ -230,7 +229,7 @@ async def infer_text(request: TextInferenceRequest):
 
 @app.post("/infer_image")
 async def infer_text(request: ImageInferenceRequest):
-    model_name = request.model_name
+    model_name = request.name
     pretrained = request.pretrained
     image = request.image
     normalize = request.normalize
@@ -266,7 +265,7 @@ async def infer_text(request: ImageInferenceRequest):
 
 @app.post("/infer")
 async def infer(request: InferenceRequest):
-    model_name = request.model_name
+    model_name = request.name
     pretrained = request.pretrained
     texts = request.text
     images = request.image

@@ -15,14 +15,14 @@ It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUP
 ##### Loading a sentence transformer model `POST /load_sentence_transformer_model`:
 ```
 {
-    "model_name": "intfloat/e5-small-v2",
+    "name": "intfloat/e5-small-v2",
 }
 ```
 
 ##### Loading a CLIP model `POST /load_clip_model`:
 ```
 {
-    "model_name": "ViT-B-32",
+    "name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k"
 }
 ```
@@ -30,7 +30,7 @@ It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUP
 ##### Inference request `POST /infer`:
 ```
 {
-    "model_name": "ViT-B-32",
+    "name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k",
     "text": ["I am a sentence.", "I am another sentence.", "I am a third sentence."],
     "image": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"]
@@ -92,7 +92,7 @@ Details omitted for brevity.
 ##### Unloading a model `POST /unload_model`:
 ```
 {
-    "model_name": "ViT-B-32",
+    "name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k"
 }
 ```
@@ -100,7 +100,7 @@ Details omitted for brevity.
 ##### Delete a model `POST /delete_model`:
 ```
 {
-    "model_name": "ViT-B-32",
+    "name": "ViT-B-32",
     "pretrained": "laion2b_s34b_b79k"
 }
 ```

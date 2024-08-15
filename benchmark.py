@@ -13,7 +13,7 @@ delay_between_requests = 0
 
 # Load the model
 load_model_url = "http://localhost:8686/load_sentence_transformer_model"
-load_model_data = json.dumps({"model_name": model_name})
+load_model_data = json.dumps({"name": model_name})
 
 c = pycurl.Curl()
 c.setopt(c.URL, load_model_url)
@@ -42,7 +42,7 @@ def benchmark(thread_id):
 
         c = pycurl.Curl()
         c.setopt(c.URL, "http://localhost:8686/infer_text")
-        c.setopt(c.POSTFIELDS, json.dumps({"model_name": model_name, "text": "a cat"}))
+        c.setopt(c.POSTFIELDS, json.dumps({"name": model_name, "text": "a cat"}))
         c.setopt(c.HTTPHEADER, ["Content-Type: application/json"])
         c.setopt(c.WRITEDATA, buffer)
         c.perform()

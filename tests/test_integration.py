@@ -23,7 +23,7 @@ def check_server_running():
 def load_openclip_model():
     response = requests.post(
         f"{BASE_URL}/load_clip_model",
-        json={"model_name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
     )
     response.raise_for_status()
 
@@ -31,7 +31,7 @@ def load_openclip_model():
 def load_sentence_transformer_model():
     response = requests.post(
         f"{BASE_URL}/load_sentence_transformer_model",
-        json={"model_name": SENTENCE_TRANSFORMER_MODEL},
+        json={"name": SENTENCE_TRANSFORMER_MODEL},
     )
     response.raise_for_status()
 
@@ -49,7 +49,7 @@ def test_load_sentence_transformer_model():
     check_server_running()
     response = requests.post(
         f"{BASE_URL}/load_sentence_transformer_model",
-        json={"model_name": SENTENCE_TRANSFORMER_MODEL},
+        json={"name": SENTENCE_TRANSFORMER_MODEL},
     )
     assert response.status_code == 200
     assert (
@@ -64,7 +64,7 @@ def test_load_loaded_sentence_transformer_model():
     load_sentence_transformer_model()
     response = requests.post(
         f"{BASE_URL}/load_sentence_transformer_model",
-        json={"model_name": SENTENCE_TRANSFORMER_MODEL},
+        json={"name": SENTENCE_TRANSFORMER_MODEL},
     )
     assert response.status_code == 200
     assert "already loaded" in response.json()["message"]
@@ -75,7 +75,7 @@ def test_load_clip_model():
     check_server_running()
     response = requests.post(
         f"{BASE_URL}/load_clip_model",
-        json={"model_name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
     )
     assert response.status_code == 200
     assert "loaded successfully" in response.json()["message"]
@@ -87,7 +87,7 @@ def test_infer_text():
     test_text = "This is a test sentence."
     response = requests.post(
         f"{BASE_URL}/infer_text",
-        json={"model_name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
     )
     assert response.status_code == 200
     assert "embedding" in response.json()
@@ -102,7 +102,7 @@ def test_infer_image():
     response = requests.post(
         f"{BASE_URL}/infer_image",
         json={
-            "model_name": OPENCLIP_MODEL,
+            "name": OPENCLIP_MODEL,
             "pretrained": OPENCLIP_PRETRAINED,
             "image": test_image,
         },
@@ -124,7 +124,7 @@ def test_infer_text_image():
     response = requests.post(
         f"{BASE_URL}/infer",
         json={
-            "model_name": OPENCLIP_MODEL,
+            "name": OPENCLIP_MODEL,
             "pretrained": OPENCLIP_PRETRAINED,
             "text": test_texts,
             "image": test_image,
@@ -148,7 +148,7 @@ def test_unload_model():
     check_server_running()
     load_sentence_transformer_model()
     response = requests.post(
-        f"{BASE_URL}/unload_model", json={"model_name": SENTENCE_TRANSFORMER_MODEL}
+        f"{BASE_URL}/unload_model", json={"name": SENTENCE_TRANSFORMER_MODEL}
     )
     assert response.status_code == 200
     assert "unloaded successfully" in response.json()["message"]
@@ -159,7 +159,7 @@ def test_delete_model():
     check_server_running()
     load_sentence_transformer_model()
     response = requests.post(
-        f"{BASE_URL}/delete_model", json={"model_name": SENTENCE_TRANSFORMER_MODEL}
+        f"{BASE_URL}/delete_model", json={"name": SENTENCE_TRANSFORMER_MODEL}
     )
     assert response.status_code == 200
     assert "deleted successfully" in response.json()["message"]
@@ -171,7 +171,7 @@ def test_delete_clip_model():
     load_openclip_model()
     response = requests.post(
         f"{BASE_URL}/delete_model",
-        json={"model_name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
     )
     assert response.status_code == 200
     assert "deleted successfully" in response.json()["message"]

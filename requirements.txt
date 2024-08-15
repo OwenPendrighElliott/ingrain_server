@@ -10,3 +10,4 @@ transformers
 sentence_transformers
 onnx
 pydantic
+certifi
