@@ -4,7 +4,7 @@ import threading
 import statistics
 
 # Configuration
-model_name = "intfloat/e5-base-v2"
+model_name = "intfloat/e5-small-v2"
 num_threads = 500
 num_requests_per_thread = 20
 delay_between_requests = 0
