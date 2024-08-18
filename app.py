@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 import time
 import os
 import asyncio
-from inference.request_models import (
+from inference.api_models.request_models import (
     InferenceRequest,
     TextInferenceRequest,
     ImageInferenceRequest,
@@ -10,11 +10,21 @@ from inference.request_models import (
     SentenceTransformerModelRequest,
     OpenCLIPModelRequest,
 )
+from inference.api_models.response_models import (
+    InferenceResponse,
+    TextInferenceResponse,
+    ImageInferenceResponse,
+    GenericMessageResponse,
+    LoadedModelResponse,
+    RepositoryModelResponse,
+    MetricsResponse,
+)
 from inference.triton_open_clip.clip_model import TritonCLIPClient
 from inference.triton_sentence_transformers.sentence_transformer_model import (
     TritonSentenceTransformersClient,
 )
 from inference.model_cache import LRUModelCache
+from inference.on_start import hello_world
 from inference.common import get_model_name, delete_model_from_repo
 import tritonclient.grpc as grpcclient
 from threading import Lock
@@ -85,12 +95,12 @@ def client_from_cache(
 
 
 @app.get("/health")
-async def health():
+async def health() -> GenericMessageResponse:
     return {"message": "The server is running."}
 
 
 @app.post("/load_clip_model")
-async def load_clip_model(request: OpenCLIPModelRequest):
+async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageResponse:
     model_name = request.name
     pretrained = request.pretrained
     cache_key = (model_name, pretrained)
@@ -116,7 +126,9 @@ async def load_clip_model(request: OpenCLIPModelRequest):
 
 
 @app.post("/load_sentence_transformer_model")
-async def load_sentence_transformer_model(request: SentenceTransformerModelRequest):
+async def load_sentence_transformer_model(
+    request: SentenceTransformerModelRequest,
+) -> GenericMessageResponse:
     model_name = request.name
 
     cache_key = (model_name, None)
@@ -137,7 +149,7 @@ async def load_sentence_transformer_model(request: SentenceTransformerModelReque
 
 
 @app.post("/unload_model")
-async def unload_model(request: GenericModelRequest):
+async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
     model_name = request.name
     pretrained = request.pretrained
 
@@ -157,7 +169,7 @@ async def unload_model(request: GenericModelRequest):
 
 
 @app.post("/delete_model")
-async def delete_model(request: GenericModelRequest):
+async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
     model_name = request.name
     pretrained = request.pretrained
 
@@ -175,7 +187,7 @@ async def delete_model(request: GenericModelRequest):
 
 
 @app.get("/loaded_models")
-async def loaded_models():
+async def loaded_models() -> LoadedModelResponse:
     model_repo_information = TRITON_CLIENT.get_model_repository_index(as_json=True)
     loaded_models = []
     for model in model_repo_information["models"]:
@@ -186,7 +198,7 @@ async def loaded_models():
 
 
 @app.get("/repository_models")
-async def repository_models():
+async def repository_models() -> RepositoryModelResponse:
     model_repo_information = TRITON_CLIENT.get_model_repository_index(as_json=True)
     repository_models = []
     for model in model_repo_information["models"]:
@@ -199,7 +211,7 @@ async def repository_models():
 
 
 @app.post("/infer_text")
-async def infer_text(request: TextInferenceRequest):
+async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
     model_name = request.name
     pretrained = request.pretrained
     text = request.text
@@ -224,11 +236,11 @@ async def infer_text(request: TextInferenceRequest):
 
     embedding_list = [e.tolist() for e in embedding]
 
-    return {"embedding": embedding_list, "processingTimeMs": (end - start) * 1000}
+    return {"embeddings": embedding_list, "processingTimeMs": (end - start) * 1000}
 
 
 @app.post("/infer_image")
-async def infer_text(request: ImageInferenceRequest):
+async def infer_text(request: ImageInferenceRequest) -> ImageInferenceResponse:
     model_name = request.name
     pretrained = request.pretrained
     image = request.image
@@ -260,11 +272,11 @@ async def infer_text(request: ImageInferenceRequest):
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
-    return {"embedding": embedding_list, "processingTimeMs": (end - start) * 1000}
+    return {"embeddings": embedding_list, "processingTimeMs": (end - start) * 1000}
 
 
 @app.post("/infer")
-async def infer(request: InferenceRequest):
+async def infer(request: InferenceRequest) -> InferenceResponse:
     model_name = request.name
     pretrained = request.pretrained
     texts = request.text
@@ -310,14 +322,14 @@ async def infer(request: InferenceRequest):
 
     if texts is not None:
         text_embeddings = results[0]
-        response["text_embeddings"] = [
+        response["textEmbeddings"] = [
             embedding.tolist() for embedding in text_embeddings
         ]
 
     if images is not None:
         # Whether it's index 1 or 0 depends on whether texts were provided
         image_embeddings = results[-1]
-        response["image_embeddings"] = [
+        response["imageEmbeddings"] = [
             embedding.tolist() for embedding in image_embeddings
         ]
 
@@ -327,9 +339,15 @@ async def infer(request: InferenceRequest):
 
 
 @app.get("/metrics")
-async def metrics():
+async def metrics() -> MetricsResponse:
     triton_metrics = TRITON_CLIENT.get_inference_statistics(as_json=True)
+    triton_metrics["modelStats"] = triton_metrics["model_stats"]
     return triton_metrics
+
+
+@app.on_event("startup")
+async def startup_event():
+    hello_world()
 
 
 if __name__ == "__main__":

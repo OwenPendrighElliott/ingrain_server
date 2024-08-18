@@ -116,7 +116,7 @@ docker build -t inference-server .
 Run the Docker container:
 
 ```bash
-docker run --name inference_server -d --rm -p 8686:8686 --gpus all inference-server
+docker run --name inference_server -p 8686:8686 --gpus all inference-server
 ```
 
 ## Performance test
@@ -183,8 +183,8 @@ pip install pytest
 pytest
 ```
 
-#### Integration tests
+#### Integration tests and unit tests
 
 ```bash
-pytest -m integration
+pytest --integration
 ```

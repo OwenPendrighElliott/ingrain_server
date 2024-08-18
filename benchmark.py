@@ -1,9 +1,7 @@
-import pycurl
-import json
+import ingrain
 import time
 import threading
 import statistics
-from io import BytesIO
 
 # Configuration
 model_name = "intfloat/e5-small-v2"
@@ -11,57 +9,34 @@ num_threads = 500
 num_requests_per_thread = 20
 delay_between_requests = 0
 
-# Load the model
-load_model_url = "http://localhost:8686/load_sentence_transformer_model"
-load_model_data = json.dumps({"name": model_name})
-
-c = pycurl.Curl()
-c.setopt(c.URL, load_model_url)
-c.setopt(c.POSTFIELDS, load_model_data)
-c.setopt(c.HTTPHEADER, ["Content-Type: application/json"])
-
-buffer = BytesIO()
-c.setopt(c.WRITEDATA, buffer)
-c.perform()
-c.close()
-
-response_body = buffer.getvalue().decode("utf-8")
-print(response_body)
-
 # Thread-safe structure to store response times
 response_times = []
 inference_times = []
 response_times_lock = threading.Lock()
 
+client = ingrain.Client()
+client.load_sentence_transformer_model(name=model_name)
+
 
 # Benchmarking function
 def benchmark(thread_id):
+    # Create a client and load the model for each thread
+    client = ingrain.Client()
+    model = client.load_sentence_transformer_model(name=model_name)
+
     for _ in range(num_requests_per_thread):
         start_time = time.perf_counter()
-        buffer = BytesIO()
 
-        c = pycurl.Curl()
-        c.setopt(c.URL, "http://localhost:8686/infer_text")
-        c.setopt(c.POSTFIELDS, json.dumps({"name": model_name, "text": "a cat"}))
-        c.setopt(c.HTTPHEADER, ["Content-Type: application/json"])
-        c.setopt(c.WRITEDATA, buffer)
-        c.perform()
-
-        status_code = c.getinfo(pycurl.RESPONSE_CODE)
-        c.close()
+        response = model.infer(text="Hello, world!")
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
 
-        data = json.loads(buffer.getvalue().decode("utf-8"))
-        inference_times.append(data["processingTimeMs"])
+        # Store inference time and response time
+        inference_times.append(response["processingTimeMs"])
 
-        # Store the response time
         with response_times_lock:
             response_times.append(elapsed_time)
-
-        if status_code != 200:
-            print(f"Thread {thread_id} received an error: {data}")
 
         # Delay between requests to avoid spikes
         time.sleep(delay_between_requests)

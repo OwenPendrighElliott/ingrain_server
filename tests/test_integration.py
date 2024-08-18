@@ -78,7 +78,10 @@ def test_load_clip_model():
         json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
     )
     assert response.status_code == 200
-    assert "loaded successfully" in response.json()["message"]
+    assert (
+        "loaded successfully" in response.json()["message"]
+        or "already loaded" in response.json()["message"]
+    )
 
 
 @pytest.mark.integration
@@ -90,7 +93,7 @@ def test_infer_text():
         json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
     )
     assert response.status_code == 200
-    assert "embedding" in response.json()
+    assert "embeddings" in response.json()
     assert "processingTimeMs" in response.json()
 
 
@@ -108,7 +111,7 @@ def test_infer_image():
         },
     )
     assert response.status_code == 200
-    assert "embedding" in response.json()
+    assert "embeddings" in response.json()
     assert "processingTimeMs" in response.json()
 
 
@@ -132,12 +135,12 @@ def test_infer_text_image():
     )
 
     assert response.status_code == 200
-    assert "text_embeddings" in response.json()
-    assert "image_embeddings" in response.json()
-    assert len(response.json()["text_embeddings"]) == len(test_texts)
+    assert "textEmbeddings" in response.json()
+    assert "imageEmbeddings" in response.json()
+    assert len(response.json()["textEmbeddings"]) == len(test_texts)
 
-    image_embeddings_arr = np.array(response.json()["image_embeddings"])
-    text_embeddings_arr = np.array(response.json()["text_embeddings"])
+    image_embeddings_arr = np.array(response.json()["imageEmbeddings"])
+    text_embeddings_arr = np.array(response.json()["textEmbeddings"])
 
     image_text_similarities = np.dot(image_embeddings_arr, text_embeddings_arr.T)
     assert image_text_similarities[0, 0] < image_text_similarities[0, 1]
@@ -152,6 +155,41 @@ def test_unload_model():
     )
     assert response.status_code == 200
     assert "unloaded successfully" in response.json()["message"]
+
+
+@pytest.mark.integration
+def test_unload_and_load_sentence_transformer_mode():
+    check_server_running()
+    load_sentence_transformer_model()
+    response = requests.post(
+        f"{BASE_URL}/unload_model", json={"name": SENTENCE_TRANSFORMER_MODEL}
+    )
+    assert response.status_code == 200
+    assert "unloaded successfully" in response.json()["message"]
+    response = requests.post(
+        f"{BASE_URL}/load_sentence_transformer_model",
+        json={"name": SENTENCE_TRANSFORMER_MODEL},
+    )
+    assert response.status_code == 200
+    assert "loaded successfully" in response.json()["message"]
+
+
+@pytest.mark.integration
+def test_unload_and_load_clip_model():
+    check_server_running()
+    load_openclip_model()
+    response = requests.post(
+        f"{BASE_URL}/unload_model",
+        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+    )
+    assert response.status_code == 200
+    assert "unloaded successfully" in response.json()["message"]
+    response = requests.post(
+        f"{BASE_URL}/load_clip_model",
+        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+    )
+    assert response.status_code == 200
+    assert "loaded successfully" in response.json()["message"]
 
 
 @pytest.mark.integration
@@ -200,4 +238,4 @@ def test_metrics():
     check_server_running()
     response = requests.get(f"{BASE_URL}/metrics")
     assert response.status_code == 200
-    assert "model_stats" in response.json()
+    assert "modelStats" in response.json()
