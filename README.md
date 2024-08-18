@@ -1,4 +1,4 @@
-# Inference Server
+# Ingrain Server
 
 This is a wrapper for [Triton Inference Server](https://developer.nvidia.com/triton-inference-server) that makes using it with sentence transformers and open CLIP models easy.
 
@@ -110,13 +110,13 @@ Details omitted for brevity.
 Build the Docker image:
 
 ```bash
-docker build -t inference-server .
+docker build -t ingrain-server .
 ```
 
 Run the Docker container:
 
 ```bash
-docker run --name inference_server -p 8686:8686 --gpus all inference-server
+docker run --name ingrain_server -p 8686:8686 --gpus all ingrain-server
 ```
 
 ## Performance test
