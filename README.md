@@ -25,7 +25,7 @@ ingrn = ingrain.Client()
 
 model = ingrn.load_sentence_transformer_model(name="intfloat/e5-small-v2")
 
-response = model.infer(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
+response = model.infer_text(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
 
 print(f"Processing Time (ms): {response['processingTimeMs']}")
 print(f"Text Embeddings: {response['embeddings']}")
@@ -40,7 +40,7 @@ ingrn = ingrain.Client(return_numpy=True)
 
 model = client.load_sentence_transformer_model(name="intfloat/e5-small-v2")
 
-response = model.infer(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
+response = model.infer_text(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
 
 print(type(response['embeddings']))
 ```
