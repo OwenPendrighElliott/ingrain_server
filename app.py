@@ -243,7 +243,7 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
 async def infer_text(request: ImageInferenceRequest) -> ImageInferenceResponse:
     model_name = request.name
     pretrained = request.pretrained
-    image = request.image
+    images = request.image
     normalize = request.normalize
 
     client = client_from_cache(model_name, pretrained)
@@ -253,7 +253,10 @@ async def infer_text(request: ImageInferenceRequest) -> ImageInferenceResponse:
             detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model.",
         )
 
-    image_data = client.load_image(image)
+    if isinstance(images, str):
+        images = [images]
+
+    image_data = client.load_images_parallel(images)
 
     if image_data is None:
         raise HTTPException(
@@ -312,7 +315,6 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
             )
         if isinstance(images, str):
             images = [images]
-        # image_datas = [client.load_image(image) for image in images]
         image_datas = client.load_images_parallel(images)
         tasks.append(asyncio.to_thread(client.encode_image, image_datas, normalize))
 

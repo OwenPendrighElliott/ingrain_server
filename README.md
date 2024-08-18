@@ -8,7 +8,42 @@ This server handles all the model loading, tracing, ONNX conversion, memory mana
 
 ## How does it perform?
 
-It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~560 QPS, or `intfloat/e5-base-v2` to 500 clients at ~500 QPS.
+It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~1050 QPS, or `intfloat/e5-base-v2` to 500 clients at ~860 QPS.
+
+## Usage
+
+The easiest way to get started is the use the optimised Python Client:
+
+```bash
+pip install ingrain
+```
+
+```python
+import ingrain
+
+ingrn = ingrain.Client()
+
+model = ingrn.load_sentence_transformer_model(name="intfloat/e5-small-v2")
+
+response = model.infer(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
+
+print(f"Processing Time (ms): {response['processingTimeMs']}")
+print(f"Text Embeddings: {response['embeddings']}")
+```
+
+You can also have the embeddings automatically be returned as a numpy array:
+
+```python
+import ingrain
+
+ingrn = ingrain.Client(return_numpy=True)
+
+model = client.load_sentence_transformer_model(name="intfloat/e5-small-v2")
+
+response = model.infer(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
+
+print(type(response['embeddings']))
+```
 
 ### Example Requests and Responses
 
@@ -123,6 +158,12 @@ docker run --name ingrain_server -p 8686:8686 --gpus all ingrain-server
 
 You can run the benchmark script to test the performance of the server:
 
+Install the python client:
+```bash
+pip install ingrain
+```
+
+Run the benchmark script:
 ```bash
 python benchmark.py
 ```
@@ -135,13 +176,14 @@ Benchmark results:
 Concurrent threads: 500
 Requests per thread: 20
 Total requests: 10000
-Total benchmark time: 17.28 seconds
-QPS: 578.56
-Mean response time: 0.7786 seconds
-Median response time: 0.6470 seconds
-Standard deviation of response times: 0.5563 seconds
-Median inference time: 9.0256 ms
-Standard deviation of inference times: 3.0925 ms
+Total benchmark time: 9.31 seconds
+QPS: 1074.66
+Mean response time: 0.3595 seconds
+Median response time: 0.3495 seconds
+Standard deviation of response times: 0.1174 seconds
+Mean inference time: 235.5968 ms
+Median inference time: 227.6743 ms
+Standard deviation of inference times: 84.8669 ms
 ```
 
 ## Development Setup

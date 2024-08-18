@@ -73,11 +73,9 @@ class TritonSentenceTransformersClient(TritonModelClient):
     def encode_text(
         self, text: Union[str, List[str]], normalize: bool = True
     ) -> np.ndarray:
-        tokens = self.tokenizer(text, return_tensors="np")
+        tokens = self.tokenizer(text, return_tensors="np", padding=True)
         input_ids = tokens["input_ids"].astype(np.int64)
-        # input_ids = input_ids.astype(np.int64)
         attention_mask = tokens["attention_mask"].astype(np.int64)
-        # attention_mask = attention_mask.astype(np.int64)
 
         input_ids_tensor = grpcclient.InferInput("input_ids", input_ids.shape, "INT64")
         attention_mask_tensor = grpcclient.InferInput(

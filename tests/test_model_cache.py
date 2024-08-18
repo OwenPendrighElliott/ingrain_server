@@ -54,7 +54,6 @@ def test_lru_model_cache_eviction(mock_clip_client, mock_sentence_client):
     cache.put(key2, mock_sentence_client)
 
     assert cache.get(key1) is not None
-    print(cache.loaded)
     assert not cache.loaded[key2]
     assert cache.hits == 0
     assert cache.misses == 1

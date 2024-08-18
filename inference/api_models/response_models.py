@@ -25,7 +25,7 @@ class LoadedModelResponse(BaseModel):
 
 class RepositoryModel(BaseModel):
     name: str
-    state: str
+    state: Optional[str]
 
 
 class RepositoryModelResponse(BaseModel):

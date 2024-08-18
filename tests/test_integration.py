@@ -73,6 +73,7 @@ def test_load_loaded_sentence_transformer_model():
 @pytest.mark.integration
 def test_load_clip_model():
     check_server_running()
+    load_openclip_model()
     response = requests.post(
         f"{BASE_URL}/load_clip_model",
         json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
@@ -87,10 +88,51 @@ def test_load_clip_model():
 @pytest.mark.integration
 def test_infer_text():
     check_server_running()
+    load_sentence_transformer_model()
     test_text = "This is a test sentence."
     response = requests.post(
         f"{BASE_URL}/infer_text",
         json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
+    )
+    assert response.status_code == 200
+    assert "embeddings" in response.json()
+    assert "processingTimeMs" in response.json()
+
+
+@pytest.mark.integration
+def test_infer_text_batch():
+    check_server_running()
+    load_sentence_transformer_model()
+    test_text = [
+        "This is a test sentence.",
+        "This is another test sentence.",
+        "This is a third test sentence.",
+    ]
+    response = requests.post(
+        f"{BASE_URL}/infer_text",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
+    )
+    assert response.status_code == 200
+    assert "embeddings" in response.json()
+    assert "processingTimeMs" in response.json()
+
+
+@pytest.mark.integration
+def test_infer_text_clip_batch():
+    check_server_running()
+    load_openclip_model()
+    test_text = [
+        "This is a test sentence.",
+        "This is another test sentence.",
+        "This is a third test sentence.",
+    ]
+    response = requests.post(
+        f"{BASE_URL}/infer_text",
+        json={
+            "name": OPENCLIP_MODEL,
+            "pretrained": OPENCLIP_PRETRAINED,
+            "text": test_text,
+        },
     )
     assert response.status_code == 200
     assert "embeddings" in response.json()
@@ -110,6 +152,37 @@ def test_infer_image():
             "image": test_image,
         },
     )
+    assert response.status_code == 200
+    assert "embeddings" in response.json()
+    assert "processingTimeMs" in response.json()
+
+
+@pytest.mark.integration
+def test_infer_image_batch():
+    check_server_running()
+    load_openclip_model()
+    test_image = [
+        "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIAAACVT/22AAACkElEQVR4nOzUMQ0CYRgEUQ5wgwAUnA+EUKKJBkeowAHVJd/kz3sKtpjs9fH9nDjO/npOT1jKeXoA/CNQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKRtl/t7esNSbvs2PWEpHpQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIl7RcAAP//iL8GbQ2nM1wAAAAASUVORK5CYII="
+    ] * 3
+    print(len(test_image))
+    print(
+        f"{BASE_URL}/infer_image",
+        {
+            "name": OPENCLIP_MODEL,
+            "pretrained": OPENCLIP_PRETRAINED,
+            "image": test_image,
+        },
+    )
+    response = requests.post(
+        f"{BASE_URL}/infer_image",
+        json={
+            "name": OPENCLIP_MODEL,
+            "pretrained": OPENCLIP_PRETRAINED,
+            "image": test_image,
+        },
+    )
+
+    print(response.json())
     assert response.status_code == 200
     assert "embeddings" in response.json()
     assert "processingTimeMs" in response.json()
