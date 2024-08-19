@@ -1,18 +1,25 @@
 # Use the NVIDIA Triton server image as the base
 FROM nvcr.io/nvidia/tritonserver:24.07-py3
 
+# Install the required packages
+RUN apt-get update && apt-get install -y python3-pip python3-venv
+
 # Set the working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Create a virtual environment
+RUN python3 -m venv /app/venv
 
-# Install Python and dependencies
-RUN apt-get update && apt-get install -y python3-pip python3-venv && \
-    python3 -m venv venv && \
-    . venv/bin/activate && \
+# Copy only requirements.txt first to take advantage of Docker's cache
+COPY requirements.txt /app
+
+# Install Python dependencies
+RUN . /app/venv/bin/activate && \
     pip install --upgrade pip && \
     pip install -r requirements.txt
+
+# Copy the rest of the application code into the container
+COPY . /app
 
 # Expose the required ports
 EXPOSE 8686
@@ -20,10 +27,8 @@ EXPOSE 8686
 # Create the model repository directory
 RUN mkdir -p /app/model_repository
 
-# Copy and make the inference server run script executable
-COPY run_inference_server.sh /app/
-RUN chmod +x /app/run_inference_server.sh
+# Ensure the inference server run script is executable
+RUN chmod +x /app/start.sh
 
-# Start Triton server and inference server
-CMD tritonserver --model-repository=/app/model_repository --model-control-mode=explicit & \
-    /app/run_inference_server.sh
+# Start the app
+CMD bash /app/start.sh

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
+from starlette.responses import JSONResponse
 import time
-import os
 import asyncio
 from inference.api_models.request_models import (
     InferenceRequest,
@@ -24,7 +24,6 @@ from inference.triton_sentence_transformers.sentence_transformer_model import (
     TritonSentenceTransformersClient,
 )
 from inference.model_cache import LRUModelCache
-from inference.on_start import hello_world
 from inference.common import get_model_name, delete_model_from_repo
 import tritonclient.grpc as grpcclient
 from threading import Lock
@@ -94,6 +93,17 @@ def client_from_cache(
     return None
 
 
+@app.middleware("http")
+async def route_timeout_middleware(request: Request, call_next):
+    if request.url.path in {"/load_clip_model", "/load_sentence_transformer_model"}:
+        try:
+            return await asyncio.wait_for(call_next(request), timeout=600)
+        except asyncio.TimeoutError:
+            return JSONResponse({"error": "Request timed out"}, status_code=504)
+    else:
+        return await call_next(request)
+
+
 @app.get("/health")
 async def health() -> GenericMessageResponse:
     return {"message": "The server is running."}
@@ -105,24 +115,23 @@ async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageRespon
     pretrained = request.pretrained
     cache_key = (model_name, pretrained)
 
-    # Ensure thread safety when accessing the model cache
-    with MODEL_CACHE_LOCK:
-        client = MODEL_CACHE.get(cache_key)
-        if client is None:
-            client = TritonCLIPClient(
-                triton_grpc_url=TRITON_GRPC_URL,
-                model=model_name,
-                pretrained=pretrained,
-                triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
-            )
+    client = client_from_cache(model_name, pretrained)
+    if client is None:
+        client = TritonCLIPClient(
+            triton_grpc_url=TRITON_GRPC_URL,
+            model=model_name,
+            pretrained=pretrained,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+        )
+        with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
-            return {
-                "message": f"Model {model_name} with checkpoint {pretrained} loaded successfully."
-            }
-        else:
-            return {
-                "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
-            }
+        return {
+            "message": f"Model {model_name} with checkpoint {pretrained} loaded successfully."
+        }
+    else:
+        return {
+            "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
+        }
 
 
 @app.post("/load_sentence_transformer_model")
@@ -133,19 +142,18 @@ async def load_sentence_transformer_model(
 
     cache_key = (model_name, None)
 
-    # Ensure thread safety when accessing the model cache
-    with MODEL_CACHE_LOCK:
-        client = MODEL_CACHE.get(cache_key)
-        if client is None:
-            client = TritonSentenceTransformersClient(
-                triton_grpc_url=TRITON_GRPC_URL,
-                model=model_name,
-                triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
-            )
+    client = client_from_cache(model_name, None)
+    if client is None:
+        client = TritonSentenceTransformersClient(
+            triton_grpc_url=TRITON_GRPC_URL,
+            model=model_name,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+        )
+        with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
-            return {"message": f"Model {model_name} loaded successfully."}
-        else:
-            return {"message": f"Model {model_name} is already loaded."}
+        return {"message": f"Model {model_name} loaded successfully."}
+    else:
+        return {"message": f"Model {model_name} is already loaded."}
 
 
 @app.post("/unload_model")
@@ -155,17 +163,17 @@ async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
 
     cache_key = (model_name, pretrained)
 
-    with MODEL_CACHE_LOCK:
-        client = MODEL_CACHE.get(cache_key)
-        if client is not None:
+    client = client_from_cache(model_name, pretrained)
+    if client is not None:
+        with MODEL_CACHE_LOCK:
             client = MODEL_CACHE.remove(cache_key)
-            return {
-                "message": f"Model {model_name} with checkpoint {pretrained} unloaded successfully."
-            }
-        else:
-            return {
-                "message": f"Model {model_name} with checkpoint {pretrained} is not loaded."
-            }
+        return {
+            "message": f"Model {model_name} with checkpoint {pretrained} unloaded successfully."
+        }
+    else:
+        return {
+            "message": f"Model {model_name} with checkpoint {pretrained} is not loaded."
+        }
 
 
 @app.post("/delete_model")
@@ -345,11 +353,6 @@ async def metrics() -> MetricsResponse:
     triton_metrics = TRITON_CLIENT.get_inference_statistics(as_json=True)
     triton_metrics["modelStats"] = triton_metrics["model_stats"]
     return triton_metrics
-
-
-@app.on_event("startup")
-async def startup_event():
-    hello_world()
 
 
 if __name__ == "__main__":

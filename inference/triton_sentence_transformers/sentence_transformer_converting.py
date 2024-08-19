@@ -51,7 +51,6 @@ dynamic_batching {{}}
 def onnx_transformer_model(
     model: SentenceTransformer, output_path: str
 ) -> torch.jit.ScriptModule:
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     wrapped_model = SentenceTransformerWrapper(model)

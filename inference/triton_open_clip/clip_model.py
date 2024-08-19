@@ -209,7 +209,6 @@ class TritonCLIPClient(TritonModelClient):
     def encode_image(
         self, image: Union[Image.Image, List[Image.Image]], normalize: bool = True
     ) -> np.ndarray:
-
         if isinstance(image, Image.Image):
             image = [image]
         processed_images = np.stack([self.preprocess(image).numpy() for image in image])

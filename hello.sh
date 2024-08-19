@@ -1,7 +1,6 @@
-def hello_world():
-    print("Inference server is ready!")
-    print(
-        """
+#!/bin/bash
+
+echo '
                   ___           ___           ___           ___                       ___              
       ___        /\__\         /\  \         /\  \         /\  \          ___        /\__\             
      /\  \      /::|  |       /::\  \       /::\  \       /::\  \        /\  \      /::|  |            
@@ -24,8 +23,7 @@ def hello_world():
    \:\/:/  /     \:\ \/__/      |:|\/__/     \::::/__/     \:\ \/__/      |:|\/__/                     
     \::/  /       \:\__\        |:|  |        ~~~~          \:\__\        |:|  |                       
      \/__/         \/__/         \|__|                       \/__/         \|__|                       
-"""
-    )
-    print(
-        "Welcome to Ingrain Server, a triton wrapper with automatic model conversion for Sentence Transformers and Open CLIP"
-    )
+'
+echo "Welcome to Ingrain Server, a triton wrapper with automatic model conversion for Sentence Transformers and Open CLIP"
+echo "Log level is set to ERROR as an optimisation, expect nothing in this console unless there is an error"
+echo "To see triton logs please look at tritonserver.log"

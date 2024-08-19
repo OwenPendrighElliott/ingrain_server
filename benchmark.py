@@ -5,8 +5,8 @@ import statistics
 
 # Configuration
 model_name = "intfloat/e5-small-v2"
-num_threads = 500
-num_requests_per_thread = 20
+num_threads = 100
+num_requests_per_thread = 50
 delay_between_requests = 0
 
 # Thread-safe structure to store response times
@@ -22,12 +22,12 @@ client.load_sentence_transformer_model(name=model_name)
 def benchmark(thread_id):
     # Create a client and load the model for each thread
     client = ingrain.Client()
-    model = client.load_sentence_transformer_model(name=model_name)
+    # model = client.load_sentence_transformer_model(name=model_name)
 
     for _ in range(num_requests_per_thread):
         start_time = time.perf_counter()
 
-        response = model.infer(text="Hello, world!")
+        response = client.infer(name=model_name, text="Hello, world!")
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
