@@ -22,9 +22,12 @@ from .clip_converting import (
 
 from typing import Tuple, Union, List
 
+_PREPROCESSOR_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "preprocessors")
 PREPROCESS_CONFIGS = {
-    fname.split(".")[0]: json.load(open(fname, "r"))
-    for fname in os.path.join(os.path.dirname(__file__), "preprocessors")
+    os.path.basename(fname).split(".")[0]: json.load(
+        open(os.path.join(_PREPROCESSOR_CONFIG_DIR, fname), "r")
+    )
+    for fname in os.listdir(_PREPROCESSOR_CONFIG_DIR)
 }
 
 
@@ -42,7 +45,7 @@ def create_transforms(model_name: str, pretrained: Union[str, None]):
     preprocessor_config = PREPROCESS_CONFIGS[model_name]
 
     preprocess = image_transform_v2(
-        preprocessor_config=PreprocessCfg(**preprocessor_config),
+        cfg=PreprocessCfg(**preprocessor_config),
         is_train=False,
     )
 

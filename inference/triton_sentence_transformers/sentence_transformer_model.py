@@ -61,7 +61,7 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
 
         self.model_name = get_model_name(model)
 
-        if not self.triton_client.is_model_ready(model):
+        if not self.triton_client.is_model_ready(self.model_name):
             raise ValueError(f"Model {model} is not ready")
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -113,7 +113,7 @@ class TritonSentenceTransformersModelClient(TritonModelLoadingClient):
 
         self.model_name = get_model_name(model)
 
-        if not self.triton_client.is_model_ready(model):
+        if not self.triton_client.is_model_ready(self.model_name):
             _, self.tokenizer = create_model(model, triton_model_repository_path)
             self.triton_client.load_model(self.model_name)
         else:

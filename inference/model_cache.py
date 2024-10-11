@@ -1,7 +1,11 @@
 import collections
-from .triton_open_clip.clip_model import TritonCLIPClient
+from .triton_open_clip.clip_model import (
+    TritonCLIPModelClient,
+    TritonCLIPInferenceClient,
+)
 from .triton_sentence_transformers.sentence_transformer_model import (
-    TritonSentenceTransformersClient,
+    TritonSentenceTransformersModelClient,
+    TritonSentenceTransformersInferenceClient,
 )
 from typing import Union, Dict, Tuple
 
@@ -11,7 +15,12 @@ class LRUModelCache:
         self.capacity: int = capacity
         self.data: Dict[
             Tuple[str, Union[str, None]],
-            Union[TritonCLIPClient, TritonSentenceTransformersClient],
+            Union[
+                TritonCLIPModelClient,
+                TritonSentenceTransformersModelClient,
+                TritonCLIPInferenceClient,
+                TritonSentenceTransformersInferenceClient,
+            ],
         ] = {}
         self.loaded: Dict[Tuple[str, Union[str, None]], bool] = {}
         self.usage_order = collections.OrderedDict()
@@ -28,9 +37,13 @@ class LRUModelCache:
             del self.loaded[key]
             del self.usage_order[key]
 
-    def get(
-        self, key: Tuple[str, Union[str, None]]
-    ) -> Union[TritonCLIPClient, TritonSentenceTransformersClient, None]:
+    def get(self, key: Tuple[str, Union[str, None]]) -> Union[
+        TritonCLIPModelClient,
+        TritonSentenceTransformersModelClient,
+        TritonCLIPInferenceClient,
+        TritonSentenceTransformersInferenceClient,
+        None,
+    ]:
         if key not in self.data:
             self.misses += 1
             return None
@@ -48,7 +61,12 @@ class LRUModelCache:
     def put(
         self,
         key: Tuple[str, Union[str, None]],
-        value: Union[TritonCLIPClient, TritonSentenceTransformersClient],
+        value: Union[
+            TritonCLIPModelClient,
+            TritonSentenceTransformersModelClient,
+            TritonCLIPInferenceClient,
+            TritonSentenceTransformersInferenceClient,
+        ],
     ) -> None:
         if self.capacity <= 0:
             return

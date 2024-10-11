@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request, HTTPException
 from starlette.responses import JSONResponse
 import asyncio
 from inference.api_models.request_models import (
-    t,
     GenericModelRequest,
     SentenceTransformerModelRequest,
     OpenCLIPModelRequest,
@@ -13,11 +12,9 @@ from inference.api_models.response_models import (
     RepositoryModelResponse,
 )
 from inference.triton_open_clip.clip_model import (
-    TritonCLIPClient,
     TritonCLIPModelClient,
 )
 from inference.triton_sentence_transformers.sentence_transformer_model import (
-    TritonSentenceTransformersClient,
     TritonSentenceTransformersModelClient,
 )
 from inference.model_cache import LRUModelCache
@@ -93,7 +90,7 @@ async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageRespon
 
     client = get_model_creation_client(model_name, pretrained)
     if client is None:
-        client = TritonCLIPClient(
+        client = TritonCLIPModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             pretrained=pretrained,
@@ -105,6 +102,7 @@ async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageRespon
             "message": f"Model {model_name} with checkpoint {pretrained} loaded successfully."
         }
     else:
+        client.load()
         return {
             "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
         }
@@ -120,7 +118,8 @@ async def load_sentence_transformer_model(
 
     client = get_model_creation_client(model_name, None)
     if client is None:
-        client = TritonSentenceTransformersClient(
+        print("Client not found")
+        client = TritonSentenceTransformersModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
@@ -129,6 +128,7 @@ async def load_sentence_transformer_model(
             MODEL_CACHE.put(cache_key, client)
         return {"message": f"Model {model_name} loaded successfully."}
     else:
+        client.load()
         return {"message": f"Model {model_name} is already loaded."}
 
 
@@ -174,7 +174,7 @@ async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
 async def loaded_models() -> LoadedModelResponse:
     model_repo_information = TRITON_CLIENT.get_model_repository_index(as_json=True)
     loaded_models = []
-    for model in model_repo_information["models"]:
+    for model in model_repo_information.get("models", []):
         if "state" in model and model["state"] == "UNAVAILABLE":
             continue
         loaded_models.append(model["name"])
@@ -185,7 +185,7 @@ async def loaded_models() -> LoadedModelResponse:
 async def repository_models() -> RepositoryModelResponse:
     model_repo_information = TRITON_CLIENT.get_model_repository_index(as_json=True)
     repository_models = []
-    for model in model_repo_information["models"]:
+    for model in model_repo_information.get("models", []):
         model_data = {"name": model["name"]}
         if "state" in model:
             model_data["state"] = model["state"]
