@@ -4,7 +4,7 @@ from PIL import Image
 from typing import List, Union
 
 
-class TritonModelClient:
+class TritonModelInferenceClient:
     def __init__(self, triton_grpc_url: str):
         self.triton_client = grpcclient.InferenceServerClient(
             url=triton_grpc_url, verbose=False
@@ -20,6 +20,23 @@ class TritonModelClient:
         self, image: Union[Image.Image, List[Image.Image]], normalize: bool = True
     ) -> np.ndarray:
         raise NotImplementedError
+
+    def unload(self):
+        raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
+
+    def is_ready(self) -> bool:
+        raise NotImplementedError
+
+
+class TritonModelLoadingClient:
+    def __init__(self, triton_grpc_url: str):
+        self.triton_client = grpcclient.InferenceServerClient(
+            url=triton_grpc_url, verbose=False
+        )
+        self.modalities = set()
 
     def unload(self):
         raise NotImplementedError

@@ -151,7 +151,7 @@ docker build -t ingrain-server .
 Run the Docker container:
 
 ```bash
-docker run --name ingrain_server -p 8686:8686 --gpus all ingrain-server
+docker run --name ingrain_server -p 8686:8686 -p 8687:8687 --gpus all ingrain-server
 ```
 
 ## Performance test
@@ -207,9 +207,12 @@ bash run_triton_server_dev.sh
 ### Run the FastAPI server
 
 ```bash
-uvicorn app:app --host 127.0.0.1 --port 8686 --reload
+uvicorn inference_server:app --host 127.0.0.1 --port 8686 --reload
 ```
 
+```bash
+uvicorn model_server:app --host 127.0.0.1 --port 8687 --reload
+```
 
 ### Testing
 

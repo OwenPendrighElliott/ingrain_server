@@ -3,3 +3,4 @@ model_repository
 __pycache__
 .pytest_cache
 tests
+examples/

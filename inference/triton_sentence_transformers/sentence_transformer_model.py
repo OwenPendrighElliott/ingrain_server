@@ -3,7 +3,7 @@ import numpy as np
 import tritonclient.grpc as grpcclient
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
-from ..model_client import TritonModelClient
+from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
 from ..common import get_model_name
 from .sentence_transformer_converting import (
     onnx_transformer_model,
@@ -51,20 +51,18 @@ def create_model(
     return friendly_name, tokenizer
 
 
-class TritonSentenceTransformersClient(TritonModelClient):
+class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
     def __init__(
         self,
         triton_grpc_url: str,
         model: str,
-        triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
 
         self.model_name = get_model_name(model)
 
-        if not self.triton_client.is_model_ready(model):
-            _, self.tokenizer = create_model(model, triton_model_repository_path)
-            self.triton_client.load_model(self.model_name)
+        if not self.triton_client.is_model_ready(self.model_name):
+            raise ValueError(f"Model {model} is not ready")
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model)
 
@@ -93,6 +91,35 @@ class TritonSentenceTransformersClient(TritonModelClient):
             outputs = outputs / np.linalg.norm(outputs, axis=-1, keepdims=True)
 
         return outputs
+
+    def load(self):
+        self.triton_client.load_model(self.model_name)
+
+    def unload(self):
+        self.triton_client.unload_model(self.model_name)
+
+    def is_ready(self) -> bool:
+        return self.triton_client.is_model_ready(self.model_name)
+
+
+class TritonSentenceTransformersModelClient(TritonModelLoadingClient):
+    def __init__(
+        self,
+        triton_grpc_url: str,
+        model: str,
+        triton_model_repository_path: str,
+    ):
+        super().__init__(triton_grpc_url)
+
+        self.model_name = get_model_name(model)
+
+        if not self.triton_client.is_model_ready(self.model_name):
+            _, self.tokenizer = create_model(model, triton_model_repository_path)
+            self.triton_client.load_model(self.model_name)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model)
+
+        self.modalities = {"text"}
 
     def load(self):
         self.triton_client.load_model(self.model_name)

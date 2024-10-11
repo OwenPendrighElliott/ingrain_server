@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Image Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px; /* Make the container wider */
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #search-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #search-box input {
+            padding: 10px;
+            font-size: 18px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #search-box button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin-left: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #search-box button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            display: grid; /* Use grid layout for wider results */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            justify-content: space-around;
+        }
+        .result-image {
+            margin: 10px;
+            text-align: center;
+        }
+        .result-image img {
+            max-width: 200px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .processing-time {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Text to Image Search</h1>
+    <div class="processing-time" id="processing-time"></div>
+    <div id="search-box">
+        <input type="text" id="query" placeholder="Describe an image" onkeydown="checkEnter(event)">
+        <button onclick="performSearch()">Search</button>
+    </div>
+    <div id="results"></div>
+</div>
+
+<script>
+    // Trigger search on Enter key
+    function checkEnter(event) {
+        if (event.key === 'Enter') {
+            performSearch();
+        }
+    }
+
+    function performSearch() {
+        const query = document.getElementById('query').value;
+        if (query.trim() === '') return;
+
+        const resultsDiv = document.getElementById('results');
+        const processingTimeDiv = document.getElementById('processing-time');
+
+        resultsDiv.innerHTML = '<p>Searching...</p>';
+        processingTimeDiv.innerHTML = '';
+
+        fetch('/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query_text: query }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            resultsDiv.innerHTML = '';
+            processingTimeDiv.innerHTML = `Processing time: ${data.processing_time}ms | Inference time: ${data.inference_time}ms`;
+
+            data.results.forEach(result => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'result-image';
+                imgDiv.innerHTML = `<img src="${result.img_path}" alt="Image result">`;
+                resultsDiv.appendChild(imgDiv);
+            });
+        })
+        .catch(error => {
+            resultsDiv.innerHTML = '<p>Error occurred during search.</p>';
+            console.error('Error:', error);
+        });
+    }
+</script>
+
+</body>
+</html>

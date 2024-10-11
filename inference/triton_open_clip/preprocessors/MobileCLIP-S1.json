@@ -1,0 +1,17 @@
+{
+    "size": 256,
+    "mode": "RGB",
+    "mean": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "std": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "interpolation": "bilinear",
+    "resize_mode": "squash",
+    "fill_color": 0
+}
