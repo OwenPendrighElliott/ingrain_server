@@ -1,7 +1,5 @@
 import os
 import open_clip
-from open_clip.transform import image_transform_v2
-from open_clip.transform import PreprocessCfg
 import validators
 import numpy as np
 import base64
@@ -10,10 +8,8 @@ import pycurl
 from io import BytesIO
 import tritonclient.grpc as grpcclient
 from PIL import Image
-import json
-from concurrent.futures import ThreadPoolExecutor
 from ..common import get_text_image_model_names
-from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
+from ..model_client import TritonModelClient
 from .clip_converting import (
     script_open_clip_model,
     generate_image_clip_config,
@@ -22,14 +18,9 @@ from .clip_converting import (
 
 from typing import Tuple, Union, List
 
-PREPROCESS_CONFIGS = {
-    fname.split(".")[0]: json.load(open(fname, "r"))
-    for fname in os.path.join(os.path.dirname(__file__), "preprocessors")
-}
-
 
 def create_transforms(model_name: str, pretrained: Union[str, None]):
-    """Create the transforms.
+    """Create the model and transforms.
 
     Args:
         model_name (str): The model name.
@@ -38,14 +29,9 @@ def create_transforms(model_name: str, pretrained: Union[str, None]):
     Returns:
         Tuple: The text and image model names, preprocess function, and tokenizer.
     """
-
-    preprocessor_config = PREPROCESS_CONFIGS[model_name]
-
-    preprocess = image_transform_v2(
-        preprocessor_config=PreprocessCfg(**preprocessor_config),
-        is_train=False,
+    _, _, preprocess = open_clip.create_model_and_transforms(
+        model_name, pretrained=pretrained
     )
-
     tokenizer = open_clip.get_tokenizer(model_name)
     friendly_text_name, friendly_image_name = get_text_image_model_names(
         model_name, pretrained
@@ -132,12 +118,16 @@ def create_model_and_transforms_triton(
     return friendly_text_name, friendly_image_name, preprocess, tokenizer
 
 
-class TritonCLIPInferenceClient(TritonModelInferenceClient):
+from concurrent.futures import ThreadPoolExecutor
+
+
+class TritonCLIPClient(TritonModelClient):
     def __init__(
         self,
         triton_grpc_url: str,
         model: str,
         pretrained: Union[str, None],
+        triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
         self.text_model_name, self.image_model_name = get_text_image_model_names(
@@ -147,7 +137,16 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
         if not self.triton_client.is_model_ready(
             self.text_model_name
         ) or not self.triton_client.is_model_ready(self.image_model_name):
-            raise ValueError(f"Model {model} is not ready")
+            (
+                self.text_model_name,
+                self.image_model_name,
+                self.preprocess,
+                self.tokenizer,
+            ) = create_model_and_transforms_triton(
+                model, pretrained, triton_model_repository_path
+            )
+            self.triton_client.load_model(self.text_model_name)
+            self.triton_client.load_model(self.image_model_name)
         else:
             (
                 self.text_model_name,
@@ -224,56 +223,6 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
             outputs = outputs / np.linalg.norm(outputs, axis=-1, keepdims=True)
 
         return outputs
-
-    def load(self):
-        self.triton_client.load_model(self.text_model_name)
-        self.triton_client.load_model(self.image_model_name)
-
-    def unload(self):
-        self.triton_client.unload_model(self.text_model_name)
-        self.triton_client.unload_model(self.image_model_name)
-
-    def is_ready(self) -> bool:
-        return self.triton_client.is_model_ready(
-            self.text_model_name
-        ) and self.triton_client.is_model_ready(self.image_model_name)
-
-
-class TritonCLIPModelClient(TritonModelLoadingClient):
-    def __init__(
-        self,
-        triton_grpc_url: str,
-        model: str,
-        pretrained: Union[str, None],
-        triton_model_repository_path: str,
-    ):
-        super().__init__(triton_grpc_url)
-        self.text_model_name, self.image_model_name = get_text_image_model_names(
-            model, pretrained
-        )
-
-        if not self.triton_client.is_model_ready(
-            self.text_model_name
-        ) or not self.triton_client.is_model_ready(self.image_model_name):
-            (
-                self.text_model_name,
-                self.image_model_name,
-                self.preprocess,
-                self.tokenizer,
-            ) = create_model_and_transforms_triton(
-                model, pretrained, triton_model_repository_path
-            )
-            self.triton_client.load_model(self.text_model_name)
-            self.triton_client.load_model(self.image_model_name)
-        else:
-            (
-                self.text_model_name,
-                self.image_model_name,
-                self.preprocess,
-                self.tokenizer,
-            ) = create_transforms(model, pretrained)
-
-        self.modalities = {"text", "image"}
 
     def load(self):
         self.triton_client.load_model(self.text_model_name)

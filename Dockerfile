@@ -68,8 +68,8 @@ RUN apt-get update && apt-get install -y python3-pip python3-venv && \
 COPY --from=triton_build /opt/tritonserver /opt/tritonserver
 
 # Set environment variables for Triton
-ENV LD_LIBRARY_PATH /opt/tritonserver/lib:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
-ENV PATH /opt/tritonserver/bin:$PATH
+ENV LD_LIBRARY_PATH=/opt/tritonserver/lib:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV PATH=/opt/tritonserver/bin:$PATH
 
 # Set the working directory
 WORKDIR /app
