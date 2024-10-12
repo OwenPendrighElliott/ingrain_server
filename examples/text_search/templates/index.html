@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SciDocs Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"] {
+            width: calc(100% - 100px);
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .result-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .result-item h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .result-item p {
+            font-size: 1em;
+            color: #555;
+        }
+        .result-item .distance {
+            font-size: 0.8em;
+            color: #999;
+            text-align: right;
+        }
+        .timing-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SciDocs Search</h1>
+</header>
+
+<div class="container">
+    <input type="text" id="query" placeholder="Enter your search query..." onkeydown="if(event.key === 'Enter') performSearch()">
+    <button onclick="performSearch()">Search</button>
+    <div class="timing-info" id="timing-info"></div>
+    <div class="results" id="results"></div>
+</div>
+
+<script>
+    function performSearch() {
+        const query = document.getElementById('query').value;
+        if (!query) {
+            alert("Please enter a query.");
+            return;
+        }
+
+        fetch("/search", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `query=${encodeURIComponent(query)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultsDiv = document.getElementById('results');
+            const timingInfoDiv = document.getElementById('timing-info');
+            resultsDiv.innerHTML = '';
+            timingInfoDiv.innerHTML = `Embedding Time: ${data.embedding_time_ms.toFixed(2)} ms | Search Time: ${data.search_time_ms.toFixed(2)} ms`;
+
+            if (data.results.length === 0) {
+                resultsDiv.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+
+            data.results.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('result-item');
+
+                const title = document.createElement('h3');
+                title.textContent = item.title;
+                resultItem.appendChild(title);
+
+                const text = document.createElement('p');
+                text.textContent = item.text;
+                resultItem.appendChild(text);
+
+                const distance = document.createElement('div');
+                distance.classList.add('distance');
+                distance.textContent = `Distance: ${item.distance}`;
+                resultItem.appendChild(distance);
+
+                resultsDiv.appendChild(resultItem);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
+</html>

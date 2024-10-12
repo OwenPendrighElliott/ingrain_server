@@ -119,7 +119,7 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
 
 
 @app.post("/infer_image")
-async def infer_text(request: ImageInferenceRequest) -> ImageInferenceResponse:
+async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     model_name = request.name
     pretrained = request.pretrained
     images = request.image

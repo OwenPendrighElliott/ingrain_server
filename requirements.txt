@@ -11,3 +11,4 @@ transformers
 sentence_transformers
 pydantic
 certifi
+onnx
