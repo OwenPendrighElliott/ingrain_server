@@ -71,7 +71,7 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
     def encode_text(
         self, text: Union[str, List[str]], normalize: bool = True
     ) -> np.ndarray:
-        tokens = self.tokenizer(text, return_tensors="np", padding=True)
+        tokens = self.tokenizer(text, return_tensors="np", padding=True, truncation=True)
         input_ids = tokens["input_ids"].astype(np.int64)
         attention_mask = tokens["attention_mask"].astype(np.int64)
 

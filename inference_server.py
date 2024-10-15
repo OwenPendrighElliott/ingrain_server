@@ -25,7 +25,6 @@ from typing import Union
 
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
-TRITON_MODEL_REPOSITORY_PATH = "model_repository"
 
 app = FastAPI()
 

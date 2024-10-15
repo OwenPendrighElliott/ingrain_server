@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List
 
 # Constants
-MODEL_NAME = "intfloat/e5-base-v2"
-MODEL_DIM = 768
+MODEL_NAME = "intfloat/e5-small-v2"
+MODEL_DIM = 384
 NUM_THREADS = 8
 BATCH_SIZE = 8
 INDEX_FILE = "scidocs_index.bin"

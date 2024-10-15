@@ -30,7 +30,7 @@ def index():
 @app.route("/search", methods=["POST"])
 def search():
     query_text = request.json["query_text"]
-    start_time = time.time()
+    
 
     client = ingrain.Client()
     response = client.infer_text(
@@ -39,6 +39,7 @@ def search():
     query_embedding = np.array(response["embeddings"])
 
     # Search the index for similar images
+    start_time = time.time()
     labels, distances = INDEX.knn_query(query_embedding, k=100)
     labels = labels.flatten()
     inference_time = round(response["processingTimeMs"], 4)

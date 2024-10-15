@@ -7,10 +7,10 @@ import time
 from flask import Flask, render_template, request, jsonify
 
 # Constants
-MODEL = "intfloat/e5-base-v2"
+MODEL = "intfloat/e5-small-v2"
 INDEX_FILE = "scidocs_index.bin"
 MAPPING_FILE = "scidocs_id_mapping.json"
-MODEL_DIM = 768
+MODEL_DIM = 384
 TOP_K = 50
 
 # Initialize Flask app

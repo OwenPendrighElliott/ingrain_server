@@ -1,6 +1,6 @@
 #!/bin/bash
 # Print the hello message
-bash hello.sh
+bash /app/hello.sh
 # Start Triton server in the background
 nohup tritonserver --model-repository=/app/model_repository --model-control-mode=explicit > /app/tritonserver.log 2>&1 &
 # Start two Uvicorn servers in parallel:

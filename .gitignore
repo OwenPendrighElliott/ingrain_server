@@ -1,4 +1,5 @@
 model_repository/
+examples/image_search_vecdb/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

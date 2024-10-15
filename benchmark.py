@@ -7,7 +7,7 @@ import statistics
 model_name = "intfloat/e5-small-v2"
 # model_name = "Snowflake/snowflake-arctic-embed-m"
 num_threads = 100
-num_requests_per_thread = 500
+num_requests_per_thread = 50
 delay_between_requests = 0
 
 # Thread-safe structure to store response times
