@@ -30,7 +30,6 @@ def index():
 @app.route("/search", methods=["POST"])
 def search():
     query_text = request.json["query_text"]
-    
 
     client = ingrain.Client()
     response = client.infer_text(

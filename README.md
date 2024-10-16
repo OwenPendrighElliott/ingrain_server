@@ -1,6 +1,14 @@
 # Ingrain Server
 
+
 This is a wrapper for [Triton Inference Server](https://developer.nvidia.com/triton-inference-server) that makes using it with sentence transformers and open CLIP models easy.
+
+To use:
+```bash
+docker run --name ingrain_server -p 8686:8686 -p 8687:8687 --gpus all owenpelliott/ingrain-server:latest
+```
+
+To run without a GPU remove the `--gpus all` flag.
 
 ## What does it do?
 
@@ -74,12 +82,12 @@ print(type(response['embeddings']))
 Response
 ```
 {
-    "text_embeddings": [
+    "textEmbeddings": [
         [0.1, ..., 0.4],
         [0.5, ..., 0.8],
         [-0.2, ..., 0.3],
     ]
-    "image_embeddings": [
+    "imageEmbeddings": [
         [0.1, ..., 0.4],
         [0.5, ..., 0.8],
     ],
@@ -91,7 +99,7 @@ Response
 Details omitted for brevity.
 ```
 {
-  "model_stats": [
+  "modelStats": [
     {
       "name": "ViT-B-32_laion2b_s34b_b79k_image_encoder",
       "version": "1",
@@ -140,7 +148,7 @@ Details omitted for brevity.
 }
 ```
 
-## Deployment Setup
+## Build Container Locally
 
 Build the Docker image:
 
