@@ -4,6 +4,5 @@ __pycache__
 .pytest_cache
 tests
 examples/
-docker/
 .pytest_cache
 __pycache__
