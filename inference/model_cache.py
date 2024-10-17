@@ -37,9 +37,7 @@ class LRUModelCache:
             del self.loaded[key]
             del self.usage_order[key]
 
-    def get(
-        self, key: Tuple[str, Union[str, None]]
-    ) -> Union[
+    def get(self, key: Tuple[str, Union[str, None]]) -> Union[
         TritonCLIPModelClient,
         TritonSentenceTransformersModelClient,
         TritonCLIPInferenceClient,

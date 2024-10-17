@@ -27,3 +27,4 @@ echo '
 echo "Welcome to Ingrain Server, a triton wrapper with automatic model conversion for Sentence Transformers and Open CLIP"
 echo "Log level is set to ERROR as an optimisation, expect nothing in this console unless there is an error"
 echo "To see triton logs please look at tritonserver.log"
+echo "Ingrain Server is now starting..." > /app/hello.log

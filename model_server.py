@@ -118,7 +118,6 @@ async def load_sentence_transformer_model(
 
     client = get_model_creation_client(model_name, None)
     if client is None:
-        print("Client not found")
         client = TritonSentenceTransformersModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
@@ -152,7 +151,7 @@ async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
         }
 
 
-@app.post("/delete_model")
+@app.delete("/delete_model")
 async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
     model_name = request.name
     pretrained = request.pretrained

@@ -5,7 +5,7 @@ ARG BASE_IMAGE=owenpelliott/ingrain-gpu-base:amd64
 FROM ${BASE_IMAGE}
 
 # Install the required packages
-RUN apt-get update && apt-get install -y python3-pip python3-venv
+RUN apt-get update && apt-get install -y python3-pip python3-venv supervisor
 
 # Set the working directory
 WORKDIR /app
@@ -30,5 +30,6 @@ RUN mkdir -p /app/model_repository
 # Ensure the inference server run script is executable
 RUN chmod +x /app/start.sh
 
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Start the app
 CMD ["bash", "/app/start.sh"]

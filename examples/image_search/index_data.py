@@ -15,7 +15,7 @@ CLIP_MODEL_NAME = "ViT-B-16"
 CLIP_PRETRAINED = "dfn2b"
 MODEL_DIM = 512
 NUM_THREADS = 8  # Adjust the number of threads to your machine's capability
-BATCH_SIZE = 8  # Number of images per batch
+BATCH_SIZE = 2  # Number of images per batch
 
 # Initialize ingrain client
 client = ingrain.Client(return_numpy=True)
@@ -50,40 +50,32 @@ all_images = []
 embeddings = []
 id_to_image_mapping = {}
 
-if not os.path.exists(INDEX_FILE):
-    print("Index not found, creating new index...")
-    image_files = [
-        f
-        for f in os.listdir(IMAGE_DIR)
-        if f.endswith((".png", ".jpg", ".jpeg", ".webp"))
-    ]
-    index.init_index(max_elements=len(image_files), ef_construction=256, M=16)
 
-    # Split image_files into batches
-    batches = [
-        image_files[i : i + BATCH_SIZE] for i in range(0, len(image_files), BATCH_SIZE)
-    ]
+image_files = [
+    f for f in os.listdir(IMAGE_DIR) if f.endswith((".png", ".jpg", ".jpeg", ".webp"))
+]
+index.init_index(max_elements=len(image_files), ef_construction=256, M=16)
 
-    # Use ThreadPoolExecutor to parallelize batch processing
-    with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-        futures = {executor.submit(process_batch, batch): batch for batch in batches}
-        for future in tqdm(as_completed(futures), total=len(futures)):
-            batch_results = future.result()
-            for filename, embedding in batch_results:
-                embeddings.append(embedding)
-                all_images.append(filename)
-                # Map filename to its index (use index length as ID)
-                id_to_image_mapping[len(id_to_image_mapping)] = filename
+# Split image_files into batches
+batches = [
+    image_files[i : i + BATCH_SIZE] for i in range(0, len(image_files), BATCH_SIZE)
+]
 
-    embeddings = np.vstack(embeddings)
-    index.add_items(embeddings)
-    index.save_index(INDEX_FILE)
+# Use ThreadPoolExecutor to parallelize batch processing
+with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+    futures = {executor.submit(process_batch, batch): batch for batch in batches}
+    for future in tqdm(as_completed(futures), total=len(futures)):
+        batch_results = future.result()
+        for filename, embedding in batch_results:
+            embeddings.append(embedding)
+            all_images.append(filename)
+            # Map filename to its index (use index length as ID)
+            id_to_image_mapping[len(id_to_image_mapping)] = filename
 
-    # Save the ID to image mapping as JSON
-    with open(MAPPING_FILE, "w") as f:
-        json.dump(id_to_image_mapping, f)
+embeddings = np.vstack(embeddings)
+index.add_items(embeddings)
+index.save_index(INDEX_FILE)
 
-else:
-    print("Loading existing index...")
-    index.load_index(INDEX_FILE)
-    all_images = os.listdir(IMAGE_DIR)
+# Save the ID to image mapping as JSON
+with open(MAPPING_FILE, "w") as f:
+    json.dump(id_to_image_mapping, f)

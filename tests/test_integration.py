@@ -270,7 +270,7 @@ def test_unload_and_load_clip_model():
 def test_delete_model():
     check_server_running()
     load_sentence_transformer_model()
-    response = requests.post(
+    response = requests.delete(
         f"{MODEL_BASE_URL}/delete_model", json={"name": SENTENCE_TRANSFORMER_MODEL}
     )
     assert response.status_code == 200
@@ -281,7 +281,7 @@ def test_delete_model():
 def test_delete_clip_model():
     check_server_running()
     load_openclip_model()
-    response = requests.post(
+    response = requests.delete(
         f"{MODEL_BASE_URL}/delete_model",
         json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
     )
