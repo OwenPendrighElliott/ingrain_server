@@ -9,6 +9,7 @@ class InferenceRequest(BaseModel):
     text: Optional[Union[str, List[str]]] = None
     image: Optional[Union[str, List[str]]] = None
     normalize: Optional[bool] = True
+    n_dims: Optional[int] = None
 
 
 class TextInferenceRequest(BaseModel):
@@ -16,6 +17,7 @@ class TextInferenceRequest(BaseModel):
     pretrained: Optional[str] = None
     text: Union[str, List[str]]
     normalize: Optional[bool] = True
+    n_dims: Optional[int] = None
 
 
 class ImageInferenceRequest(BaseModel):
@@ -23,17 +25,7 @@ class ImageInferenceRequest(BaseModel):
     pretrained: Optional[str] = None
     image: Union[str, List[str]]
     normalize: Optional[bool] = True
-
-
-class PairwiseInferenceRequest(BaseModel):
-    name: str
-    pretrained: Optional[str] = None
-    left_text: Union[str, List[str]]
-    right_text: Union[str, List[str]]
-    left_image: Union[str, List[str]]
-    right_image: Union[str, List[str]]
-    metric: Literal['cosine', 'euclidean', 'inner_product', 'manhattan']
-    normalize: Optional[bool] = True
+    n_dims: Optional[int] = None
 
 
 class GenericModelRequest(BaseModel):

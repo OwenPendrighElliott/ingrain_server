@@ -94,6 +94,7 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
     pretrained = request.pretrained
     text = request.text
     normalize = request.normalize
+    n_dims = request.n_dims
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
@@ -109,7 +110,7 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
         )
 
     start = time.perf_counter()
-    embedding = client.encode_text(text, normalize=normalize)
+    embedding = client.encode_text(text, normalize=normalize, n_dims=n_dims)
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
@@ -123,6 +124,7 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     pretrained = request.pretrained
     images = request.image
     normalize = request.normalize
+    n_dims = request.n_dims
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
@@ -149,7 +151,7 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
         )
 
     start = time.perf_counter()
-    embedding = client.encode_image(image_data, normalize=normalize)
+    embedding = client.encode_image(image_data, normalize=normalize, n_dims=n_dims)
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
@@ -163,6 +165,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
     texts = request.text
     images = request.image
     normalize = request.normalize
+    n_dims = request.n_dims
 
     client = client_from_cache(model_name, pretrained)
 
@@ -183,7 +186,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
             )
         if isinstance(texts, str):
             texts = [texts]
-        tasks.append(asyncio.to_thread(client.encode_text, texts, normalize))
+        tasks.append(asyncio.to_thread(client.encode_text, texts, normalize, n_dims))
 
     if images is not None:
         if "image" not in client.modalities:
@@ -194,7 +197,9 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
         if isinstance(images, str):
             images = [images]
         image_datas = client.load_images_parallel(images)
-        tasks.append(asyncio.to_thread(client.encode_image, image_datas, normalize))
+        tasks.append(
+            asyncio.to_thread(client.encode_image, image_datas, normalize, n_dims)
+        )
 
     start = time.perf_counter()
     results = await asyncio.gather(*tasks)

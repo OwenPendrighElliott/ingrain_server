@@ -15,12 +15,12 @@ from concurrent.futures import ThreadPoolExecutor
 from ..common import get_text_image_model_names
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
 from .clip_converting import (
-    script_open_clip_model,
+    onnx_convert_open_clip_model,
     generate_image_clip_config,
     generate_text_clip_config,
 )
 
-from typing import Tuple, Union, List
+from typing import Optional, Union, List
 
 _PREPROCESSOR_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "preprocessors")
 PREPROCESS_CONFIGS = {
@@ -110,13 +110,20 @@ def create_model_and_transforms_triton(
     ):
         return friendly_text_name, friendly_image_name, preprocess, tokenizer
 
-    image_encoder, text_encoder = script_open_clip_model(model)
-
-    text_encoder.save(
-        os.path.join(triton_model_repository_path, friendly_text_name, "1", "model.pt")
+    text_encoder_path = os.path.join(
+        triton_model_repository_path, friendly_text_name, "1", "model.onnx"
     )
-    image_encoder.save(
-        os.path.join(triton_model_repository_path, friendly_image_name, "1", "model.pt")
+
+    image_encoder_path = os.path.join(
+        triton_model_repository_path, friendly_image_name, "1", "model.onnx"
+    )
+
+    onnx_convert_open_clip_model(
+        model,
+        tokenizer,
+        preprocess,
+        text_encoder_path,
+        image_encoder_path,
     )
 
     generate_text_clip_config(
@@ -162,17 +169,24 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
         self.modalities = {"text", "image"}
 
     def encode_text(
-        self, text: Union[str, List[str]], normalize: bool = True
+        self,
+        text: Union[str, List[str]],
+        normalize: bool = True,
+        n_dims: Optional[int] = None,
     ) -> np.ndarray:
         tokens = self.tokenizer(text).numpy()
-        text_inputs = grpcclient.InferInput("input__0", tokens.shape, "INT64")
+        tokens = tokens.astype(np.int32)
+        text_inputs = grpcclient.InferInput("input", tokens.shape, "INT32")
         text_inputs.set_data_from_numpy(tokens)
         outputs = self.triton_client.infer(
             model_name=self.text_model_name, inputs=[text_inputs]
-        ).as_numpy("output__0")
+        ).as_numpy("output")
 
         if normalize:
             outputs = outputs / np.linalg.norm(outputs, axis=-1, keepdims=True)
+
+        if n_dims is not None:
+            outputs = outputs[:, :n_dims]
 
         return outputs
 
@@ -211,20 +225,26 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
             return list(executor.map(self.load_image, images))
 
     def encode_image(
-        self, image: Union[Image.Image, List[Image.Image]], normalize: bool = True
+        self,
+        image: Union[Image.Image, List[Image.Image]],
+        normalize: bool = True,
+        n_dims: Optional[int] = None,
     ) -> np.ndarray:
         if isinstance(image, Image.Image):
             image = [image]
         processed_images = np.stack([self.preprocess(image).numpy() for image in image])
 
-        image_inputs = grpcclient.InferInput("input__0", processed_images.shape, "FP32")
+        image_inputs = grpcclient.InferInput("input", processed_images.shape, "FP32")
         image_inputs.set_data_from_numpy(processed_images)
         outputs = self.triton_client.infer(
             model_name=self.image_model_name, inputs=[image_inputs]
-        ).as_numpy("output__0")
+        ).as_numpy("output")
 
         if normalize:
             outputs = outputs / np.linalg.norm(outputs, axis=-1, keepdims=True)
+
+        if n_dims is not None:
+            outputs = outputs[:, :n_dims]
 
         return outputs
 

@@ -14,8 +14,8 @@ MAPPING_FILE = "image_id_mapping.json"
 CLIP_MODEL_NAME = "MobileCLIP-S2"
 CLIP_PRETRAINED = "datacompdr"
 MODEL_DIM = 512
-NUM_THREADS = 8  # Adjust the number of threads to your machine's capability
-BATCH_SIZE = 2  # Number of images per batch
+NUM_THREADS = 5  # Adjust the number of threads to your machine's capability
+BATCH_SIZE = 4  # Number of images per batch
 
 # Initialize ingrain client
 client = ingrain.Client(return_numpy=True)
@@ -59,7 +59,7 @@ index.init_index(max_elements=len(image_files), ef_construction=256, M=16)
 # Split image_files into batches
 batches = [
     image_files[i : i + BATCH_SIZE] for i in range(0, len(image_files), BATCH_SIZE)
-][:256]
+]
 
 # Use ThreadPoolExecutor to parallelize batch processing
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:

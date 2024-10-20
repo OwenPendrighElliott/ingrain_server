@@ -159,11 +159,10 @@ async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
     cache_key = (model_name, pretrained)
 
     with MODEL_CACHE_LOCK:
-        delete_model_from_repo(model_name, pretrained, TRITON_MODEL_REPOSITORY_PATH)
         client = MODEL_CACHE.get(cache_key)
         if client is not None:
             client = MODEL_CACHE.remove(cache_key)
-
+            delete_model_from_repo(model_name, pretrained, TRITON_MODEL_REPOSITORY_PATH)
         return {
             "message": f"Model {model_name} with checkpoint {pretrained} deleted successfully."
         }

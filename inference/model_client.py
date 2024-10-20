@@ -1,7 +1,7 @@
 import tritonclient.grpc as grpcclient
 import numpy as np
 from PIL import Image
-from typing import List, Union
+from typing import List, Union, Optional
 
 
 class TritonModelInferenceClient:
@@ -12,12 +12,18 @@ class TritonModelInferenceClient:
         self.modalities = set()
 
     def encode_text(
-        self, text: Union[str, List[str]], normalize: bool = True
+        self,
+        text: Union[str, List[str]],
+        normalize: bool = True,
+        n_dims: Optional[int] = None,
     ) -> np.ndarray:
         raise NotImplementedError
 
     def encode_image(
-        self, image: Union[Image.Image, List[Image.Image]], normalize: bool = True
+        self,
+        image: Union[Image.Image, List[Image.Image]],
+        normalize: bool = True,
+        n_dims: Optional[int] = None,
     ) -> np.ndarray:
         raise NotImplementedError
 
