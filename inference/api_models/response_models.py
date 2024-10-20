@@ -18,6 +18,9 @@ class ImageInferenceResponse(BaseModel):
     embeddings: List[List[float]]
     processingTimeMs: float
 
+class PairwiseInferenceResponse(BaseModel):
+    similarities: List[List[float]]
+    processingTimeMs: float
 
 class LoadedModelResponse(BaseModel):
     models: List[str]

@@ -9,8 +9,9 @@ import hnswlib
 # Constants
 IMAGE_DIR = "images"
 INDEX_FILE = "image_index.bin"
-CLIP_MODEL_NAME = "ViT-B-16"
-CLIP_PRETRAINED = "dfn2b"
+CLIP_MODEL_NAME = "MobileCLIP-S2"
+CLIP_PRETRAINED = "datacompdr"
+
 MODEL_DIM = 512
 INDEX = hnswlib.Index(space="cosine", dim=MODEL_DIM)
 INDEX.load_index(INDEX_FILE)

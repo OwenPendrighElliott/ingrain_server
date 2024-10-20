@@ -14,9 +14,8 @@ build_and_push() {
         docker push "$tag"
     fi
 }
-# Build CPU base image for linux/amd64
-build_and_push "linux/amd64" "owenpelliott/ingrain-cpu-base:amd64" "Dockerfile.base_cpu"
+
 # Build CPU base image for linux/arm64
-build_and_push "linux/arm64" "owenpelliott/ingrain-cpu-base:arm64" "Dockerfile.base_cpu"
+build_and_push "linux/arm64" "owenpelliott/ingrain-base:arm64" "Dockerfile.base_arm64"
 # Build GPU base image for linux/amd64
-build_and_push "linux/amd64" "owenpelliott/ingrain-gpu-base:amd64" "Dockerfile.base_cuda"
+build_and_push "linux/amd64" "owenpelliott/ingrain-base:amd64" "Dockerfile.base_amd64"

@@ -1,8 +1,10 @@
 #!/bin/bash
+
 PUSH_IMAGES=false
 if [[ "$1" == "--push" ]]; then
     PUSH_IMAGES=true
 fi
+
 build_and_push() {
     platform=$1
     base_image=$2
@@ -14,26 +16,22 @@ build_and_push() {
         docker push "$tag"
     fi
 }
-# Build CPU image for linux/amd64
-build_and_push "linux/amd64" "owenpelliott/ingrain-cpu-base:amd64" "owenpelliott/ingrain-server:cpu-latest-amd64"
+
 # Build CPU image for linux/arm64
-build_and_push "linux/arm64" "owenpelliott/ingrain-cpu-base:arm64" "owenpelliott/ingrain-server:cpu-latest-arm64"
-# Create multi-arch manifest for CPU image
-echo "Creating multi-arch manifest for CPU image..."
-docker manifest create owenpelliott/ingrain-server:cpu-latest \
-  --amend owenpelliott/ingrain-server:cpu-latest-amd64 \
-  --amend owenpelliott/ingrain-server:cpu-latest-arm64
-# Push manifest if push flag is set
+build_and_push "linux/arm64" "owenpelliott/ingrain-base:arm64" "owenpelliott/ingrain-server:latest-arm64"
+
+# Build image for linux/amd64
+build_and_push "linux/amd64" "owenpelliott/ingrain-base:amd64" "owenpelliott/ingrain-server:latest-amd64"
+
+# Check if docker manifest exists and create it if needed
+echo "Creating multi-arch image..."
+docker manifest rm owenpelliott/ingrain-server:latest 2>/dev/null
+
+docker manifest create owenpelliott/ingrain-server:latest \
+    --amend owenpelliott/ingrain-server:latest-arm64 \
+    --amend owenpelliott/ingrain-server:latest-amd64
+
 if [ "$PUSH_IMAGES" = true ]; then
-    echo "Pushing multi-arch manifest for CPU image..."
-    docker manifest push owenpelliott/ingrain-server:cpu-latest
+    echo "Pushing multi-arch image manifest to Docker Hub..."
+    docker manifest push owenpelliott/ingrain-server:latest
 fi
-# Build GPU image for linux/amd64
-build_and_push "linux/amd64" "owenpelliott/ingrain-gpu-base:amd64" "owenpelliott/ingrain-server:gpu-latest"
-if [ "$PUSH_IMAGES" = true ]; then
-    echo "Tagging and pushing GPU image as latest..."
-    docker tag owenpelliott/ingrain-server:gpu-latest owenpelliott/ingrain-server:latest
-    docker push owenpelliott/ingrain-server:gpu-latest
-    docker push owenpelliott/ingrain-server:latest
-fi
-echo "Build process completed."
