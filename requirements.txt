@@ -1,14 +1,14 @@
 tritonclient[grpc]
-open-clip-torch==2.26.1
-torch==2.4.1 --extra-index-url https://download.pytorch.org/whl/cpu
-torchvision==0.19.1 --extra-index-url https://download.pytorch.org/whl/cpu
-pillow
-pycurl
-fastapi
-uvicorn
-validators
-transformers
-sentence_transformers
-pydantic
+open-clip-torch==2.27.1
+torch==2.5.0 --extra-index-url https://download.pytorch.org/whl/cpu
+torchvision==0.20.0 --extra-index-url https://download.pytorch.org/whl/cpu
+pillow==10.4.0
+pycurl==7.45.3
+fastapi==0.115.2
+uvicorn==0.32.0
+validators==0.33.0
+transformers==4.44.0
+sentence_transformers==3.0.1
+pydantic==2.8.2
 certifi
-onnx
+onnx==1.17.0

@@ -1,5 +1,6 @@
 model_repository/
 examples/image_search_vecdb/
+playspace/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

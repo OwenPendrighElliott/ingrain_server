@@ -2,6 +2,8 @@ import pytest
 import requests
 import numpy as np
 
+from typing import Literal
+
 INFERENCE_BASE_URL = "http://127.0.0.1:8686"
 MODEL_BASE_URL = "http://127.0.0.1:8687"
 
@@ -9,6 +11,8 @@ MODEL_BASE_URL = "http://127.0.0.1:8687"
 SENTENCE_TRANSFORMER_MODEL = "intfloat/e5-small-v2"
 OPENCLIP_MODEL = "ViT-B-32"
 OPENCLIP_PRETRAINED = "laion2b_s34b_b79k"
+CUSTOM_TEXT_CLIP_MODEL = "ViT-B-16-SigLIP"
+CUSTOM_TEXT_CLIP_MODEL_PRETRAINED = "webli"
 
 
 def check_server_running():
@@ -21,10 +25,19 @@ def check_server_running():
         ) from e
 
 
-def load_openclip_model():
+def load_openclip_model(clip_type: Literal["CLIP", "CustomTextCLIP"] = "CLIP"):
+    if clip_type == "CLIP":
+        model_name = OPENCLIP_MODEL
+        pretrained = OPENCLIP_PRETRAINED
+    elif clip_type == "CustomTextCLIP":
+        model_name = CUSTOM_TEXT_CLIP_MODEL
+        pretrained = CUSTOM_TEXT_CLIP_MODEL_PRETRAINED
+    else:
+        raise ValueError("Invalid model type. Must be 'CLIP' or 'CustomTextCLIP'.")
+
     response = requests.post(
         f"{MODEL_BASE_URL}/load_clip_model",
-        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        json={"name": model_name, "pretrained": pretrained},
     )
     response.raise_for_status()
 
@@ -74,10 +87,26 @@ def test_load_loaded_sentence_transformer_model():
 @pytest.mark.integration
 def test_load_clip_model():
     check_server_running()
-    load_openclip_model()
     response = requests.post(
         f"{MODEL_BASE_URL}/load_clip_model",
         json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+    )
+    assert response.status_code == 200
+    assert (
+        "loaded successfully" in response.json()["message"]
+        or "already loaded" in response.json()["message"]
+    )
+
+
+@pytest.mark.integration
+def test_load_custom_text_clip_model():
+    check_server_running()
+    response = requests.post(
+        f"{MODEL_BASE_URL}/load_clip_model",
+        json={
+            "name": CUSTOM_TEXT_CLIP_MODEL,
+            "pretrained": CUSTOM_TEXT_CLIP_MODEL_PRETRAINED,
+        },
     )
     assert response.status_code == 200
     assert (
@@ -232,7 +261,7 @@ def test_unload_model():
 
 
 @pytest.mark.integration
-def test_unload_and_load_sentence_transformer_mode():
+def test_unload_and_load_sentence_transformer_model():
     check_server_running()
     load_sentence_transformer_model()
     response = requests.post(

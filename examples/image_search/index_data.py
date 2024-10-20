@@ -11,11 +11,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 IMAGE_DIR = "images"
 INDEX_FILE = "image_index.bin"
 MAPPING_FILE = "image_id_mapping.json"
-CLIP_MODEL_NAME = "ViT-B-16"
-CLIP_PRETRAINED = "dfn2b"
+CLIP_MODEL_NAME = "MobileCLIP-S2"
+CLIP_PRETRAINED = "datacompdr"
 MODEL_DIM = 512
-NUM_THREADS = 8  # Adjust the number of threads to your machine's capability
-BATCH_SIZE = 2  # Number of images per batch
+NUM_THREADS = 5  # Adjust the number of threads to your machine's capability
+BATCH_SIZE = 4  # Number of images per batch
 
 # Initialize ingrain client
 client = ingrain.Client(return_numpy=True)

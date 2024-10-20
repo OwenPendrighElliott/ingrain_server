@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Literal
 
 
 class InferenceRequest(BaseModel):
@@ -9,6 +9,7 @@ class InferenceRequest(BaseModel):
     text: Optional[Union[str, List[str]]] = None
     image: Optional[Union[str, List[str]]] = None
     normalize: Optional[bool] = True
+    n_dims: Optional[int] = None
 
 
 class TextInferenceRequest(BaseModel):
@@ -16,6 +17,7 @@ class TextInferenceRequest(BaseModel):
     pretrained: Optional[str] = None
     text: Union[str, List[str]]
     normalize: Optional[bool] = True
+    n_dims: Optional[int] = None
 
 
 class ImageInferenceRequest(BaseModel):
@@ -23,6 +25,7 @@ class ImageInferenceRequest(BaseModel):
     pretrained: Optional[str] = None
     image: Union[str, List[str]]
     normalize: Optional[bool] = True
+    n_dims: Optional[int] = None
 
 
 class GenericModelRequest(BaseModel):

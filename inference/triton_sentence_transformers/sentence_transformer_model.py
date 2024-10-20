@@ -10,7 +10,7 @@ from .sentence_transformer_converting import (
     generate_text_sentence_transformer_config,
 )
 
-from typing import Union, List
+from typing import Union, List, Optional
 
 
 def create_model(
@@ -69,7 +69,10 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
         self.modalities = {"text"}
 
     def encode_text(
-        self, text: Union[str, List[str]], normalize: bool = True
+        self,
+        text: Union[str, List[str]],
+        normalize: bool = True,
+        n_dims: Optional[int] = None,
     ) -> np.ndarray:
         tokens = self.tokenizer(
             text, return_tensors="np", padding=True, truncation=True
@@ -91,6 +94,9 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
 
         if normalize:
             outputs = outputs / np.linalg.norm(outputs, axis=-1, keepdims=True)
+
+        if n_dims is not None:
+            outputs = outputs[:, :n_dims]
 
         return outputs
 

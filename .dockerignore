@@ -1,5 +1,6 @@
 venv
 model_repository
+playspace
 __pycache__
 .pytest_cache
 tests

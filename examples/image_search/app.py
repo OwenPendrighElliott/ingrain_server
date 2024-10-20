@@ -9,9 +9,10 @@ import hnswlib
 # Constants
 IMAGE_DIR = "images"
 INDEX_FILE = "image_index.bin"
-CLIP_MODEL_NAME = "ViT-B-16"
-CLIP_PRETRAINED = "dfn2b"
+CLIP_MODEL_NAME = "MobileCLIP-S2"
+CLIP_PRETRAINED = "datacompdr"
 MODEL_DIM = 512
+K = 20
 INDEX = hnswlib.Index(space="cosine", dim=MODEL_DIM)
 INDEX.load_index(INDEX_FILE)
 INDEX.set_ef(256)
@@ -39,7 +40,7 @@ def search():
 
     # Search the index for similar images
     start_time = time.time()
-    labels, distances = INDEX.knn_query(query_embedding, k=100)
+    labels, distances = INDEX.knn_query(query_embedding, k=K)
     labels = labels.flatten()
     inference_time = round(response["processingTimeMs"], 4)
     search_time_ms = round((time.time() - start_time) * 1000, 4)
