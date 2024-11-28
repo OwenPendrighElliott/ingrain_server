@@ -36,6 +36,8 @@ class GenericModelRequest(BaseModel):
 class SentenceTransformerModelRequest(BaseModel):
     name: str
 
+class TimmModelRequest(BaseModel):
+    name: str
 
 class OpenCLIPModelRequest(BaseModel):
     name: str

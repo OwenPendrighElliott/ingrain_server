@@ -5,6 +5,7 @@ from inference.api_models.request_models import (
     GenericModelRequest,
     SentenceTransformerModelRequest,
     OpenCLIPModelRequest,
+    TimmModelRequest,
 )
 from inference.api_models.response_models import (
     GenericMessageResponse,
@@ -17,6 +18,8 @@ from inference.triton_open_clip.clip_model import (
 from inference.triton_sentence_transformers.sentence_transformer_model import (
     TritonSentenceTransformersModelClient,
 )
+from inference.triton_timm.timm_model import TritonTimmModelClient
+
 from inference.model_cache import LRUModelCache
 from inference.common import get_model_name, delete_model_from_repo
 import tritonclient.grpc as grpcclient
@@ -36,11 +39,11 @@ MODEL_CACHE_LOCK = Lock()
 
 
 def get_model_creation_client(
-    model_name: str, pretrained: Union[str, None]
-) -> Union[TritonCLIPModelClient, TritonSentenceTransformersModelClient, None]:
+    model_name: str, pretrained: Union[str, None], model_type: str
+) -> Union[TritonCLIPModelClient, TritonTimmModelClient, TritonSentenceTransformersModelClient, None]:
     nice_model_name = get_model_name(model_name, pretrained)
 
-    if TRITON_CLIENT.is_model_ready(nice_model_name):
+    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_type == "sentence_transformer":
         # if the model is ready, create a client for it
         # the model name is used directly for sentence transformers
         client = TritonSentenceTransformersModelClient(
@@ -50,9 +53,18 @@ def get_model_creation_client(
         )
         return client
 
+    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_type == "timm":
+        # if the model is ready, create a client for it
+        # the model name is used directly for timm models
+        client = TritonTimmModelClient(
+            triton_grpc_url=TRITON_GRPC_URL,
+            model=model_name,
+        )
+        return client
+
     if TRITON_CLIENT.is_model_ready(
         nice_model_name + "_text_encoder"
-    ) and TRITON_CLIENT.is_model_ready(nice_model_name + "_image_encoder"):
+    ) and TRITON_CLIENT.is_model_ready(nice_model_name + "_image_encoder") and model_type == "open_clip":
         # if the model is ready, create a client for it
         # the model name must be split into text and image encoders for CLIP
         client = TritonCLIPModelClient(
@@ -130,6 +142,25 @@ async def load_sentence_transformer_model(
         client.load()
         return {"message": f"Model {model_name} is already loaded."}
 
+
+@app.post("/load_timm_model")
+async def load_timm_model(request: TimmModelRequest) -> GenericMessageResponse:
+    model_name = request.name
+
+    cache_key = (model_name, None)
+
+    client = get_model_creation_client(model_name, None)
+    if client is None:
+        client = TritonTimmModelClient(
+            triton_grpc_url=TRITON_GRPC_URL,
+            model=model_name,
+        )
+        with MODEL_CACHE_LOCK:
+            MODEL_CACHE.put(cache_key, client)
+        return {"message": f"Model {model_name} loaded successfully."}
+    else:
+        client.load()
+        return {"message": f"Model {model_name} is already loaded."}
 
 @app.post("/unload_model")
 async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:

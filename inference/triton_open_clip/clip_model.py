@@ -2,16 +2,10 @@ import os
 import open_clip
 from open_clip.transform import image_transform_v2
 from open_clip.transform import PreprocessCfg
-import validators
 import numpy as np
-import base64
-import certifi
-import pycurl
-from io import BytesIO
 import tritonclient.grpc as grpcclient
 from PIL import Image
 import json
-from concurrent.futures import ThreadPoolExecutor
 from ..common import get_text_image_model_names
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
 from .clip_converting import (
@@ -189,40 +183,6 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
             outputs = outputs[:, :n_dims]
 
         return outputs
-
-    def download_image(self, url: str) -> Image.Image:
-        buffer = BytesIO()
-        c = pycurl.Curl()
-        c.setopt(c.URL, url)
-        c.setopt(c.WRITEDATA, buffer)
-        c.setopt(pycurl.CAINFO, certifi.where())
-        c.perform()
-        c.close()
-        buffer.seek(0)
-        return Image.open(buffer)
-
-    def decode_base64_image(self, base64_image: str) -> Image.Image:
-        if base64_image.startswith("data:image"):
-            base64_image = base64_image.split(",")[1]
-        # Decode the base64 string to bytes
-        image_data = base64.b64decode(base64_image)
-        buffer = BytesIO()
-        buffer.write(image_data)
-        buffer.seek(0)
-        return Image.open(buffer)
-
-    def load_image(self, image: str) -> Image.Image:
-        image_data = None
-        if validators.url(image):
-            image_data = self.download_image(image)
-        elif isinstance(image, str):
-            image_data = self.decode_base64_image(image)
-
-        return image_data
-
-    def load_images_parallel(self, images: List[str]) -> List[Image.Image]:
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            return list(executor.map(self.load_image, images))
 
     def encode_image(
         self,
