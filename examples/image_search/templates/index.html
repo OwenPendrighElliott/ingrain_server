@@ -112,12 +112,12 @@
         .then(response => response.json())
         .then(data => {
             resultsDiv.innerHTML = '';
-            processingTimeDiv.innerHTML = `Processing time: ${data.processing_time}ms | Inference time: ${data.inference_time}ms`;
+            processingTimeDiv.innerHTML = `Search time: ${data.processing_time}ms | Inference time: ${data.inference_time}ms`;
 
             data.results.forEach(result => {
                 const imgDiv = document.createElement('div');
                 imgDiv.className = 'result-image';
-                imgDiv.innerHTML = `<img src="${result.img_path}" alt="Image result">`;
+                imgDiv.innerHTML = `<img src="${result}" alt="Image result">`;
                 resultsDiv.appendChild(imgDiv);
             });
         })

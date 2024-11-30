@@ -12,3 +12,4 @@ sentence_transformers==3.0.1
 pydantic==2.8.2
 certifi
 onnx==1.17.0
+timm

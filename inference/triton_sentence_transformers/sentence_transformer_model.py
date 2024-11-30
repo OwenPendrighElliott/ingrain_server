@@ -4,7 +4,7 @@ import tritonclient.grpc as grpcclient
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
-from ..common import get_model_name
+from ..common import get_model_name, save_library_name
 from .sentence_transformer_converting import (
     onnx_transformer_model,
     generate_text_sentence_transformer_config,
@@ -46,6 +46,10 @@ def create_model(
         os.path.join(triton_model_repository_path, friendly_name),
         friendly_name,
         model.get_sentence_embedding_dimension(),
+    )
+
+    save_library_name(
+        os.path.join(triton_model_repository_path, friendly_name), "sentence_transformers"
     )
 
     return friendly_name, tokenizer
@@ -122,10 +126,10 @@ class TritonSentenceTransformersModelClient(TritonModelLoadingClient):
         self.model_name = get_model_name(model)
 
         if not self.triton_client.is_model_ready(self.model_name):
-            _, self.tokenizer = create_model(model, triton_model_repository_path)
+            _, _ = create_model(model, triton_model_repository_path)
             self.triton_client.load_model(self.model_name)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model)
+        # else:
+        #     self.tokenizer = AutoTokenizer.from_pretrained(model)
 
         self.modalities = {"text"}
 
