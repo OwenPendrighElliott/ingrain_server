@@ -19,7 +19,6 @@ def main():
         if model in models or model in exported_model_configs:
             continue
 
-        print(model, pretrained)
         try:
             _, _, preprocess = open_clip.create_model_and_transforms(
                 model, pretrained=pretrained

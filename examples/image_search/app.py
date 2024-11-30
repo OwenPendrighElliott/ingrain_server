@@ -1,23 +1,18 @@
-import os
 import time
 import numpy as np
 import ingrain
-import json
+import os
+import requests
 from flask import Flask, request, render_template, jsonify, send_from_directory
-import hnswlib
 
 # Constants
+HNSWLIB_SERVER_URL = "http://localhost:8685"
 IMAGE_DIR = "images"
-INDEX_FILE = "image_index.bin"
+INDEX_NAME = "image_search"
 CLIP_MODEL_NAME = "MobileCLIP-S2"
 CLIP_PRETRAINED = "datacompdr"
 MODEL_DIM = 512
 K = 20
-INDEX = hnswlib.Index(space="cosine", dim=MODEL_DIM)
-INDEX.load_index(INDEX_FILE)
-INDEX.set_ef(256)
-
-ID_TO_IMAGE_MAPPING = json.load(open("image_id_mapping.json"))
 
 # Create Flask app
 app = Flask(__name__)
@@ -36,21 +31,29 @@ def search():
     response = client.infer_text(
         name=CLIP_MODEL_NAME, pretrained=CLIP_PRETRAINED, text=query_text
     )
-    query_embedding = np.array(response["embeddings"])
+    query_embedding = response["embeddings"][0]
 
     # Search the index for similar images
     start_time = time.time()
-    labels, distances = INDEX.knn_query(query_embedding, k=K)
-    labels = labels.flatten()
+    search_response = requests.post(
+        f"{HNSWLIB_SERVER_URL}/search",
+        json={
+            "indexName": INDEX_NAME,
+            "queryVector": query_embedding,
+            "k": K,
+            "efSearch": 256,
+            "filter": "",
+            "returnMetadata": True,
+        },
+    )
+
+    results = [
+        os.path.join(IMAGE_DIR, h["source_image"])
+        for h in search_response.json()["metadatas"]
+    ]
+
     inference_time = round(response["processingTimeMs"], 4)
     search_time_ms = round((time.time() - start_time) * 1000, 4)
-
-    # Prepare the image results
-    results = []
-    for label in labels:
-        img_filename = ID_TO_IMAGE_MAPPING[str(label)]
-        img_path = f"/{IMAGE_DIR}/{img_filename}"
-        results.append({"img_path": img_path})
 
     return jsonify(
         {

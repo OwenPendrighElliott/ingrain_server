@@ -51,7 +51,7 @@ class TritonModelInferenceClient:
         c.perform()
         c.close()
         buffer.seek(0)
-        return Image.open(buffer)
+        return Image.open(buffer).convert("RGB")
 
     def decode_base64_image(self, base64_image: str) -> Image.Image:
         if base64_image.startswith("data:image"):
@@ -61,7 +61,7 @@ class TritonModelInferenceClient:
         buffer = BytesIO()
         buffer.write(image_data)
         buffer.seek(0)
-        return Image.open(buffer)
+        return Image.open(buffer).convert("RGB")
 
     def load_image(self, image: str) -> Image.Image:
         image_data = None

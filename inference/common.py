@@ -14,7 +14,7 @@ def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:
     Returns:
         str: The model name.
     """
-    name = model_name.replace("/", "_")
+    name = model_name.replace("/", "_").replace(":", "___")
     if pretrained is not None:
         name += f"_{pretrained}"
     return name
@@ -74,3 +74,14 @@ def delete_model_from_repo(
         shutil.rmtree(model_path_image_encoder)
         shutil.rmtree(model_path_text_encoder)
         return
+
+
+def save_library_name(output_dir: str, library_name: str):
+    """Save the library name to a file.
+
+    Args:
+        output_dir (str): The output directory.
+        library_name (str): The library name.
+    """
+    with open(os.path.join(output_dir, "library_name.txt"), "w") as f:
+        f.write(library_name)

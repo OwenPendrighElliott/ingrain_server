@@ -6,7 +6,7 @@ import numpy as np
 import tritonclient.grpc as grpcclient
 from PIL import Image
 import json
-from ..common import get_text_image_model_names
+from ..common import get_text_image_model_names, save_library_name
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
 from .clip_converting import (
     onnx_convert_open_clip_model,
@@ -133,6 +133,14 @@ def create_model_and_transforms_triton(
         (3, *model.visual.preprocess_cfg["size"]),
         config["embed_dim"],
     )
+
+    save_library_name(
+        os.path.join(triton_model_repository_path, friendly_text_name), "open_clip"
+    )
+    save_library_name(
+        os.path.join(triton_model_repository_path, friendly_image_name), "open_clip"
+    )
+
     return friendly_text_name, friendly_image_name, preprocess, tokenizer
 
 
@@ -252,8 +260,8 @@ class TritonCLIPModelClient(TritonModelLoadingClient):
             (
                 self.text_model_name,
                 self.image_model_name,
-                self.preprocess,
-                self.tokenizer,
+                _,
+                _,
             ) = create_transforms(model, pretrained)
 
         self.modalities = {"text", "image"}

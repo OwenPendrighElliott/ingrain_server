@@ -25,7 +25,7 @@ from inference.common import get_model_name, delete_model_from_repo
 import tritonclient.grpc as grpcclient
 from threading import Lock
 
-from typing import Union
+from typing import Union, Literal
 
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
@@ -39,11 +39,13 @@ MODEL_CACHE_LOCK = Lock()
 
 
 def get_model_creation_client(
-    model_name: str, pretrained: Union[str, None], model_type: str
+    model_name: str, pretrained: Union[str, None], model_library: Literal["open_clip", "sentence_transformers", "timm"]
 ) -> Union[TritonCLIPModelClient, TritonTimmModelClient, TritonSentenceTransformersModelClient, None]:
     nice_model_name = get_model_name(model_name, pretrained)
 
-    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_type == "sentence_transformer":
+    cache_key = (model_name, pretrained)
+
+    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_library == "sentence_transformers":
         # if the model is ready, create a client for it
         # the model name is used directly for sentence transformers
         client = TritonSentenceTransformersModelClient(
@@ -51,20 +53,25 @@ def get_model_creation_client(
             model=model_name,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
+        with MODEL_CACHE_LOCK:
+            MODEL_CACHE.put(cache_key, client)
         return client
 
-    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_type == "timm":
+    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_library == "timm":
         # if the model is ready, create a client for it
         # the model name is used directly for timm models
         client = TritonTimmModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
+        with MODEL_CACHE_LOCK:
+            MODEL_CACHE.put(cache_key, client)
         return client
 
     if TRITON_CLIENT.is_model_ready(
         nice_model_name + "_text_encoder"
-    ) and TRITON_CLIENT.is_model_ready(nice_model_name + "_image_encoder") and model_type == "open_clip":
+    ) and TRITON_CLIENT.is_model_ready(nice_model_name + "_image_encoder") and model_library == "open_clip":
         # if the model is ready, create a client for it
         # the model name must be split into text and image encoders for CLIP
         client = TritonCLIPModelClient(
@@ -73,6 +80,8 @@ def get_model_creation_client(
             pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
+        with MODEL_CACHE_LOCK:
+            MODEL_CACHE.put(cache_key, client)
         return client
 
     return None
@@ -100,7 +109,7 @@ async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageRespon
     pretrained = request.pretrained
     cache_key = (model_name, pretrained)
 
-    client = get_model_creation_client(model_name, pretrained)
+    client = get_model_creation_client(model_name, pretrained, model_library="open_clip")
     if client is None:
         client = TritonCLIPModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
@@ -127,8 +136,7 @@ async def load_sentence_transformer_model(
     model_name = request.name
 
     cache_key = (model_name, None)
-
-    client = get_model_creation_client(model_name, None)
+    client = get_model_creation_client(model_name, None, model_library="sentence_transformers")
     if client is None:
         client = TritonSentenceTransformersModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
@@ -149,11 +157,12 @@ async def load_timm_model(request: TimmModelRequest) -> GenericMessageResponse:
 
     cache_key = (model_name, None)
 
-    client = get_model_creation_client(model_name, None)
+    client = get_model_creation_client(model_name, None, model_library="timm")
     if client is None:
         client = TritonTimmModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -168,18 +177,17 @@ async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
     pretrained = request.pretrained
 
     cache_key = (model_name, pretrained)
-
-    client = get_model_creation_client(model_name, pretrained)
-    if client is not None:
-        with MODEL_CACHE_LOCK:
-            client = MODEL_CACHE.remove(cache_key)
-        return {
-            "message": f"Model {model_name} with checkpoint {pretrained} unloaded successfully."
-        }
-    else:
-        return {
-            "message": f"Model {model_name} with checkpoint {pretrained} is not loaded."
-        }
+    original_cache_size = len(MODEL_CACHE)
+    with MODEL_CACHE_LOCK:
+        MODEL_CACHE.remove(cache_key)
+        if len(MODEL_CACHE) < original_cache_size:
+            return {
+                "message": f"Model {model_name} with checkpoint {pretrained} unloaded successfully."
+            }
+        else:
+            return {
+                "message": f"Model {model_name} with checkpoint {pretrained} is not loaded."
+            }
 
 
 @app.delete("/delete_model")
