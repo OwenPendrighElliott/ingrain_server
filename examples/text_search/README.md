@@ -1,4 +1,4 @@
-# Image Search Demo
+# Text Search Demo
 
 To get started with the image search demo, you can use the optimised Python Client:
 
@@ -9,7 +9,7 @@ pip install ingrain
 Install the required packages:
 
 ```bash
-pip install numpy pillow flask tqdm
+pip install flask tqdm
 ```
 
 Run a HNSWLib Server:
@@ -18,7 +18,13 @@ Run a HNSWLib Server:
 docker run -p 8685:8685 owenpelliott/hnswlib_server
 ```
 
-Then place your images in a folder called `images` and run the following code to index the data:
+Download the scidocs data:
+
+```bash
+bash get_data.sh
+```
+
+Then run the following code to index the data:
 
 NOTE: There may be a delay and slow start as the workers configure their preprocessing configs.
 ```bash

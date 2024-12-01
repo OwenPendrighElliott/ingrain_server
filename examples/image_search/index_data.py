@@ -2,21 +2,20 @@ import os
 import requests
 import ingrain
 import base64
-import json
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
-HNSWLIB_SERVER_URL = "http://localhost:8685"
 
 # Constants
+HNSWLIB_SERVER_URL = "http://localhost:8685"
 IMAGE_DIR = "images"
 INDEX_NAME = "image_search"
 CLIP_MODEL_NAME = "MobileCLIP-S2"
 CLIP_PRETRAINED = "datacompdr"
 MODEL_DIM = 512
 INDEXING_BATCH_SIZE = 512
-NUM_THREADS = 5  # Adjust the number of threads to your machine's capability
-BATCH_SIZE = 4  # Number of images per batch
+NUM_THREADS = 10
+BATCH_SIZE = 1
 
 # Initialize ingrain client
 client = ingrain.Client(return_numpy=False)
@@ -73,9 +72,7 @@ batches = [
 i = 0
 # Use ThreadPoolExecutor to parallelize batch processing
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-    futures = {executor.submit(process_batch, batch): batch for batch in batches}
-    for future in tqdm(as_completed(futures), total=len(futures)):
-        batch_results = future.result()
+    for batch_results in tqdm(executor.map(process_batch, batches), total=len(batches)):
         for filename, embedding in batch_results:
             embeddings.append(embedding)
             all_images.append(filename)

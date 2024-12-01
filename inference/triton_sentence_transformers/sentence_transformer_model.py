@@ -49,7 +49,8 @@ def create_model(
     )
 
     save_library_name(
-        os.path.join(triton_model_repository_path, friendly_name), "sentence_transformers"
+        os.path.join(triton_model_repository_path, friendly_name),
+        "sentence_transformers",
     )
 
     return friendly_name, tokenizer
