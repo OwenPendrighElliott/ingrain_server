@@ -35,25 +35,42 @@ app = FastAPI()
 MODEL_CACHE = LRUModelCache(capacity=5)
 MODEL_CACHE_LOCK = Lock()
 
+
 def get_model_library(model_name: str, pretrained: Union[str, None]) -> str:
     friendly_name = get_model_name(model_name, pretrained)
     try:
-        with open(os.path.join(TRITON_MODEL_REPOSITORY_PATH, friendly_name, "library_name.txt"), "r") as f:
+        with open(
+            os.path.join(
+                TRITON_MODEL_REPOSITORY_PATH, friendly_name, "library_name.txt"
+            ),
+            "r",
+        ) as f:
             return f.read().strip()
     except FileNotFoundError:
         pass
-    
+
     try:
-        with open(os.path.join(TRITON_MODEL_REPOSITORY_PATH, friendly_name + "_image_encoder", "library_name.txt"), "r") as f:
+        with open(
+            os.path.join(
+                TRITON_MODEL_REPOSITORY_PATH,
+                friendly_name + "_image_encoder",
+                "library_name.txt",
+            ),
+            "r",
+        ) as f:
             return f.read().strip()
     except FileNotFoundError:
         pass
 
     return None
 
-def client_from_cache(
-    model_name: str, pretrained: Union[str, None]
-) -> Union[TritonCLIPInferenceClient, TritonSentenceTransformersInferenceClient, TritonTimmInferenceClient, None]:
+
+def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
+    TritonCLIPInferenceClient,
+    TritonSentenceTransformersInferenceClient,
+    TritonTimmInferenceClient,
+    None,
+]:
     cache_key = (model_name, pretrained)
 
     with MODEL_CACHE_LOCK:
@@ -76,7 +93,10 @@ def client_from_cache(
         return None
 
     # if the model isn't in this workers cache, check if it's ready
-    if TRITON_CLIENT.is_model_ready(nice_model_name) and model_library == "sentence_transformers":
+    if (
+        TRITON_CLIENT.is_model_ready(nice_model_name)
+        and model_library == "sentence_transformers"
+    ):
         # if the model is ready, create a client for it
         # the model name is used directly for sentence transformers
         client = TritonSentenceTransformersInferenceClient(
@@ -93,15 +113,17 @@ def client_from_cache(
         client = TritonTimmInferenceClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
-            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
         return client
 
-    if TRITON_CLIENT.is_model_ready(
-        nice_model_name + "_text_encoder"
-    ) and TRITON_CLIENT.is_model_ready(nice_model_name + "_image_encoder") and model_library == "open_clip":
+    if (
+        TRITON_CLIENT.is_model_ready(nice_model_name + "_text_encoder")
+        and TRITON_CLIENT.is_model_ready(nice_model_name + "_image_encoder")
+        and model_library == "open_clip"
+    ):
         # if the model is ready, create a client for it
         # the model name must be split into text and image encoders for CLIP
         client = TritonCLIPInferenceClient(

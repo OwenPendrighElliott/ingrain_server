@@ -1,29 +1,21 @@
 import os
 import json
-import hnswlib
-import numpy as np
 import ingrain
+import requests
 import time
 from flask import Flask, render_template, request, jsonify
 
 # Constants
 MODEL = "intfloat/e5-small-v2"
-INDEX_FILE = "scidocs_index.bin"
-MAPPING_FILE = "scidocs_id_mapping.json"
+INDEX_NAME = "scidocs_index"
 MODEL_DIM = 384
 TOP_K = 50
+HNSWLIB_SERVER_URL = "http://localhost:8685"
+
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Load HNSWLib index
-index = hnswlib.Index(space="cosine", dim=MODEL_DIM)
-index.load_index(INDEX_FILE)
-index.set_ef(256)
-
-# Load ID to passage mapping
-with open(MAPPING_FILE, "r") as f:
-    id_to_passage_mapping = json.load(f)
 
 # Load SciDocs corpus
 CORPUS_FILE = os.path.join("data", "scidocs", "scidocs", "corpus.jsonl")
@@ -42,34 +34,35 @@ def search():
         return jsonify([])
 
     # Perform inference on query
-    client = ingrain.Client(return_numpy=True)
+    client = ingrain.Client(return_numpy=False)
     query = "query: " + query
     response = client.infer(name=MODEL, text=query)
     query_embedding = response["textEmbeddings"][0]
     embedding_time = response["processingTimeMs"]
     # Perform search on HNSWLib index
     start_search_time = time.time()
-    labels, distances = index.knn_query(query_embedding, k=TOP_K)
+    search_response = requests.post(
+        f"{HNSWLIB_SERVER_URL}/search",
+        json={
+            "indexName": INDEX_NAME,
+            "queryVector": query_embedding,
+            "k": TOP_K,
+            "efSearch": 256,
+            "filter": "",
+            "returnMetadata": True,
+        },
+    ).json()
     search_time = (time.time() - start_search_time) * 1000  # Convert to milliseconds
 
     # Prepare search results
     results = []
-    for label, distance in zip(labels[0], distances[0]):
-        doc_id = list(id_to_passage_mapping.keys())[
-            int(label)
-        ]  # Get _id from the mapping
-        passage = corpus_dict.get(doc_id, None)  # Retrieve document from corpus
 
-        if passage:
-            results.append(
-                {
-                    "title": passage.get("title", "No Title"),
-                    "text": passage.get("text", "No Text"),
-                    "distance": float(
-                        distance
-                    ),  # Convert np.float32 to native Python float
-                }
-            )
+    for i in range(len(search_response["hits"])):
+        distance = search_response["distances"][i]
+        title = search_response["metadatas"][i]["title"]
+        text = search_response["metadatas"][i]["text"]
+
+        results.append({"title": title, "text": text, "distance": distance})
 
     return jsonify(
         {

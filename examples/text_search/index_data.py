@@ -1,33 +1,43 @@
 import os
-import numpy as np
-import hnswlib
 import ingrain
 import json
+import requests
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 # Constants
+HNSWLIB_SERVER_URL = "http://localhost:8685"
 MODEL_NAME = "intfloat/e5-small-v2"
 MODEL_DIM = 384
-NUM_THREADS = 8
-BATCH_SIZE = 8
-INDEX_FILE = "scidocs_index.bin"
-MAPPING_FILE = "scidocs_id_mapping.json"
+NUM_THREADS = 20
+BATCH_SIZE = 2
+INDEX_NAME = "scidocs_index"
 PASSAGE_PREFIX = "passage: "
+INDEXING_BATCH_SIZE = 512
 CORPUS_FILE = os.path.join("data", "scidocs", "scidocs", "corpus.jsonl")
 
 # Initialize ingrain client
-client = ingrain.Client(return_numpy=True)
+client = ingrain.Client(return_numpy=False)
 client.load_sentence_transformer_model(name=MODEL_NAME)
 
 # Initialize HNSWLib index
-index = hnswlib.Index(space="cosine", dim=MODEL_DIM)
+response = requests.post(
+    f"{HNSWLIB_SERVER_URL}/create_index",
+    json={
+        "indexName": INDEX_NAME,
+        "dimension": MODEL_DIM,
+        "indexType": "Approximate",
+        "spaceType": "IP",
+        "efConstruction": 512,
+        "M": 16,
+    },
+)
 
 
 # Function to process a batch of corpus data
 def process_batch(corpus_batch: List[dict]):
-    client = ingrain.Client(return_numpy=True)
+    client = ingrain.Client(return_numpy=False)
     texts = [PASSAGE_PREFIX + doc["text"] for doc in corpus_batch]
     try:
         response = client.infer(name=MODEL_NAME, text=texts)
@@ -48,29 +58,49 @@ with open(CORPUS_FILE, "r") as f:
 
 # Prepare index and mapping
 all_passages = []
+ids = []
+source_texts = []
+source_titles = []
+source_ids = []
 embeddings = []
-id_to_passage_mapping = {}
-
-index.init_index(max_elements=len(corpus), ef_construction=256, M=16)
 
 # Split corpus into batches
 batches = [corpus[i : i + BATCH_SIZE] for i in range(0, len(corpus), BATCH_SIZE)]
 
+i = 0
 # Use ThreadPoolExecutor to parallelize batch processing
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-    futures = {executor.submit(process_batch, batch): batch for batch in batches}
-    for future in tqdm(as_completed(futures), total=len(futures)):
-        batch_results = future.result()
+    # Wrap the map with tqdm for progress tracking
+    for batch_results in tqdm(executor.map(process_batch, batches), total=len(batches)):
         if batch_results:
             for doc_id, embedding in batch_results:
                 embeddings.append(embedding)
-                # Map document ID to its index in the embedding array
-                id_to_passage_mapping[doc_id] = len(embeddings) - 1
+                ids.append(i)
+                source_texts.append(corpus[i]["text"])
+                source_titles.append(corpus[i]["title"])
+                source_ids.append(doc_id)
+                i += 1
 
-embeddings = np.vstack(embeddings)
-index.add_items(embeddings)
-index.save_index(INDEX_FILE)
+print(len(source_texts), len(embeddings))
+print(len(ids), len(source_ids))
+for i in tqdm(range(0, len(embeddings), INDEXING_BATCH_SIZE)):
+    metadatas = [
+        {"source_id": source_ids[j], "text": source_texts[j], "title": source_titles[j]}
+        for j in range(i, min(i + INDEXING_BATCH_SIZE, len(embeddings)))
+    ]
 
-# Save the ID to passage mapping as JSON
-with open(MAPPING_FILE, "w") as f:
-    json.dump(id_to_passage_mapping, f)
+    response = requests.post(
+        f"{HNSWLIB_SERVER_URL}/add_documents",
+        json={
+            "indexName": INDEX_NAME,
+            "ids": ids[i : i + INDEXING_BATCH_SIZE],
+            "vectors": embeddings[i : i + INDEXING_BATCH_SIZE],
+            "metadatas": metadatas,
+        },
+    )
+
+
+response = requests.post(
+    f"{HNSWLIB_SERVER_URL}/save_index",
+    json={"indexName": INDEX_NAME},
+)

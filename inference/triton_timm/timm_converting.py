@@ -6,6 +6,7 @@ import base64
 from open_clip import CustomTextCLIP, CLIP
 from typing import Tuple, Any
 
+
 def convert_timm_to_onnx(
     model: torch.nn.Module, dummy_input: torch.Tensor, output_path: str
 ) -> None:
@@ -20,6 +21,7 @@ def convert_timm_to_onnx(
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
+
 
 def generate_timm_config(
     cfg_path: str,
