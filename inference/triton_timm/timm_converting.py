@@ -3,7 +3,7 @@ import torch
 from PIL import Image
 from io import BytesIO
 import base64
-from open_clip import CustomTextCLIP, CLIP
+from ..common import MAX_BATCH_SIZE
 from typing import Tuple, Any
 
 
@@ -32,7 +32,7 @@ def generate_timm_config(
     config = f"""
 name: "{name}"
 platform: "onnxruntime_onnx"
-max_batch_size: 32
+max_batch_size: {MAX_BATCH_SIZE}
 input [
   {{
     name: "input"

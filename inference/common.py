@@ -1,7 +1,9 @@
 import os
 import shutil
-import numpy as np
+import os
 from typing import Union, Tuple
+
+MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
 
 
 def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:

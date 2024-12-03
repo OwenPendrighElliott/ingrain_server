@@ -1,5 +1,6 @@
 import os
 import torch
+from ..common import MAX_BATCH_SIZE
 from sentence_transformers import SentenceTransformer
 from typing import List
 
@@ -22,7 +23,7 @@ def generate_text_sentence_transformer_config(
 ) -> None:
     config = f"""name: "{name}"
 platform: "onnxruntime_onnx"
-max_batch_size: 16
+max_batch_size: {MAX_BATCH_SIZE}
 input [
   {{
     name: "input_ids"
