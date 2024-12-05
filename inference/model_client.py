@@ -42,12 +42,16 @@ class TritonModelInferenceClient:
     def is_ready(self) -> bool:
         raise NotImplementedError
 
-    def download_image(self, url: str) -> Image.Image:
+    def download_image(self, url: str, image_download_headers: Optional[dict] = None) -> Image.Image:
         buffer = BytesIO()
         c = pycurl.Curl()
         c.setopt(c.URL, url)
         c.setopt(c.WRITEDATA, buffer)
         c.setopt(pycurl.CAINFO, certifi.where())
+        if image_download_headers:
+            c.setopt(c.HTTPHEADER, [f"{k}: {v}" for k, v in image_download_headers.items()])
+        else:
+            c.setopt(c.HTTPHEADER, ["User-Agent: ingrain-server"])
         c.perform()
         c.close()
         buffer.seek(0)
@@ -63,18 +67,21 @@ class TritonModelInferenceClient:
         buffer.seek(0)
         return Image.open(buffer).convert("RGB")
 
-    def load_image(self, image: str) -> Image.Image:
+    def load_image(self, image: str, image_download_headers: Optional[dict] = None) -> Image.Image:
         image_data = None
         if validators.url(image):
-            image_data = self.download_image(image)
+            image_data = self.download_image(image, image_download_headers=image_download_headers)
         elif isinstance(image, str):
             image_data = self.decode_base64_image(image)
 
         return image_data
 
-    def load_images_parallel(self, images: List[str]) -> List[Image.Image]:
+    def load_images_parallel(self, images: List[str], image_download_headers: Optional[dict] = None) -> List[Image.Image]:
+        def load_with_headers(image_url: str) -> Image.Image:
+            return self.load_image(image_url, headers=image_download_headers)
+
         with ThreadPoolExecutor(max_workers=10) as executor:
-            return list(executor.map(self.load_image, images))
+            return list(executor.map(load_with_headers, images))
 
 
 class TritonModelLoadingClient:

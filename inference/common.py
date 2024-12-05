@@ -1,6 +1,7 @@
 import os
 import shutil
 import os
+import platform
 from typing import Union, Tuple
 
 MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
@@ -87,3 +88,24 @@ def save_library_name(output_dir: str, library_name: str):
     """
     with open(os.path.join(output_dir, "library_name.txt"), "w") as f:
         f.write(library_name)
+
+def is_valid_dir_name(name: str) -> bool:
+    invalid_chars = r'<>:"/\\|?*'
+    reserved_names = [
+        "CON", "PRN", "AUX", "NUL", 
+        *(f"{base}{num}" for base in ["COM", "LPT"] for num in range(1, 10))
+    ] if platform.system() == "Windows" else []
+    
+    if not name or name.strip() == "":
+        return False
+    
+    if any(char in name for char in invalid_chars):
+        return False
+    
+    if platform.system() == "Windows" and name.upper() in reserved_names:
+        return False
+
+    if len(name) > 255:
+        return False
+    
+    return True

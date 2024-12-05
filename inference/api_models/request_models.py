@@ -10,6 +10,7 @@ class InferenceRequest(BaseModel):
     image: Optional[Union[str, List[str]]] = None
     normalize: Optional[bool] = True
     n_dims: Optional[int] = None
+    image_download_headers: Optional[dict] = None
 
 
 class TextInferenceRequest(BaseModel):
@@ -26,6 +27,7 @@ class ImageInferenceRequest(BaseModel):
     image: Union[str, List[str]]
     normalize: Optional[bool] = True
     n_dims: Optional[int] = None
+    image_download_headers: Optional[dict] = None
 
 
 class GenericModelRequest(BaseModel):

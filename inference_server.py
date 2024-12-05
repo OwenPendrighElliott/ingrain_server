@@ -181,6 +181,7 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
+    image_download_headers = request.image_download_headers
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
@@ -192,7 +193,7 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     if isinstance(images, str):
         images = [images]
 
-    image_data = client.load_images_parallel(images)
+    image_data = client.load_images_parallel(images, image_download_headers=image_download_headers)
 
     if image_data is None:
         raise HTTPException(
@@ -222,6 +223,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
+    image_download_headers = request.image_download_headers
 
     client = client_from_cache(model_name, pretrained)
 
@@ -252,7 +254,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
             )
         if isinstance(images, str):
             images = [images]
-        image_datas = client.load_images_parallel(images)
+        image_datas = client.load_images_parallel(images, image_download_headers=image_download_headers)
         tasks.append(
             asyncio.to_thread(client.encode_image, image_datas, normalize, n_dims)
         )
