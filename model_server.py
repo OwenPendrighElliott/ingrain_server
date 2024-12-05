@@ -30,6 +30,7 @@ from typing import Union, Literal
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
+CUSTOM_MODEL_DIR = "custom_model_files"
 
 app = FastAPI()
 
@@ -170,14 +171,16 @@ async def load_sentence_transformer_model(
 @app.post("/load_timm_model")
 async def load_timm_model(request: TimmModelRequest) -> GenericMessageResponse:
     model_name = request.name
+    pretrained = request.pretrained
 
-    cache_key = (model_name, None)
+    cache_key = (model_name, pretrained)
 
-    client = get_model_creation_client(model_name, None, model_library="timm")
+    client = get_model_creation_client(model_name, pretrained, model_library="timm")
     if client is None:
         client = TritonTimmModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:

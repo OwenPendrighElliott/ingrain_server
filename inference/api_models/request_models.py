@@ -41,8 +41,22 @@ class SentenceTransformerModelRequest(BaseModel):
 
 class TimmModelRequest(BaseModel):
     name: str
+    pretrained: Optional[str | bool] = None
 
 
 class OpenCLIPModelRequest(BaseModel):
     name: str
     pretrained: Optional[str] = None
+
+
+class DownloadCustomModelRequest(BaseModel):
+    url: str
+    model_name: str
+    model_url: str
+    config_json_url: Optional[str]
+    tokenizer_json_url: Optional[str]
+    tokenizer_config_json_url: Optional[str]
+    vocab_txt_url: Optional[str]
+    special_tokens_map_json_url: Optional[str]
+    pooling_config_json_url: Optional[str]
+    sentence_bert_config_json_url: Optional[str] = None

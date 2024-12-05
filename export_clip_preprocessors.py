@@ -1,8 +1,5 @@
 import open_clip
-from open_clip.transform import image_transform_v2
-from open_clip.transform import PreprocessCfg
 import os
-from tqdm import tqdm
 import json
 
 

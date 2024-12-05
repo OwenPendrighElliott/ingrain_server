@@ -5,9 +5,8 @@ from .common import is_valid_dir_name
 
 from typing import Optional
 
-def download_custom_model(
-    url: str, checkpoint_name: str, custom_model_dir: str
-) -> str:
+
+def download_custom_model(url: str, checkpoint_name: str, custom_model_dir: str) -> str:
     """Download a safetensors model file from a URL.
 
     Args:
@@ -20,7 +19,9 @@ def download_custom_model(
     """
     os.makedirs(custom_model_dir, exist_ok=True)
 
-    model_file_path = os.path.join(custom_model_dir, checkpoint_name, "model.safetensors")
+    model_file_path = os.path.join(
+        custom_model_dir, checkpoint_name, "model.safetensors"
+    )
 
     with requests.get(url, stream=True) as response:
         response.raise_for_status()
@@ -29,6 +30,7 @@ def download_custom_model(
                 f.write(chunk)
 
     return model_file_path
+
 
 def download_custom_model_auxillary_file(
     url: str, checkpoint_name: str, custom_model_dir: str, fname: str
@@ -86,26 +88,50 @@ def download_custom_sentence_transformers_model(
     """
 
     if not is_valid_dir_name(model_name):
-        raise ValueError(f"Model name {model_name} is not a valid directory name, please choose a different name")
+        raise ValueError(
+            f"Model name {model_name} is not a valid directory name, please choose a different name"
+        )
 
     if os.path.exists(os.path.join(custom_model_dir, model_name)):
         raise ValueError(f"Model {model_name} already exists in {custom_model_dir}")
 
     download_custom_model(model_url, model_name, custom_model_dir)
-    download_custom_model_auxillary_file(config_json_url, model_name, custom_model_dir, "config.json")
-    download_custom_model_auxillary_file(tokenizer_json_url, model_name, custom_model_dir, "tokenizer.json")
-    download_custom_model_auxillary_file(tokenizer_config_json_url, model_name, custom_model_dir, "tokenizer_config.json")
-    download_custom_model_auxillary_file(vocab_txt_url, model_name, custom_model_dir, "vocab.txt")
-    download_custom_model_auxillary_file(special_tokens_map_json_url, model_name, custom_model_dir, "special_tokens_map.json")
+    download_custom_model_auxillary_file(
+        config_json_url, model_name, custom_model_dir, "config.json"
+    )
+    download_custom_model_auxillary_file(
+        tokenizer_json_url, model_name, custom_model_dir, "tokenizer.json"
+    )
+    download_custom_model_auxillary_file(
+        tokenizer_config_json_url, model_name, custom_model_dir, "tokenizer_config.json"
+    )
+    download_custom_model_auxillary_file(
+        vocab_txt_url, model_name, custom_model_dir, "vocab.txt"
+    )
+    download_custom_model_auxillary_file(
+        special_tokens_map_json_url,
+        model_name,
+        custom_model_dir,
+        "special_tokens_map.json",
+    )
 
     pooling_dir = os.path.join(custom_model_dir, model_name, "1_Pooling")
     os.makedirs(pooling_dir, exist_ok=True)
-    download_custom_model_auxillary_file(pooling_config_json_url, model_name, pooling_dir, "config.json")
+    download_custom_model_auxillary_file(
+        pooling_config_json_url, model_name, pooling_dir, "config.json"
+    )
 
     if sentence_bert_config_json_url:
-        download_custom_model_auxillary_file(sentence_bert_config_json_url, model_name, custom_model_dir, "sentence_bert_config.json")
+        download_custom_model_auxillary_file(
+            sentence_bert_config_json_url,
+            model_name,
+            custom_model_dir,
+            "sentence_bert_config.json",
+        )
 
-    with open(os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "w") as f:
+    with open(
+        os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "w"
+    ) as f:
         f.write(json.dumps({"model_type": "sentence_transformers"}))
 
 
@@ -123,14 +149,18 @@ def download_custom_open_clip_model(
     """
 
     if not is_valid_dir_name(model_name):
-        raise ValueError(f"Model name {model_name} is not a valid directory name, please choose a different name")
+        raise ValueError(
+            f"Model name {model_name} is not a valid directory name, please choose a different name"
+        )
 
     if os.path.exists(os.path.join(custom_model_dir, model_name)):
         raise ValueError(f"Model {model_name} already exists in {custom_model_dir}")
 
     download_custom_model(model_url, model_name, custom_model_dir)
 
-    with open(os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "w") as f:
+    with open(
+        os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "w"
+    ) as f:
         f.write(json.dumps({"model_type": "open_clip"}))
 
 
@@ -150,12 +180,16 @@ def download_custom_timm_model(
     """
 
     if not is_valid_dir_name(model_name):
-        raise ValueError(f"Model name {model_name} is not a valid directory name, please choose a different name")
+        raise ValueError(
+            f"Model name {model_name} is not a valid directory name, please choose a different name"
+        )
 
     if os.path.exists(os.path.join(custom_model_dir, model_name)):
         raise ValueError(f"Model {model_name} already exists in {custom_model_dir}")
 
     download_custom_model(model_url, model_name, custom_model_dir)
 
-    with open(os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "w") as f:
+    with open(
+        os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "w"
+    ) as f:
         f.write(json.dumps({"model_type": "timm", "num_classes": num_classes}))

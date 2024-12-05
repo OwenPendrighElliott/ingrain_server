@@ -12,11 +12,12 @@ from ..common import get_model_name, save_library_name
 
 def create_model(
     model_name: str,
+    pretrained: str | bool,
     triton_model_repository_path: str,
 ):
     friendly_name = get_model_name(model_name)
 
-    model = timm.create_model(model_name, pretrained=True)
+    model = timm.create_model(model_name, pretrained=pretrained)
     model_cfg = timm.get_pretrained_cfg(model_name.split("/")[-1].split(".")[0])
     data_config = timm.data.resolve_model_data_config(model)
     preprocess = timm.data.create_transform(**data_config, is_training=False)
@@ -57,11 +58,15 @@ class TritonTimmInferenceClient(TritonModelInferenceClient):
         self,
         triton_grpc_url: str,
         model: str,
+        pretrained: str | bool | None,
         triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
         self.model_name = model
-        self.model_nice_name = get_model_name(model)
+
+        if pretrained is None:
+            pretrained = True
+        self.model_nice_name = get_model_name(model, pretrained)
 
         if not self.triton_client.is_model_ready(self.model_nice_name):
             raise ValueError(f"Model {self.model_name} is not ready on the server.")
@@ -122,15 +127,18 @@ class TritonTimmModelClient(TritonModelLoadingClient):
         self,
         triton_grpc_url: str,
         model: str,
+        pretrained: str | bool | None,
         triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
+        if pretrained is None:
+            pretrained = True
         self.model_name = model
-        self.model_nice_name = get_model_name(model)
+        self.model_nice_name = get_model_name(model, pretrained)
         self.triton_model_repository_path = triton_model_repository_path
 
         if not self.triton_client.is_model_ready(self.model_nice_name):
-            _, _ = create_model(model, triton_model_repository_path)
+            _, _ = create_model(model, pretrained, triton_model_repository_path)
             self.triton_client.load_model(self.model_nice_name)
 
     def load(self):

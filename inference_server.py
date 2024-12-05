@@ -25,6 +25,9 @@ import tritonclient.grpc as grpcclient
 import os
 from typing import Union
 
+# faster model downloadss
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
+
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
@@ -113,6 +116,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
         client = TritonTimmInferenceClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
@@ -193,7 +197,9 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     if isinstance(images, str):
         images = [images]
 
-    image_data = client.load_images_parallel(images, image_download_headers=image_download_headers)
+    image_data = client.load_images_parallel(
+        images, image_download_headers=image_download_headers
+    )
 
     if image_data is None:
         raise HTTPException(
@@ -254,7 +260,9 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
             )
         if isinstance(images, str):
             images = [images]
-        image_datas = client.load_images_parallel(images, image_download_headers=image_download_headers)
+        image_datas = client.load_images_parallel(
+            images, image_download_headers=image_download_headers
+        )
         tasks.append(
             asyncio.to_thread(client.encode_image, image_datas, normalize, n_dims)
         )
