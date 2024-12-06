@@ -7,17 +7,41 @@ import os
 import tritonclient.grpc as grpcclient
 from .timm_converting import onnx_convert_timm_model, generate_timm_config
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
-from ..common import get_model_name, save_library_name
+from ..common import get_model_name, save_library_name, custom_model_exists
 
 
 def create_model(
     model_name: str,
     pretrained: str | bool,
     triton_model_repository_path: str,
+    custom_model_dir: str,
 ):
-    friendly_name = get_model_name(model_name)
+    friendly_name = get_model_name(model_name, pretrained)
 
-    model = timm.create_model(model_name, pretrained=pretrained)
+    if custom_model_exists(custom_model_dir, pretrained):
+        model_file_path = os.path.join(
+            custom_model_dir, pretrained, "model.safetensors"
+        )
+        model_config_path = os.path.join(
+            custom_model_dir, pretrained, "_ingrain_model_meta.json"
+        )
+
+        with open(model_config_path, "r") as f:
+            model_meta = json.load(f)
+
+        if not model_meta["model_type"] == "timm":
+            raise ValueError(
+                f"The custom model {model_name} exists but it is not a timm model."
+            )
+
+        model = timm.create_model(
+            model_name,
+            checkpoint_path=model_file_path,
+            num_classes=model_meta["num_classes"],
+        )
+    else:
+        model = timm.create_model(model_name, pretrained=pretrained)
+
     model_cfg = timm.get_pretrained_cfg(model_name.split("/")[-1].split(".")[0])
     data_config = timm.data.resolve_model_data_config(model)
     preprocess = timm.data.create_transform(**data_config, is_training=False)
@@ -129,6 +153,7 @@ class TritonTimmModelClient(TritonModelLoadingClient):
         model: str,
         pretrained: str | bool | None,
         triton_model_repository_path: str,
+        custom_model_dir: str,
     ):
         super().__init__(triton_grpc_url)
         if pretrained is None:
@@ -138,7 +163,9 @@ class TritonTimmModelClient(TritonModelLoadingClient):
         self.triton_model_repository_path = triton_model_repository_path
 
         if not self.triton_client.is_model_ready(self.model_nice_name):
-            _, _ = create_model(model, pretrained, triton_model_repository_path)
+            _, _ = create_model(
+                model, pretrained, triton_model_repository_path, custom_model_dir
+            )
             self.triton_client.load_model(self.model_nice_name)
 
     def load(self):

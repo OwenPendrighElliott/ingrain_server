@@ -53,15 +53,15 @@ def test_lru_model_cache_eviction(mock_clip_client, mock_sentence_client):
     cache.put(key1, mock_clip_client)
     cache.put(key2, mock_sentence_client)
 
-    assert cache.get(key1) is not None
-    assert not cache.loaded[key2]
+    assert cache.get(key1) is None
+    assert cache.loaded[key2]
     assert cache.hits == 0
     assert cache.misses == 1
     mock_clip_client.unload.assert_called_once()
 
     assert cache.get(key2) == mock_sentence_client
-    assert cache.hits == 0
-    assert cache.misses == 2
+    assert cache.hits == 1
+    assert cache.misses == 1
 
 
 def test_lru_model_cache_remove(mock_clip_client):

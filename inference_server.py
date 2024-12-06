@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import ORJSONResponse
 import time
 import asyncio
 from inference.api_models.request_models import (
@@ -31,8 +32,9 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
+CUSTOM_MODEL_DIR = "custom_model_files"
 
-app = FastAPI()
+app = FastAPI(default_response_class=ORJSONResponse)
 
 # Model cache and lock
 MODEL_CACHE = LRUModelCache(capacity=5)
@@ -105,6 +107,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
         client = TritonSentenceTransformersInferenceClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -134,6 +137,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             pretrained=pretrained,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)

@@ -130,6 +130,21 @@ def test_infer_text():
 
 
 @pytest.mark.integration
+def test_infer_text_truncated():
+    check_server_running()
+    load_sentence_transformer_model()
+    test_text = "This is a test sentence."
+    response = requests.post(
+        f"{INFERENCE_BASE_URL}/infer_text",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text, "n_dims": 128},
+    )
+    assert response.status_code == 200
+    assert "embeddings" in response.json()
+    assert "processingTimeMs" in response.json()
+    assert len(response.json()["embeddings"][0]) == 128
+
+
+@pytest.mark.integration
 def test_infer_text_batch():
     check_server_running()
     load_sentence_transformer_model()

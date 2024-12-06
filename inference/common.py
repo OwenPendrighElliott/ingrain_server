@@ -117,3 +117,27 @@ def is_valid_dir_name(name: str) -> bool:
         return False
 
     return True
+
+
+def custom_model_exists(
+    custom_model_dir: str,
+    model_name: str,
+) -> bool:
+    """Check if the folder for the custom model exists.
+
+    Args:
+        custom_model_dir (str): The custom model directory.
+        model_name (str): The model name.
+
+    Returns:
+        bool: Whether the custom model exists.
+    """
+
+    if not os.path.exists(custom_model_dir):
+        return False
+
+    model_dir = os.path.join(custom_model_dir, model_name)
+    if not os.path.exists(model_dir):
+        return False
+
+    return True

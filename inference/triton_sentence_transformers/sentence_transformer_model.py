@@ -1,10 +1,11 @@
 import os
+import json
 import numpy as np
 import tritonclient.grpc as grpcclient
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
-from ..common import get_model_name, save_library_name
+from ..common import get_model_name, save_library_name, custom_model_exists
 from .sentence_transformer_converting import (
     onnx_transformer_model,
     generate_text_sentence_transformer_config,
@@ -16,8 +17,22 @@ from typing import Union, List, Optional
 def create_model(
     model_name: str,
     triton_model_repository_path: str,
+    custom_model_dir: str,
 ):
-    model = SentenceTransformer(model_name)
+
+    if custom_model_exists(custom_model_dir, model_name):
+        with open(
+            os.path.join(custom_model_dir, model_name, "_ingrain_model_meta.json"), "r"
+        ) as f:
+            model_meta = json.load(f)
+        if model_meta["model_type"] != "sentence_transformers":
+            raise ValueError(
+                f"The custom model {model_name} exists but it is not a sentence_transformers model."
+            )
+
+        model = SentenceTransformer(os.path.join(custom_model_dir, model_name))
+    else:
+        model = SentenceTransformer(model_name)
     tokenizer = model.tokenizer
 
     friendly_name = get_model_name(model_name)
@@ -61,6 +76,7 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
         self,
         triton_grpc_url: str,
         model: str,
+        custom_model_dir: str,
     ):
         super().__init__(triton_grpc_url)
 
@@ -69,7 +85,22 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
         if not self.triton_client.is_model_ready(self.model_name):
             raise ValueError(f"Model {model} is not ready")
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model)
+            if custom_model_exists(custom_model_dir, model):
+                with open(
+                    os.path.join(custom_model_dir, model, "_ingrain_model_meta.json"),
+                    "r",
+                ) as f:
+                    model_meta = json.load(f)
+                if model_meta["model_type"] != "sentence_transformers":
+                    raise ValueError(
+                        f"The custom model {model} exists but it is not a sentence_transformers model."
+                    )
+
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    os.path.join(custom_model_dir, model)
+                )
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(model)
 
         self.modalities = {"text"}
 
@@ -121,16 +152,15 @@ class TritonSentenceTransformersModelClient(TritonModelLoadingClient):
         triton_grpc_url: str,
         model: str,
         triton_model_repository_path: str,
+        custom_model_dir: str,
     ):
         super().__init__(triton_grpc_url)
 
         self.model_name = get_model_name(model)
 
         if not self.triton_client.is_model_ready(self.model_name):
-            _, _ = create_model(model, triton_model_repository_path)
+            _, _ = create_model(model, triton_model_repository_path, custom_model_dir)
             self.triton_client.load_model(self.model_name)
-        # else:
-        #     self.tokenizer = AutoTokenizer.from_pretrained(model)
 
         self.modalities = {"text"}
 

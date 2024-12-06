@@ -88,7 +88,9 @@ class TritonModelInferenceClient:
         self, images: List[str], image_download_headers: Optional[dict] = None
     ) -> List[Image.Image]:
         def load_with_headers(image_url: str) -> Image.Image:
-            return self.load_image(image_url, headers=image_download_headers)
+            return self.load_image(
+                image_url, image_download_headers=image_download_headers
+            )
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             return list(executor.map(load_with_headers, images))
