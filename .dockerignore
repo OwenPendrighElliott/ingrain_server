@@ -1,9 +1,9 @@
-venv
-model_repository
-playspace
-__pycache__
-.pytest_cache
+venv/
+model_repository/
+custom_model_files/
+playspace/
+__pycache__/
+.pytest_cache/
 tests
 examples/
-.pytest_cache
-__pycache__
+README.md

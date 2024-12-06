@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Request, HTTPException
 from starlette.responses import JSONResponse
+import os
 import asyncio
 from inference.api_models.request_models import (
     GenericModelRequest,
     SentenceTransformerModelRequest,
     OpenCLIPModelRequest,
     TimmModelRequest,
+    DownloadCustomModelRequest,
 )
 from inference.api_models.response_models import (
     GenericMessageResponse,
@@ -22,6 +24,11 @@ from inference.triton_timm.timm_model import TritonTimmModelClient
 
 from inference.model_cache import LRUModelCache
 from inference.common import get_model_name, delete_model_from_repo
+from inference.custom_model_utils import (
+    download_custom_open_clip_model,
+    download_custom_sentence_transformers_model,
+    download_custom_timm_model,
+)
 import tritonclient.grpc as grpcclient
 from threading import Lock
 
@@ -30,6 +37,9 @@ from typing import Union, Literal
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
+CUSTOM_MODEL_DIR = "custom_model_files"
+
+os.makedirs(CUSTOM_MODEL_DIR, exist_ok=True)
 
 app = FastAPI()
 
@@ -62,6 +72,7 @@ def get_model_creation_client(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -73,7 +84,9 @@ def get_model_creation_client(
         client = TritonTimmModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -91,6 +104,7 @@ def get_model_creation_client(
             model=model_name,
             pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -101,7 +115,11 @@ def get_model_creation_client(
 
 @app.middleware("http")
 async def route_timeout_middleware(request: Request, call_next):
-    if request.url.path in {"/load_clip_model", "/load_sentence_transformer_model"}:
+    if request.url.path in {
+        "/load_clip_model",
+        "/load_sentence_transformer_model",
+        "/load_timm_model",
+    }:
         try:
             return await asyncio.wait_for(call_next(request), timeout=600)
         except asyncio.TimeoutError:
@@ -130,6 +148,7 @@ async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageRespon
             model=model_name,
             pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -158,6 +177,7 @@ async def load_sentence_transformer_model(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -170,15 +190,18 @@ async def load_sentence_transformer_model(
 @app.post("/load_timm_model")
 async def load_timm_model(request: TimmModelRequest) -> GenericMessageResponse:
     model_name = request.name
+    pretrained = request.pretrained
 
-    cache_key = (model_name, None)
+    cache_key = (model_name, pretrained)
 
-    client = get_model_creation_client(model_name, None, model_library="timm")
+    client = get_model_creation_client(model_name, pretrained, model_library="timm")
     if client is None:
         client = TritonTimmModelClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -246,6 +269,70 @@ async def repository_models() -> RepositoryModelResponse:
 
         repository_models.append(model_data)
     return {"models": repository_models}
+
+
+@app.post("/download_custom_model")
+async def download_custom_model(
+    request: DownloadCustomModelRequest,
+) -> GenericMessageResponse:
+    model_library = request.library
+    model_name = request.pretrained_name
+    model_url = request.safetensors_url
+
+    if model_library == "open_clip":
+        try:
+            download_custom_open_clip_model(
+                CUSTOM_MODEL_DIR,
+                model_name,
+                model_url,
+                mode=request.mode,
+                mean=request.mean,
+                std=request.std,
+                interpolation=request.interpolation,
+                resize_mode=request.resize_mode,
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error in downloading custom model, original error: {str(e)}",
+            )
+
+    if model_library == "sentence_transformers":
+        try:
+            download_custom_sentence_transformers_model(
+                CUSTOM_MODEL_DIR,
+                model_name,
+                model_url,
+                config_json_url=request.config_json_url,
+                tokenizer_json_url=request.tokenizer_json_url,
+                tokenizer_config_json_url=request.tokenizer_config_json_url,
+                vocab_txt_url=request.vocab_txt_url,
+                special_tokens_map_json_url=request.special_tokens_map_json_url,
+                pooling_config_json_url=request.pooling_config_json_url,
+                sentence_bert_config_json_url=request.sentence_bert_config_json_url,
+                modules_json_url=request.modules_json_url,
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error in downloading custom model, original error: {str(e)}",
+            )
+
+    if model_library == "timm":
+        try:
+            download_custom_timm_model(
+                CUSTOM_MODEL_DIR,
+                model_name,
+                model_url,
+                num_classes=request.num_classes,
+            )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error in downloading custom model, original error: {str(e)}",
+            )
+
+    return {"message": f"Custom model {model_name} downloaded successfully."}
 
 
 if __name__ == "__main__":

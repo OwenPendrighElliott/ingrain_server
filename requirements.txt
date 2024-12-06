@@ -1,5 +1,7 @@
 tritonclient[grpc]
-open-clip-torch==2.27.1
+orjson==3.10.2
+open-clip-torch==2.29.0
+hf_transfer==0.1.8
 torch==2.5.0 --extra-index-url https://download.pytorch.org/whl/cpu
 torchvision==0.20.0 --extra-index-url https://download.pytorch.org/whl/cpu
 pillow==10.4.0

@@ -6,7 +6,7 @@ import numpy as np
 import tritonclient.grpc as grpcclient
 from PIL import Image
 import json
-from ..common import get_text_image_model_names, save_library_name
+from ..common import get_text_image_model_names, save_library_name, custom_model_exists
 from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
 from .clip_converting import (
     onnx_convert_open_clip_model,
@@ -25,7 +25,9 @@ PREPROCESS_CONFIGS = {
 }
 
 
-def create_transforms(model_name: str, pretrained: Union[str, None]):
+def create_transforms(
+    model_name: str, pretrained: Union[str, None], custom_model_dir: str
+):
     """Create the transforms.
 
     Args:
@@ -35,8 +37,14 @@ def create_transforms(model_name: str, pretrained: Union[str, None]):
     Returns:
         Tuple: The text and image model names, preprocess function, and tokenizer.
     """
-
     preprocessor_config = PREPROCESS_CONFIGS[model_name]
+    if custom_model_exists(custom_model_dir, pretrained):
+        with open(
+            os.path.join(custom_model_dir, pretrained, "_ingrain_model_meta.json"), "r"
+        ) as f:
+            model_meta = json.load(f)
+            del model_meta["model_type"]
+            preprocessor_config.update(model_meta)
 
     preprocess = image_transform_v2(
         cfg=PreprocessCfg(**preprocessor_config),
@@ -54,6 +62,7 @@ def create_model_and_transforms_triton(
     model_name: str,
     pretrained: Union[str, None],
     triton_model_repository_path: str,
+    custom_model_dir: str,
 ):
     """Create the model and transforms for Triton.
 
@@ -66,9 +75,33 @@ def create_model_and_transforms_triton(
         Tuple: The text and image model names, preprocess function, and tokenizer.
     """
     config = open_clip.get_model_config(model_name)
-    model, _, preprocess = open_clip.create_model_and_transforms(
-        model_name, pretrained=pretrained
-    )
+    if custom_model_exists(custom_model_dir, pretrained):
+        model_file_path = os.path.join(
+            custom_model_dir, pretrained, "model.safetensors"
+        )
+        model_config_path = os.path.join(
+            custom_model_dir, pretrained, "_ingrain_model_meta.json"
+        )
+
+        with open(model_config_path, "r") as f:
+            model_meta: dict = json.load(f)
+
+        if not model_meta["model_type"] == "open_clip":
+            raise ValueError(
+                f"The custom model {model_name} exists but it is not an open_clip model."
+            )
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            model_name,
+            pretrained=model_file_path,
+            image_mean=model_meta.get("mean"),
+            image_std=model_meta.get("std"),
+            image_interpolation=model_meta.get("interpolation"),
+            image_resize_mode=model_meta.get("resize_mode"),
+        )
+    else:
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            model_name, pretrained=pretrained
+        )
     tokenizer = open_clip.get_tokenizer(model_name)
     friendly_text_name, friendly_image_name = get_text_image_model_names(
         model_name, pretrained
@@ -150,6 +183,7 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
         triton_grpc_url: str,
         model: str,
         pretrained: Union[str, None],
+        custom_model_dir: str,
     ):
         super().__init__(triton_grpc_url)
         self.text_model_name, self.image_model_name = get_text_image_model_names(
@@ -166,7 +200,7 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
                 self.image_model_name,
                 self.preprocess,
                 self.tokenizer,
-            ) = create_transforms(model, pretrained)
+            ) = create_transforms(model, pretrained, custom_model_dir)
 
         self.modalities = {"text", "image"}
 
@@ -237,6 +271,7 @@ class TritonCLIPModelClient(TritonModelLoadingClient):
         model: str,
         pretrained: Union[str, None],
         triton_model_repository_path: str,
+        custom_model_dir: str,
     ):
         super().__init__(triton_grpc_url)
         self.text_model_name, self.image_model_name = get_text_image_model_names(
@@ -252,7 +287,7 @@ class TritonCLIPModelClient(TritonModelLoadingClient):
                 self.preprocess,
                 self.tokenizer,
             ) = create_model_and_transforms_triton(
-                model, pretrained, triton_model_repository_path
+                model, pretrained, triton_model_repository_path, custom_model_dir
             )
             self.triton_client.load_model(self.text_model_name)
             self.triton_client.load_model(self.image_model_name)
@@ -262,7 +297,7 @@ class TritonCLIPModelClient(TritonModelLoadingClient):
                 self.image_model_name,
                 _,
                 _,
-            ) = create_transforms(model, pretrained)
+            ) = create_transforms(model, pretrained, custom_model_dir)
 
         self.modalities = {"text", "image"}
 

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import ORJSONResponse
 import time
 import asyncio
 from inference.api_models.request_models import (
@@ -25,11 +26,15 @@ import tritonclient.grpc as grpcclient
 import os
 from typing import Union
 
+# faster model downloadss
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
+
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
+CUSTOM_MODEL_DIR = "custom_model_files"
 
-app = FastAPI()
+app = FastAPI(default_response_class=ORJSONResponse)
 
 # Model cache and lock
 MODEL_CACHE = LRUModelCache(capacity=5)
@@ -102,6 +107,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
         client = TritonSentenceTransformersInferenceClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -113,6 +119,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
         client = TritonTimmInferenceClient(
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
+            pretrained=pretrained,
             triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
@@ -130,6 +137,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             pretrained=pretrained,
+            custom_model_dir=CUSTOM_MODEL_DIR,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -181,6 +189,7 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
+    image_download_headers = request.image_download_headers
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
@@ -192,7 +201,9 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     if isinstance(images, str):
         images = [images]
 
-    image_data = client.load_images_parallel(images)
+    image_data = client.load_images_parallel(
+        images, image_download_headers=image_download_headers
+    )
 
     if image_data is None:
         raise HTTPException(
@@ -222,6 +233,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
+    image_download_headers = request.image_download_headers
 
     client = client_from_cache(model_name, pretrained)
 
@@ -252,7 +264,9 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
             )
         if isinstance(images, str):
             images = [images]
-        image_datas = client.load_images_parallel(images)
+        image_datas = client.load_images_parallel(
+            images, image_download_headers=image_download_headers
+        )
         tasks.append(
             asyncio.to_thread(client.encode_image, image_datas, normalize, n_dims)
         )

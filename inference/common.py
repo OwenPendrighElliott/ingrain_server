@@ -1,7 +1,10 @@
 import os
 import shutil
-import numpy as np
+import os
+import platform
 from typing import Union, Tuple
+
+MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
 
 
 def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:
@@ -85,3 +88,56 @@ def save_library_name(output_dir: str, library_name: str):
     """
     with open(os.path.join(output_dir, "library_name.txt"), "w") as f:
         f.write(library_name)
+
+
+def is_valid_dir_name(name: str) -> bool:
+    invalid_chars = r'<>:"/\\|?*'
+    reserved_names = (
+        [
+            "CON",
+            "PRN",
+            "AUX",
+            "NUL",
+            *(f"{base}{num}" for base in ["COM", "LPT"] for num in range(1, 10)),
+        ]
+        if platform.system() == "Windows"
+        else []
+    )
+
+    if not name or name.strip() == "":
+        return False
+
+    if any(char in name for char in invalid_chars):
+        return False
+
+    if platform.system() == "Windows" and name.upper() in reserved_names:
+        return False
+
+    if len(name) > 255:
+        return False
+
+    return True
+
+
+def custom_model_exists(
+    custom_model_dir: str,
+    model_name: str,
+) -> bool:
+    """Check if the folder for the custom model exists.
+
+    Args:
+        custom_model_dir (str): The custom model directory.
+        model_name (str): The model name.
+
+    Returns:
+        bool: Whether the custom model exists.
+    """
+
+    if not os.path.exists(custom_model_dir):
+        return False
+
+    model_dir = os.path.join(custom_model_dir, model_name)
+    if not os.path.exists(model_dir):
+        return False
+
+    return True

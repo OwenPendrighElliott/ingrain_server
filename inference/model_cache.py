@@ -84,6 +84,7 @@ class LRUModelCache:
         oldest_key, _ = self.usage_order.popitem(last=False)
         self.data[oldest_key].unload()  # Unload the model
         self.loaded[oldest_key] = False
+        del self.data[oldest_key]
 
     def get_stats(self) -> dict:
         return {

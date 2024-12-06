@@ -6,6 +6,7 @@ import base64
 from open_clip import CustomTextCLIP, CLIP
 from typing import Tuple, Any
 from .open_clip_wrappers import CLIPTextEncoderWrapper
+from ..common import MAX_BATCH_SIZE
 
 
 def convert_image_encoder_to_onnx(
@@ -54,7 +55,7 @@ def generate_text_clip_config(
     config = f"""
 name: "{name}"
 platform: "onnxruntime_onnx"
-max_batch_size: 32
+max_batch_size: {MAX_BATCH_SIZE}
 input [
   {{
     name: "input"
@@ -83,7 +84,7 @@ def generate_image_clip_config(
     config = f"""
 name: "{name}"
 platform: "onnxruntime_onnx"
-max_batch_size: 32
+max_batch_size: {MAX_BATCH_SIZE}
 input [
   {{
     name: "input"
