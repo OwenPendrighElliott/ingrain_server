@@ -50,6 +50,9 @@ class TritonModelInferenceClient:
         c.setopt(c.URL, url)
         c.setopt(c.WRITEDATA, buffer)
         c.setopt(pycurl.CAINFO, certifi.where())
+        c.setopt(c.FOLLOWLOCATION, True)
+        c.setopt(c.CONNECTTIMEOUT, 5)
+        c.setopt(c.TIMEOUT, 10)
         if image_download_headers:
             c.setopt(
                 c.HTTPHEADER, [f"{k}: {v}" for k, v in image_download_headers.items()]
