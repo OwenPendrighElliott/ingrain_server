@@ -18,7 +18,9 @@ def create_model(
 ):
     friendly_name = get_model_name(model_name, pretrained)
 
-    if custom_model_exists(custom_model_dir, pretrained):
+    if isinstance(pretrained, str) and custom_model_exists(
+        custom_model_dir, pretrained
+    ):
         model_file_path = os.path.join(
             custom_model_dir, pretrained, "model.safetensors"
         )
@@ -39,10 +41,20 @@ def create_model(
             checkpoint_path=model_file_path,
             num_classes=model_meta["num_classes"],
         )
-    else:
+    elif isinstance(pretrained, bool):
         model = timm.create_model(model_name, pretrained=pretrained)
+    else:
+        raise ValueError(
+            "Invalid pretrained value. It is string and is not a valid custom model, must be bool for timm models that are not custom."
+        )
 
     model_cfg = timm.get_pretrained_cfg(model_name.split("/")[-1].split(".")[0])
+    if model_cfg is None:
+        model_cfg = timm.models.PretrainedCfg(
+            input_size=model.pretrained_cfg["input_size"],
+            num_classes=model.pretrained_cfg["num_classes"],
+        )
+
     data_config = timm.data.resolve_model_data_config(model)
     preprocess = timm.data.create_transform(**data_config, is_training=False)
 

@@ -7,7 +7,7 @@ from typing import Union, Tuple
 MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
 
 
-def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:
+def get_model_name(model_name: str, pretrained: Union[str, bool, None] = None) -> str:
     """Get the model name.
 
     Args:
@@ -18,7 +18,7 @@ def get_model_name(model_name: str, pretrained: Union[str, None] = None) -> str:
         str: The model name.
     """
     name = model_name.replace("/", "_").replace(":", "___")
-    if pretrained is not None:
+    if pretrained is not None and isinstance(pretrained, str):
         name += f"_{pretrained}"
     return name
 
