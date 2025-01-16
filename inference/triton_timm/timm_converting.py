@@ -15,7 +15,6 @@ def convert_timm_to_onnx(
         dummy_input,
         output_path,
         export_params=True,
-        do_constant_folding=True,
         opset_version=14,
         input_names=["input"],
         output_names=["output"],

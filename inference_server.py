@@ -26,7 +26,7 @@ import tritonclient.grpc as grpcclient
 import os
 from typing import Union
 
-# faster model downloadss
+# faster model downloads
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
 TRITON_GRPC_URL = "localhost:8001"
