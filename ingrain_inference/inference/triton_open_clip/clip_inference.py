@@ -1,19 +1,13 @@
 import numpy as np
 import tritonclient.grpc as grpcclient
 from PIL import Image
-import json
 import os
-from ..preprocessors.image_preprocessor import image_transform_from_dict, ImagePreprocessor
+from ..preprocessors.image_preprocessor import load_image_transform_config
 from ..common import get_text_image_model_names
 from ..model_client import TritonModelInferenceClient
 
 from typing import Union, List, Optional
 
-def load_image_transform_config(preprocess_config_path: str) -> ImagePreprocessor:
-    with open(preprocess_config_path, "r") as f:
-        preprocess_config = json.load(f)
-    return image_transform_from_dict(preprocess_config)
-    
 
 class TritonCLIPInferenceClient(TritonModelInferenceClient):
     def __init__(
@@ -35,10 +29,11 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
             raise ValueError(f"Model {model} is not ready")
         else:
             preprocess_config_path = os.path.join(
-                triton_model_repository_path, self.image_model_name, "image_transform_config.json"
+                triton_model_repository_path,
+                self.image_model_name,
+                "image_transform_config.json",
             )
             self.preprocess = load_image_transform_config(preprocess_config_path)
-            
 
         self.modalities = {"text", "image"}
 

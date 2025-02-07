@@ -2,29 +2,29 @@ from fastapi import FastAPI, Request, HTTPException
 from starlette.responses import JSONResponse
 import os
 import asyncio
-from api_models.request_models import (
+from ingrain_inference.api_models.request_models import (
     GenericModelRequest,
     SentenceTransformerModelRequest,
     OpenCLIPModelRequest,
     TimmModelRequest,
     DownloadCustomModelRequest,
 )
-from api_models.response_models import (
+from ingrain_inference.api_models.response_models import (
     GenericMessageResponse,
     LoadedModelResponse,
     RepositoryModelResponse,
 )
-from inference.triton_open_clip.clip_model import (
+from ingrain_inference.inference.triton_open_clip.clip_model import (
     TritonCLIPModelClient,
 )
-from inference.triton_sentence_transformers.sentence_transformer_model import (
+from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_model import (
     TritonSentenceTransformersModelClient,
 )
-from inference.triton_timm.timm_model import TritonTimmModelClient
+from ingrain_inference.inference.triton_timm.timm_model import TritonTimmModelClient
 
-from inference.model_cache import LRUModelCache
-from inference.common import get_model_name, delete_model_from_repo
-from inference.custom_model_utils import (
+from ingrain_inference.inference.model_cache import LRUModelCache
+from ingrain_inference.inference.common import get_model_name, delete_model_from_repo
+from ingrain_inference.inference.custom_model_utils import (
     download_custom_open_clip_model,
     download_custom_sentence_transformers_model,
     download_custom_timm_model,
@@ -38,6 +38,9 @@ TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
 CUSTOM_MODEL_DIR = "custom_model_files"
+
+# faster model downloads
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
 os.makedirs(CUSTOM_MODEL_DIR, exist_ok=True)
 

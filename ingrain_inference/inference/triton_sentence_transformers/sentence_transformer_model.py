@@ -68,7 +68,6 @@ def create_model(
     return friendly_name, tokenizer
 
 
-
 class TritonSentenceTransformersModelClient(TritonModelLoadingClient):
     def __init__(
         self,

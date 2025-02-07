@@ -4,9 +4,12 @@ import numpy as np
 import timm
 import json
 import os
-import tritonclient.grpc as grpcclient
-from .timm_converting import onnx_convert_timm_model, generate_timm_config
-from ..model_client import TritonModelInferenceClient, TritonModelLoadingClient
+from .timm_converting import (
+    onnx_convert_timm_model,
+    generate_timm_config,
+    image_transform_dict_from_torch_transforms,
+)
+from ..model_client import TritonModelLoadingClient
 from ..common import get_model_name, save_library_name, custom_model_exists
 
 
@@ -74,6 +77,13 @@ def create_model(
             cfg_path, friendly_name, model_cfg.input_size, model_cfg.num_classes
         )
 
+        image_transform_config = image_transform_dict_from_torch_transforms(preprocess)
+        transform_config_path = os.path.join(
+            triton_model_repository_path, friendly_name, "image_transform_config.json"
+        )
+        with open(transform_config_path, "w") as f:
+            json.dump(image_transform_config, f)
+
         save_library_name(
             os.path.join(triton_model_repository_path, friendly_name), "timm"
         )
@@ -87,7 +97,6 @@ def create_model(
             f.write(json.dumps(data_config))
 
     return friendly_name, preprocess
-
 
 
 class TritonTimmModelClient(TritonModelLoadingClient):

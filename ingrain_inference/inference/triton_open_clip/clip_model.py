@@ -9,7 +9,7 @@ from .clip_converting import (
     onnx_convert_open_clip_model,
     generate_image_clip_config,
     generate_text_clip_config,
-    image_transform_dict_from_torch_transforms
+    image_transform_dict_from_torch_transforms,
 )
 
 from typing import Optional, Union, List
@@ -181,6 +181,7 @@ def create_model_and_transforms_triton(
 
     return friendly_text_name, friendly_image_name
 
+
 class TritonCLIPModelClient(TritonModelLoadingClient):
     def __init__(
         self,
@@ -198,13 +199,17 @@ class TritonCLIPModelClient(TritonModelLoadingClient):
         if not self.triton_client.is_model_ready(
             self.text_model_name
         ) or not self.triton_client.is_model_ready(self.image_model_name):
-            self.text_model_name, self.image_model_name = create_model_and_transforms_triton(
-                model, pretrained, triton_model_repository_path, custom_model_dir
+            self.text_model_name, self.image_model_name = (
+                create_model_and_transforms_triton(
+                    model, pretrained, triton_model_repository_path, custom_model_dir
+                )
             )
             self.triton_client.load_model(self.text_model_name)
             self.triton_client.load_model(self.image_model_name)
         else:
-            self.text_model_name, self.image_model_name = create_transforms(model, pretrained, custom_model_dir)
+            self.text_model_name, self.image_model_name = create_transforms(
+                model, pretrained, custom_model_dir
+            )
 
         self.modalities = {"text", "image"}
 

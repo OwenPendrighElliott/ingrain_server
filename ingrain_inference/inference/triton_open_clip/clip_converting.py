@@ -12,6 +12,7 @@ from ..common import MAX_BATCH_SIZE
 
 from typing import List
 
+
 def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict]:
     transform_dict = []
     for transform in transforms.transforms:
@@ -28,24 +29,32 @@ def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict
         elif transform.__name__ == "_convert_to_rgb":
             transform_data = {"type": "ConvertToRGB"}
             transform_dict.append(transform_data)
-        
+
     return transform_dict
+
 
 def decompose_clip_preprocess(preprocess: Compose) -> Tuple[Compose, nn.Sequential]:
     to_tensor_index = preprocess.transforms.index(ToTensor)
-    pre_tensor_transforms = Compose(transforms=preprocess.transforms[:to_tensor_index+1])
-    post_tensor_transforms = nn.Sequential(preprocess.transforms[to_tensor_index+1:])
+    pre_tensor_transforms = Compose(
+        transforms=preprocess.transforms[: to_tensor_index + 1]
+    )
+    post_tensor_transforms = nn.Sequential(preprocess.transforms[to_tensor_index + 1 :])
     return pre_tensor_transforms, post_tensor_transforms
 
 
 def convert_image_encoder_to_onnx(
-    model: torch.nn.Module, dummy_input: Image.Image, preprocess: Compose, output_path: str
+    model: torch.nn.Module,
+    dummy_input: Image.Image,
+    preprocess: Compose,
+    output_path: str,
 ) -> None:
 
     to_tensor_index = preprocess.transforms.index(ToTensor)
     model_with_baked_preprocess = CLIPImageEncoderWrapper(model, preprocess)
 
-    pre_tensor_transforms = Compose(transforms=preprocess.transforms[:to_tensor_index+1])
+    pre_tensor_transforms = Compose(
+        transforms=preprocess.transforms[: to_tensor_index + 1]
+    )
 
     image_dummy_input = pre_tensor_transforms(dummy_input)
 
@@ -156,4 +165,4 @@ def onnx_convert_open_clip_model(
     image = Image.open(BytesIO(base64.b64decode(image_base_64)))
 
     convert_text_encoder_to_onnx(model, text_dummy_input, text_output_path)
-    convert_image_encoder_to_onnx(model, image, image_output_path)
+    convert_image_encoder_to_onnx(model, image, preprocess, image_output_path)

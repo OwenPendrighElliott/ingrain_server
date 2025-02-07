@@ -2,14 +2,12 @@ import json
 import os
 from PIL import Image
 import numpy as np
-import timm
+from ..preprocessors.image_preprocessor import load_image_transform_config
 import tritonclient.grpc as grpcclient
 from ..model_client import TritonModelInferenceClient
 from ..common import get_model_name
 
 from typing import List
-
-
 
 
 class TritonTimmInferenceClient(TritonModelInferenceClient):
@@ -30,18 +28,12 @@ class TritonTimmInferenceClient(TritonModelInferenceClient):
         if not self.triton_client.is_model_ready(self.model_nice_name):
             raise ValueError(f"Model {self.model_name} is not ready on the server.")
         else:
-            with open(
-                os.path.join(
-                    triton_model_repository_path,
-                    self.model_nice_name,
-                    "data_config.json",
-                ),
-                "r",
-            ) as f:
-                data_config = json.load(f)
-            self.preprocess = timm.data.create_transform(
-                **data_config, is_training=False
+            preprocess_config_path = os.path.join(
+                triton_model_repository_path,
+                self.model_nice_name,
+                "image_transform_config.json",
             )
+            self.preprocess = load_image_transform_config(preprocess_config_path)
 
         self.modalities = {"image"}
 
@@ -57,7 +49,7 @@ class TritonTimmInferenceClient(TritonModelInferenceClient):
         if isinstance(image, Image.Image):
             image = [image]
 
-        processed_images = np.stack([self.preprocess(image).numpy() for image in image])
+        processed_images = np.stack([self.preprocess(image) for image in image])
 
         image_inputs = grpcclient.InferInput("input", processed_images.shape, "FP32")
         image_inputs.set_data_from_numpy(processed_images)

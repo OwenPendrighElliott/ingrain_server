@@ -2,11 +2,12 @@ import os
 import json
 import numpy as np
 import tritonclient.grpc as grpcclient
-from transformers import AutoTokenizer
+from tokenizers import Tokenizer, Encoding
 from ..model_client import TritonModelInferenceClient
 from ..common import get_model_name, custom_model_exists
 
 from typing import Union, List, Optional
+
 
 class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
     def __init__(
@@ -33,11 +34,11 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
                         f"The custom model {model} exists but it is not a sentence_transformers model."
                     )
 
-                self.tokenizer = AutoTokenizer.from_pretrained(
+                self.tokenizer = Tokenizer.from_pretrained(
                     os.path.join(custom_model_dir, model)
                 )
             else:
-                self.tokenizer = AutoTokenizer.from_pretrained(model)
+                self.tokenizer: Tokenizer = Tokenizer.from_pretrained(model)
 
         self.modalities = {"text"}
 
@@ -47,11 +48,24 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
         normalize: bool = True,
         n_dims: Optional[int] = None,
     ) -> np.ndarray:
-        tokens = self.tokenizer(
-            text, return_tensors="np", padding=True, truncation=True
+        # tokens = self.tokenizer.en(
+        #     text, return_tensors="np", padding=True, truncation=True
+        # )
+        if isinstance(text, str):
+            text = [text]
+        encoding: List[Encoding] = self.tokenizer.encode_batch(
+            text, is_pretokenized=False
         )
-        input_ids = tokens["input_ids"].astype(np.int64)
-        attention_mask = tokens["attention_mask"].astype(np.int64)
+        max_len = max([len(e.ids) for e in encoding])
+        input_ids = np.zeros((len(encoding), max_len), dtype=np.int64)
+        attention_mask = np.zeros((len(encoding), max_len), dtype=np.int64)
+
+        for i, e in enumerate(encoding):
+            input_ids[i, : len(e.ids)] = e.ids
+            attention_mask[i, : len(e.ids)] = 1
+
+        # input_ids = tokens["input_ids"].astype(np.int64)
+        # attention_mask = tokens["attention_mask"].astype(np.int64)
 
         input_ids_tensor = grpcclient.InferInput("input_ids", input_ids.shape, "INT64")
         attention_mask_tensor = grpcclient.InferInput(

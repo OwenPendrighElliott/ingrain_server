@@ -1,21 +1,21 @@
 import collections
-from ..inference.triton_open_clip.clip_model import (
+from .triton_open_clip.clip_model import (
     TritonCLIPModelClient,
 )
-from ..inference.triton_timm.timm_model import (
+from .triton_timm.timm_model import (
     TritonTimmModelClient,
 )
 
-from ..inference.triton_open_clip.clip_inference import (
+from .triton_open_clip.clip_inference import (
     TritonCLIPInferenceClient,
 )
-from ..inference.triton_timm.timm_inference import (
+from .triton_timm.timm_inference import (
     TritonTimmInferenceClient,
 )
-from ..inference.triton_sentence_transformers.sentence_transformer_model import (
+from .triton_sentence_transformers.sentence_transformer_model import (
     TritonSentenceTransformersModelClient,
 )
-from ..inference.triton_sentence_transformers.sentence_transformer_inference import (
+from .triton_sentence_transformers.sentence_transformer_inference import (
     TritonSentenceTransformersInferenceClient,
 )
 from typing import Union, Dict, Tuple

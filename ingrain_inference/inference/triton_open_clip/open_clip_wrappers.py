@@ -58,18 +58,20 @@ class CLIPImageEncoderWrapper(nn.Module):
         A wrapper that encapsulates the image encoder part of the CLIP model.
         """
         super().__init__()
-       
+
         self.visual = visual
 
         to_tensor_index = transforms.transforms.index(ToTensor)
 
-        self.tensor_transforms = [t for t in transforms.transforms[to_tensor_index+1:]]
+        self.tensor_transforms = [
+            t for t in transforms.transforms[to_tensor_index + 1 :]
+        ]
 
     def forward(self, image):
         """
         Forward pass to encode image.
         """
-        
+
         x = self.tensor_transforms(image)
         x = self.visual(x)
         return x

@@ -2,17 +2,49 @@ import os
 import torch
 from PIL import Image
 from io import BytesIO
+from torchvision.transforms import Compose, ToTensor, Resize
 import base64
+from .timm_wrappers import TimmClassifierWrapper
 from ..common import MAX_BATCH_SIZE
-from typing import Tuple, Any
+from typing import Tuple, List, Any
+
+
+def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict]:
+    transform_dict = []
+    for transform in transforms.transforms:
+        if isinstance(transform, Resize):
+            size = transform.size
+            if isinstance(size, int):
+                size = (size, size)
+            transform_data = {
+                "type": "ResizeImage",
+                "size": size,
+                "method": transform.interpolation,
+            }
+            transform_dict.append(transform_data)
+        elif transform.__name__ == "_convert_to_rgb":
+            transform_data = {"type": "ConvertToRGB"}
+            transform_dict.append(transform_data)
+
+    return transform_dict
 
 
 def convert_timm_to_onnx(
-    model: torch.nn.Module, dummy_input: torch.Tensor, output_path: str
+    model: torch.nn.Module, image: Image.Image, preprocess: Compose, output_path: str
 ) -> None:
+
+    to_tensor_index = preprocess.transforms.index(ToTensor)
+    model_with_baked_preprocess = TimmClassifierWrapper(model, preprocess)
+
+    pre_tensor_transforms = Compose(
+        transforms=preprocess.transforms[: to_tensor_index + 1]
+    )
+
+    image_dummy_input = pre_tensor_transforms(image)
+
     torch.onnx.export(
-        model,
-        dummy_input,
+        model_with_baked_preprocess,
+        image_dummy_input,
         output_path,
         export_params=True,
         opset_version=14,
@@ -63,5 +95,4 @@ def onnx_convert_timm_model(
 
     image = Image.open(BytesIO(base64.b64decode(image_base_64)))
 
-    image_dummy_input = preprocess(image).unsqueeze(0)
-    convert_timm_to_onnx(model, image_dummy_input, image_output_path)
+    convert_timm_to_onnx(model, image, preprocess, image_output_path)
