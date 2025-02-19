@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 from io import BytesIO
 from torchvision.transforms import Compose, ToTensor, Resize
+from timm.data import MaybeToTensor, MaybePILToTensor
 import base64
 from .timm_wrappers import TimmClassifierWrapper
 from ..common import MAX_BATCH_SIZE
@@ -22,7 +23,7 @@ def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict
                 "method": transform.interpolation,
             }
             transform_dict.append(transform_data)
-        elif transform.__name__ == "_convert_to_rgb":
+        elif hasattr(transform, "__name__") and transform.__name__ == "_convert_to_rgb":
             transform_data = {"type": "ConvertToRGB"}
             transform_dict.append(transform_data)
 
@@ -32,15 +33,19 @@ def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict
 def convert_timm_to_onnx(
     model: torch.nn.Module, image: Image.Image, preprocess: Compose, output_path: str
 ) -> None:
-
-    to_tensor_index = preprocess.transforms.index(ToTensor)
+    print(preprocess.transforms)
+    to_tensor_index = next(
+        i
+        for i, t in enumerate(preprocess.transforms)
+        if isinstance(t, (ToTensor, MaybeToTensor, MaybePILToTensor))
+    )
     model_with_baked_preprocess = TimmClassifierWrapper(model, preprocess)
 
     pre_tensor_transforms = Compose(
         transforms=preprocess.transforms[: to_tensor_index + 1]
     )
 
-    image_dummy_input = pre_tensor_transforms(image)
+    image_dummy_input = pre_tensor_transforms(image).unsqueeze(0)
 
     torch.onnx.export(
         model_with_baked_preprocess,

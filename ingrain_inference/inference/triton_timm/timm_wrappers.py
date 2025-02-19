@@ -1,4 +1,5 @@
 import torch
+from timm.data import MaybeToTensor, MaybePILToTensor
 from torch import nn
 from torchvision.transforms import Compose, ToTensor
 
@@ -12,11 +13,15 @@ class TimmClassifierWrapper(nn.Module):
 
         self.visual = visual
 
-        to_tensor_index = transforms.transforms.index(ToTensor)
+        to_tensor_index = next(
+            i
+            for i, t in enumerate(transforms.transforms)
+            if isinstance(t, (ToTensor, MaybeToTensor, MaybePILToTensor))
+        )
 
-        self.tensor_transforms = [
-            t for t in transforms.transforms[to_tensor_index + 1 :]
-        ]
+        self.tensor_transforms = Compose(
+            [t for t in transforms.transforms[to_tensor_index + 1 :]]
+        )
 
     def forward(self, image):
         """
@@ -24,5 +29,6 @@ class TimmClassifierWrapper(nn.Module):
         """
 
         x = self.tensor_transforms(image)
+        print("SHAPESHAPE:", x.shape)
         x = self.visual(x)
         return x

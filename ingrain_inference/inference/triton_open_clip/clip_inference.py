@@ -15,8 +15,8 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
         triton_grpc_url: str,
         model: str,
         pretrained: Union[str, None],
-        triton_model_repository_path: str,
         custom_model_dir: str,
+        triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
         self.text_model_name, self.image_model_name = get_text_image_model_names(

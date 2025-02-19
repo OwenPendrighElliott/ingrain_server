@@ -9,17 +9,24 @@ from ..common import get_model_name, custom_model_exists
 from typing import Union, List, Optional
 
 
+def get_sentence_transformers_parameters(model_dir: str) -> dict:
+    with open(os.path.join(model_dir, "sentence_transformer_config.json"), "r") as f:
+        params = json.load(f)
+    return params
+
+
 class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
     def __init__(
         self,
         triton_grpc_url: str,
         model: str,
         custom_model_dir: str,
+        triton_model_repository_path: str,
     ):
         super().__init__(triton_grpc_url)
 
         self.model_name = get_model_name(model)
-
+        self.meta_parameters = {}
         if not self.triton_client.is_model_ready(self.model_name):
             raise ValueError(f"Model {model} is not ready")
         else:
@@ -33,12 +40,23 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
                     raise ValueError(
                         f"The custom model {model} exists but it is not a sentence_transformers model."
                     )
-
+                self.meta_parameters = get_sentence_transformers_parameters(
+                    os.path.join(custom_model_dir, model)
+                )
                 self.tokenizer = Tokenizer.from_pretrained(
                     os.path.join(custom_model_dir, model)
                 )
+                self.tokenizer.enable_truncation(
+                    max_length=self.meta_parameters["max_length"]
+                )
             else:
+                self.meta_parameters = get_sentence_transformers_parameters(
+                    triton_model_repository_path, self.model_name
+                )
                 self.tokenizer: Tokenizer = Tokenizer.from_pretrained(model)
+                self.tokenizer.enable_truncation(
+                    max_length=self.meta_parameters["max_length"]
+                )
 
         self.modalities = {"text"}
 
@@ -48,9 +66,6 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
         normalize: bool = True,
         n_dims: Optional[int] = None,
     ) -> np.ndarray:
-        # tokens = self.tokenizer.en(
-        #     text, return_tensors="np", padding=True, truncation=True
-        # )
         if isinstance(text, str):
             text = [text]
         encoding: List[Encoding] = self.tokenizer.encode_batch(

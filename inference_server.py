@@ -110,6 +110,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             custom_model_dir=CUSTOM_MODEL_DIR,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -140,6 +141,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
             model=model_name,
             pretrained=pretrained,
             custom_model_dir=CUSTOM_MODEL_DIR,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)

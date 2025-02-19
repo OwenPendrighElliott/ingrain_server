@@ -65,6 +65,17 @@ def create_model(
         "sentence_transformers",
     )
 
+    with open(
+        os.path.join(
+            triton_model_repository_path,
+            friendly_name,
+            "sentence_transformer_config.json",
+        ),
+        "w+",
+    ) as f:
+        data = {"max_length": model._modules["0"].max_seq_length}
+        json.dump(data, f)
+
     return friendly_name, tokenizer
 
 

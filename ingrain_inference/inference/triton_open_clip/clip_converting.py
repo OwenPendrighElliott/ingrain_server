@@ -26,7 +26,7 @@ def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict
                 "method": transform.interpolation,
             }
             transform_dict.append(transform_data)
-        elif transform.__name__ == "_convert_to_rgb":
+        elif hasattr(transform, "__name__") and transform.__name__ == "_convert_to_rgb":
             transform_data = {"type": "ConvertToRGB"}
             transform_dict.append(transform_data)
 
