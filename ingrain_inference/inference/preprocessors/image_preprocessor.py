@@ -6,52 +6,64 @@ from typing import List
 
 
 class ImagePreprocessor:
-    def __init__(self, steps: list, return_numpy: bool = True):
+    def __init__(
+        self,
+        steps: list,
+    ):
         self.steps = steps
-        self.return_numpy = return_numpy
 
-    def __call__(self, image: Image.Image) -> Image.Image:
+    def __call__(self, image: Image.Image) -> np.ndarray:
         for step in self.steps:
             image = step(image)
 
-        if self.return_numpy:
-            return np.array(image)
-        return image
+        image = np.array(image, dtype=np.float32)
+        image = image / 255.0
+        image = np.moveaxis(image, -1, 0)
+        return np.array(image)
 
 
-class ImageTransformBase:
+class ParameterisedImageTransformBase:
     def __call__(self, image: Image.Image) -> Image.Image:
         raise NotImplementedError
 
     @classmethod
-    def from_dict(data: dict):
+    def from_dict(cls, data: dict):
         raise NotImplementedError
 
 
-class ResizeImage(ImageTransformBase):
-    def __init__(self, size: tuple | list, method: int = Image.Resampling.BILINEAR):
+class NonParameterisedImageTransformBase:
+    def __call__(self, image: Image.Image) -> Image.Image:
+        raise NotImplementedError
+
+    @classmethod
+    def from_dict(cls):
+        raise NotImplementedError
+
+
+class ResizeImage(ParameterisedImageTransformBase):
+    def __init__(self, size: tuple | list, method: int = 2):
         if len(size) != 2:
             raise ValueError("Size must be a tuple of 2 integers")
         self.size = size
         self.method = method
 
     def __call__(self, image: Image.Image) -> Image.Image:
-        return image.resize(self.size, self.method)
+        return image.resize(self.size, resample=self.method)
 
     @classmethod
-    def from_dict(data: dict):
+    def from_dict(cls, data: dict):
         if "size" not in data:
             raise ValueError("Size is required for the resize transform")
 
         return ResizeImage(data["size"], data.get("method", Image.Resampling.BILINEAR))
 
 
-class ConvertToRGB:
+class ConvertToRGB(NonParameterisedImageTransformBase):
     def __call__(self, image: Image.Image) -> Image.Image:
         return image.convert("RGB")
 
     @classmethod
-    def from_dict(_: dict):
+    def from_dict(cls):
         return ConvertToRGB()
 
 
@@ -63,7 +75,7 @@ def image_transform_from_dict(data: List[dict]) -> ImagePreprocessor:
             case "ResizeImage":
                 transform = ResizeImage.from_dict(t_dict)
             case "ConvertToRGB":
-                transform = ConvertToRGB.from_dict(t_dict)
+                transform = ConvertToRGB.from_dict()
             case _:
                 raise ValueError(f"Unknown transform type: {t_dict['type']}")
         transforms.append(transform)

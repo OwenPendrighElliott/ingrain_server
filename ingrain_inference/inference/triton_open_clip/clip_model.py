@@ -9,6 +9,11 @@ from .clip_converting import (
     onnx_convert_open_clip_model,
     generate_image_clip_config,
     generate_text_clip_config,
+    # image_transform_dict_from_torch_transforms,
+)
+from .tokenizer_tools.export_tokenizer import export_tokenizer
+
+from ..torchvision_transform_conversion import (
     image_transform_dict_from_torch_transforms,
 )
 
@@ -179,6 +184,11 @@ def create_model_and_transforms_triton(
     with open(transform_config_path, "w") as f:
         json.dump(image_transform_config, f)
 
+    export_tokenizer(
+        tokenizer,
+        os.path.join(triton_model_repository_path, friendly_text_name, "tokenizer"),
+    )
+
     return friendly_text_name, friendly_image_name
 
 
@@ -206,10 +216,6 @@ class TritonCLIPModelClient(TritonModelLoadingClient):
             )
             self.triton_client.load_model(self.text_model_name)
             self.triton_client.load_model(self.image_model_name)
-        else:
-            self.text_model_name, self.image_model_name = create_transforms(
-                model, pretrained, custom_model_dir
-            )
 
         self.modalities = {"text", "image"}
 

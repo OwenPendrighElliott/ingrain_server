@@ -1,10 +1,12 @@
 import pytest
 from unittest.mock import MagicMock
-from inference.triton_open_clip.clip_model import TritonCLIPModelClient
-from inference.triton_sentence_transformers.sentence_transformer_model import (
+from ingrain_inference.inference.triton_open_clip.clip_model import (
+    TritonCLIPModelClient,
+)
+from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_model import (
     TritonSentenceTransformersModelClient,
 )
-from inference.model_cache import LRUModelCache
+from ingrain_inference.inference.model_cache import LRUModelCache
 
 
 @pytest.fixture

@@ -7,8 +7,12 @@ import os
 from .timm_converting import (
     onnx_convert_timm_model,
     generate_timm_config,
+    # image_transform_dict_from_torch_transforms,
+)
+from ..torchvision_transform_conversion import (
     image_transform_dict_from_torch_transforms,
 )
+
 from ..model_client import TritonModelLoadingClient
 from ..common import get_model_name, save_library_name, custom_model_exists
 

@@ -29,6 +29,5 @@ class TimmClassifierWrapper(nn.Module):
         """
 
         x = self.tensor_transforms(image)
-        print("SHAPESHAPE:", x.shape)
         x = self.visual(x)
         return x

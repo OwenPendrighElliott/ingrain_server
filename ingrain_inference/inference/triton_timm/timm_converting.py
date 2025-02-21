@@ -7,33 +7,12 @@ from timm.data import MaybeToTensor, MaybePILToTensor
 import base64
 from .timm_wrappers import TimmClassifierWrapper
 from ..common import MAX_BATCH_SIZE
-from typing import Tuple, List, Any
-
-
-def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict]:
-    transform_dict = []
-    for transform in transforms.transforms:
-        if isinstance(transform, Resize):
-            size = transform.size
-            if isinstance(size, int):
-                size = (size, size)
-            transform_data = {
-                "type": "ResizeImage",
-                "size": size,
-                "method": transform.interpolation,
-            }
-            transform_dict.append(transform_data)
-        elif hasattr(transform, "__name__") and transform.__name__ == "_convert_to_rgb":
-            transform_data = {"type": "ConvertToRGB"}
-            transform_dict.append(transform_data)
-
-    return transform_dict
+from typing import Tuple, Any
 
 
 def convert_timm_to_onnx(
     model: torch.nn.Module, image: Image.Image, preprocess: Compose, output_path: str
 ) -> None:
-    print(preprocess.transforms)
     to_tensor_index = next(
         i
         for i, t in enumerate(preprocess.transforms)

@@ -10,28 +10,6 @@ from typing import Tuple, Any
 from .open_clip_wrappers import CLIPTextEncoderWrapper, CLIPImageEncoderWrapper
 from ..common import MAX_BATCH_SIZE
 
-from typing import List
-
-
-def image_transform_dict_from_torch_transforms(transforms: Compose) -> List[dict]:
-    transform_dict = []
-    for transform in transforms.transforms:
-        if isinstance(transform, Resize):
-            size = transform.size
-            if isinstance(size, int):
-                size = (size, size)
-            transform_data = {
-                "type": "ResizeImage",
-                "size": size,
-                "method": transform.interpolation,
-            }
-            transform_dict.append(transform_data)
-        elif hasattr(transform, "__name__") and transform.__name__ == "_convert_to_rgb":
-            transform_data = {"type": "ConvertToRGB"}
-            transform_dict.append(transform_data)
-
-    return transform_dict
-
 
 def decompose_clip_preprocess(preprocess: Compose) -> Tuple[Compose, nn.Sequential]:
     to_tensor_index = preprocess.transforms.index(ToTensor)
@@ -49,14 +27,16 @@ def convert_image_encoder_to_onnx(
     output_path: str,
 ) -> None:
 
-    to_tensor_index = preprocess.transforms.index(ToTensor)
+    to_tensor_index = next(
+        i for i, t in enumerate(preprocess.transforms) if isinstance(t, ToTensor)
+    )
     model_with_baked_preprocess = CLIPImageEncoderWrapper(model, preprocess)
 
     pre_tensor_transforms = Compose(
         transforms=preprocess.transforms[: to_tensor_index + 1]
     )
 
-    image_dummy_input = pre_tensor_transforms(dummy_input)
+    image_dummy_input = pre_tensor_transforms(dummy_input).unsqueeze(0)
 
     torch.onnx.export(
         model_with_baked_preprocess,

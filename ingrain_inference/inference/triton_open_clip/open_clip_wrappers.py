@@ -61,11 +61,13 @@ class CLIPImageEncoderWrapper(nn.Module):
 
         self.visual = visual
 
-        to_tensor_index = transforms.transforms.index(ToTensor)
+        to_tensor_index = next(
+            i for i, t in enumerate(transforms.transforms) if isinstance(t, ToTensor)
+        )
 
-        self.tensor_transforms = [
-            t for t in transforms.transforms[to_tensor_index + 1 :]
-        ]
+        self.tensor_transforms = nn.Sequential(
+            *[t for t in transforms.transforms[to_tensor_index + 1 :]]
+        )
 
     def forward(self, image):
         """

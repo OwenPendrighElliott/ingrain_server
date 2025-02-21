@@ -51,7 +51,7 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
                 )
             else:
                 self.meta_parameters = get_sentence_transformers_parameters(
-                    triton_model_repository_path, self.model_name
+                    os.path.join(triton_model_repository_path, self.model_name)
                 )
                 self.tokenizer: Tokenizer = Tokenizer.from_pretrained(model)
                 self.tokenizer.enable_truncation(

@@ -94,7 +94,6 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
         return client
 
     nice_model_name = get_model_name(model_name, pretrained)
-    print(nice_model_name)
     model_library = get_model_library(model_name, pretrained)
     if not model_library:
         return None
