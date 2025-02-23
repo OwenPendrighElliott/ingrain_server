@@ -19,7 +19,7 @@ Open CLIP models and sentence transformers are both converted to ONNX and served
 
 ## How does it perform?
 
-It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~1050 QPS, or `intfloat/e5-base-v2` to 500 clients at ~860 QPS.
+It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 100 clients at ~1310 QPS, or `intfloat/e5-base-v2` to 500 clients at ~1158 QPS.
 
 ## How compatible is it?
 

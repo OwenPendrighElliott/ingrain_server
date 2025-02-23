@@ -14,8 +14,8 @@ CLIP_MODEL_NAME = "MobileCLIP-S2"
 CLIP_PRETRAINED = "datacompdr"
 MODEL_DIM = 512
 INDEXING_BATCH_SIZE = 512
-NUM_THREADS = 10
-BATCH_SIZE = 1
+NUM_THREADS = 8
+BATCH_SIZE = 4
 
 
 # Function to process a batch of images and get their embeddings
@@ -75,7 +75,7 @@ def main():
     # Use ThreadPoolExecutor to parallelize batch processing
     with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
         for batch_results in tqdm(
-            executor.map(process_batch, batches), total=len(batches)
+            executor.map(process_batch, batches), total=len(batches),  unit="image", unit_scale=BATCH_SIZE, desc="Processing images", ascii=True
         ):
             for filename, embedding in batch_results:
                 embeddings.append(embedding)

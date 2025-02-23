@@ -11,7 +11,7 @@ HNSWLIB_SERVER_URL = "http://localhost:8685"
 MODEL_NAME = "intfloat/e5-small-v2"
 MODEL_DIM = 384
 NUM_THREADS = 20
-BATCH_SIZE = 2
+BATCH_SIZE = 4
 INDEX_NAME = "scidocs_index"
 PASSAGE_PREFIX = "passage: "
 INDEXING_BATCH_SIZE = 512
@@ -71,7 +71,7 @@ i = 0
 # Use ThreadPoolExecutor to parallelize batch processing
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
     # Wrap the map with tqdm for progress tracking
-    for batch_results in tqdm(executor.map(process_batch, batches), total=len(batches)):
+    for batch_results in tqdm(executor.map(process_batch, batches), total=len(batches), unit="doc", unit_scale=BATCH_SIZE, desc="Processing documents", ascii=True):
         if batch_results:
             for doc_id, embedding in batch_results:
                 embeddings.append(embedding)

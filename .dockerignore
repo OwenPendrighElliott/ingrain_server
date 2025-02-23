@@ -1,9 +1,23 @@
+# Python
 venv/
+__pycache__/
+README.md
+
+# Git
+.git
+.gitignore
+.github/
 model_repository/
+
+# Build files
+docker/
+
+# Repo files
+docs/
+examples/
+
+# Test Files
+tests
+.pytest_cache/
 custom_model_files/
 playspace/
-__pycache__/
-.pytest_cache/
-tests
-examples/
-README.md
