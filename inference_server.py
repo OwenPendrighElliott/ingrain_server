@@ -2,32 +2,34 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import ORJSONResponse
 import time
 import asyncio
-from inference.api_models.request_models import (
+from ingrain_inference.api_models.request_models import (
     InferenceRequest,
     TextInferenceRequest,
     ImageInferenceRequest,
 )
-from inference.api_models.response_models import (
+from ingrain_inference.api_models.response_models import (
     InferenceResponse,
     TextInferenceResponse,
     ImageInferenceResponse,
     GenericMessageResponse,
     MetricsResponse,
 )
-from inference.triton_open_clip.clip_model import TritonCLIPInferenceClient
-from inference.triton_sentence_transformers.sentence_transformer_model import (
+from ingrain_inference.inference.triton_open_clip.clip_inference import (
+    TritonCLIPInferenceClient,
+)
+from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_inference import (
     TritonSentenceTransformersInferenceClient,
 )
-from inference.triton_timm.timm_model import TritonTimmInferenceClient
-from inference.common import get_model_name
-from inference.model_cache import LRUModelCache
+from ingrain_inference.inference.triton_timm.timm_inference import (
+    TritonTimmInferenceClient,
+)
+from ingrain_inference.inference.common import get_model_name
+from ingrain_inference.inference.model_cache import LRUModelCache
 from threading import Lock
 import tritonclient.grpc as grpcclient
 import os
 from typing import Union
 
-# faster model downloads
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
 TRITON_GRPC_URL = "localhost:8001"
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
@@ -92,7 +94,6 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
         return client
 
     nice_model_name = get_model_name(model_name, pretrained)
-    print(nice_model_name)
     model_library = get_model_library(model_name, pretrained)
     if not model_library:
         return None
@@ -108,6 +109,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
             triton_grpc_url=TRITON_GRPC_URL,
             model=model_name,
             custom_model_dir=CUSTOM_MODEL_DIR,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)
@@ -138,6 +140,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
             model=model_name,
             pretrained=pretrained,
             custom_model_dir=CUSTOM_MODEL_DIR,
+            triton_model_repository_path=TRITON_MODEL_REPOSITORY_PATH,
         )
         with MODEL_CACHE_LOCK:
             MODEL_CACHE.put(cache_key, client)

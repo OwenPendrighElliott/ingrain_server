@@ -1,5 +1,6 @@
 # Ingrain Server
 
+> __This project is under active development, expect breaking changes between versions until v1.0.0.__
 
 This is a wrapper for [Triton Inference Server](https://developer.nvidia.com/triton-inference-server) that makes using it with sentence transformers and open CLIP models easy.
 
