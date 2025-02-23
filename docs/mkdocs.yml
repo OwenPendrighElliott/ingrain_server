@@ -1,0 +1,26 @@
+
+site_name: Ingrain Documentation
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.tabs
+
+markdown_extensions:
+  - codehilite
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+
+plugins:
+  - search
+  - codeinclude
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - Model Server API: model_server.md
+  - Inference Server API: inference_server.md
