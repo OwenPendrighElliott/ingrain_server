@@ -9,9 +9,6 @@ README.md
 .github/
 model_repository/
 
-# Build files
-docker/
-
 # Repo files
 docs/
 examples/

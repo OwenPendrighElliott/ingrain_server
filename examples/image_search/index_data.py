@@ -75,7 +75,12 @@ def main():
     # Use ThreadPoolExecutor to parallelize batch processing
     with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
         for batch_results in tqdm(
-            executor.map(process_batch, batches), total=len(batches),  unit="image", unit_scale=BATCH_SIZE, desc="Processing images", ascii=True
+            executor.map(process_batch, batches),
+            total=len(batches),
+            unit="image",
+            unit_scale=BATCH_SIZE,
+            desc="Processing images",
+            ascii=True,
         ):
             for filename, embedding in batch_results:
                 embeddings.append(embedding)

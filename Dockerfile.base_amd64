@@ -1,12 +1,15 @@
+
 #
 # Multistage build.
 #
-ARG TRITON_VERSION=2.48.0
-ARG TRITON_CONTAINER_VERSION=24.11
+ARG TRITON_VERSION=2.54.0
+ARG TRITON_CONTAINER_VERSION=25.01
 
-FROM nvcr.io/nvidia/tritonserver:${TRITON_CONTAINER_VERSION}-py3 AS full
+FROM nvcr.io/nvidia/tritonserver:25.01-py3 AS full
 
-FROM nvcr.io/nvidia/tritonserver:${TRITON_CONTAINER_VERSION}-py3-min
+FROM nvcr.io/nvidia/tritonserver:25.01-py3-min
+
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 ARG TRITON_VERSION
 ARG TRITON_CONTAINER_VERSION
@@ -31,6 +34,7 @@ ENV TRITON_SERVER_GPU_ENABLED    1
 # artifacts copied below are assign to this user.
 ENV TRITON_SERVER_USER=triton-server
 RUN userdel tensorrt-server > /dev/null 2>&1 || true \
+      && userdel ubuntu > /dev/null 2>&1 || true \
       && if ! id -u $TRITON_SERVER_USER > /dev/null 2>&1 ; then \
           useradd $TRITON_SERVER_USER; \
         fi \
@@ -54,23 +58,23 @@ RUN apt-get update \
               libgoogle-perftools-dev \
               libjemalloc-dev \
               libnuma-dev \
-              libre2-9 \
               software-properties-common \
               wget \
               libgomp1 \
+              python3-pip \
       && rm -rf /var/lib/apt/lists/*
 
 # Set TCMALLOC_RELEASE_RATE for users setting LD_PRELOAD with tcmalloc
 ENV TCMALLOC_RELEASE_RATE 200
 
-ENV DCGM_VERSION 3.2.6
+ENV DCGM_VERSION 3.3.6
 # Install DCGM. Steps from https://developer.nvidia.com/dcgm#Downloads
 RUN curl -o /tmp/cuda-keyring.deb \
-          https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb \
+          https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb \
       && apt install /tmp/cuda-keyring.deb \
       && rm /tmp/cuda-keyring.deb \
       && apt-get update \
-      && apt-get install -y datacenter-gpu-manager=1:3.2.6
+      && apt-get install -y datacenter-gpu-manager=1:3.3.6
 
 # Extra defensive wiring for CUDA Compat lib
 RUN ln -sf ${_CUDA_COMPAT_PATH}/lib.real ${_CUDA_COMPAT_PATH}/lib \
@@ -83,9 +87,9 @@ RUN rm -fr /opt/tritonserver/*
 ENV NVIDIA_PRODUCT_NAME="Triton Server"
 COPY docker/entrypoint.d/ /opt/nvidia/entrypoint.d/
 
-ENV NVIDIA_BUILD_ID 101814615
-LABEL com.nvidia.build.id=101814615
-LABEL com.nvidia.build.ref=b28cfeda16bcb5d398119f5f03ac50403659380f
+ENV NVIDIA_BUILD_ID 136230209
+LABEL com.nvidia.build.id=136230209
+LABEL com.nvidia.build.ref=ed3acc9acf4c657986a4e42b3dceaad3f3d9bad0
 
 WORKDIR /opt/tritonserver
 COPY --chown=1000:1000 --from=full /opt/tritonserver/LICENSE .
@@ -104,3 +108,8 @@ RUN chown triton-server:triton-server /opt/tritonserver/backends
 
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 COPY --chown=1000:1000 --from=full /usr/bin/serve /usr/bin/.
+
+RUN apt-get autoremove -y \
+      && apt-get clean -y \
+      && rm -rf /var/lib/apt/lists/* \
+      && rm -rf /tmp/*

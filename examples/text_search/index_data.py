@@ -71,7 +71,14 @@ i = 0
 # Use ThreadPoolExecutor to parallelize batch processing
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
     # Wrap the map with tqdm for progress tracking
-    for batch_results in tqdm(executor.map(process_batch, batches), total=len(batches), unit="doc", unit_scale=BATCH_SIZE, desc="Processing documents", ascii=True):
+    for batch_results in tqdm(
+        executor.map(process_batch, batches),
+        total=len(batches),
+        unit="doc",
+        unit_scale=BATCH_SIZE,
+        desc="Processing documents",
+        ascii=True,
+    ):
         if batch_results:
             for doc_id, embedding in batch_results:
                 embeddings.append(embedding)

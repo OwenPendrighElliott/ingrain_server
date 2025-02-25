@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TAG=0.0.3
+TAG=0.0.4
 
 PUSH_IMAGES=false
 if [[ "$1" == "--push" ]]; then
@@ -17,18 +17,21 @@ build_and_push() {
     if [ "$PUSH_IMAGES" = true ]; then
         echo "Pushing $tag to Docker Hub..."
         docker push "$tag"
+        echo "Pushing $version_tag to Docker Hub..."
+        docker push "$version_tag"
     fi
 }
 
 # Build CPU image for linux/arm64
-build_and_push "linux/arm64" "owenpelliott/ingrain-base:arm64" "owenpelliott/ingrain-server:$TAG-arm64" "owenpelliott/ingrain-server:$TAG-arm64"
+build_and_push "linux/arm64" "owenpelliott/ingrain-base:arm64" "owenpelliott/ingrain-server:latest-arm64" "owenpelliott/ingrain-server:$TAG-arm64"
 
 # Build image for linux/amd64
-build_and_push "linux/amd64" "owenpelliott/ingrain-base:amd64" "owenpelliott/ingrain-server:$TAG-amd64" "owenpelliott/ingrain-server:$TAG-amd64"
+build_and_push "linux/amd64" "owenpelliott/ingrain-base:amd64" "owenpelliott/ingrain-server:latest-amd64" "owenpelliott/ingrain-server:$TAG-amd64"
 
 # Check if docker manifest exists and create it if needed
 echo "Creating multi-arch image..."
 docker manifest rm owenpelliott/ingrain-server:latest 2>/dev/null
+docker manifest rm owenpelliott/ingrain-server:$TAG 2>/dev/null
 
 docker manifest create owenpelliott/ingrain-server:latest \
     --amend owenpelliott/ingrain-server:latest-arm64 \
