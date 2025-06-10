@@ -30,7 +30,6 @@ class CLIPTextEncoderWrapper(nn.Module):
         # Token embedding and adding positional encoding
         x = self.token_embedding(text).to(cast_dtype)  # [batch_size, n_ctx, d_model]
         x = x + self.positional_embedding.to(cast_dtype)
-
         # Passing through the transformer
         x = self.transformer(x, attn_mask=self.attn_mask)
 
@@ -39,7 +38,7 @@ class CLIPTextEncoderWrapper(nn.Module):
 
         text = text.to(torch.int32)
         # Pooling to get final representation
-        x, _ = text_global_pool(x, text, self.text_pool_type)
+        x = text_global_pool(x, text, self.text_pool_type)
 
         # Project the text embedding if the projection layer exists
         if self.text_projection is not None:
@@ -48,7 +47,6 @@ class CLIPTextEncoderWrapper(nn.Module):
             else:
                 x = x @ self.text_projection
 
-        # Optionally normalize the output
         return x
 
 

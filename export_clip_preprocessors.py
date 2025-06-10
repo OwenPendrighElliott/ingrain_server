@@ -4,7 +4,9 @@ import json
 
 
 def main():
-    config_dir = os.path.join("inference", "triton_open_clip", "preprocessors")
+    config_dir = os.path.join(
+        "ingrain_inference", "inference", "triton_open_clip", "preprocessors"
+    )
     os.makedirs(config_dir, exist_ok=True)
 
     exported_model_configs = set(f.split(".")[0] for f in os.listdir(config_dir))
@@ -14,9 +16,11 @@ def main():
 
     for model, pretrained in checkpoints:
         if model in models or model in exported_model_configs:
+            print(f"Skipping already processed model: {model}")
             continue
 
         try:
+            print(f"Processing model: {model} with pretrained: {pretrained}")
             _, _, preprocess = open_clip.create_model_and_transforms(
                 model, pretrained=pretrained
             )

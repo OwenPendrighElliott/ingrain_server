@@ -121,7 +121,7 @@ def is_valid_dir_name(name: str) -> bool:
 
 def custom_model_exists(
     custom_model_dir: str,
-    model_name: str,
+    model_name: str | None,
 ) -> bool:
     """Check if the folder for the custom model exists.
 
@@ -132,6 +132,9 @@ def custom_model_exists(
     Returns:
         bool: Whether the custom model exists.
     """
+
+    if model_name is None:
+        return False
 
     if not os.path.exists(custom_model_dir):
         return False

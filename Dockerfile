@@ -1,17 +1,18 @@
-# ARG to specify the base image
-ARG BASE_IMAGE=owenpelliott/ingrain-base:amd64
-
 # Use the base image specified in the build argument
-FROM ${BASE_IMAGE}
+FROM python:3.13.4-slim-bookworm
 
 # Install the required packages
-RUN apt-get update && apt-get install -y python3-pip python3-venv supervisor
+RUN apt-get update && apt-get install -y supervisor
 
 # Set the working directory
 WORKDIR /app
 
 # Copy only requirements.txt first to take advantage of Docker's cache
 COPY requirements.txt /app
+
+RUN mkdir -p /app/model_cache/
+
+ENV HF_HOME=/app/model_cache/
 
 # Install Python dependencies
 RUN pip install --upgrade pip --ignore-installed pip && \

@@ -8,6 +8,7 @@ README.md
 .gitignore
 .github/
 model_repository/
+model_cache/
 
 # Repo files
 docs/

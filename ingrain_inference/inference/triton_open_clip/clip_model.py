@@ -2,6 +2,7 @@ import os
 import open_clip
 from open_clip.transform import image_transform_v2
 from open_clip.transform import PreprocessCfg
+from huggingface_hub import hf_hub_download
 import json
 from ..common import get_text_image_model_names, save_library_name, custom_model_exists
 from ..model_client import TritonModelLoadingClient
@@ -78,6 +79,15 @@ def create_model_and_transforms_triton(
         Tuple: The text and image model names, preprocess function, and tokenizer.
     """
     config = open_clip.get_model_config(model_name)
+    if config is None and model_name.startswith("hf-hub:"):
+        config_path = hf_hub_download(
+            repo_id=model_name.split("hf-hub:")[1],
+            library_name="open_clip",
+            filename="open_clip_config.json",
+        )
+        with open(config_path, "r") as f:
+            config = json.load(f)["model_cfg"]
+
     if custom_model_exists(custom_model_dir, pretrained):
         model_file_path = os.path.join(
             custom_model_dir, pretrained, "model.safetensors"
