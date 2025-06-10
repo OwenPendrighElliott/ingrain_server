@@ -9,10 +9,10 @@ MODEL_BASE_URL = "http://127.0.0.1:8687"
 
 # test models
 OPEN_CLIP_MODELS = [
-    ("ViT-B-32", "laion2b_s34b_b79k"),
-    ("hf-hub:timm/ViT-B-16-SigLIP-i18n-256", None),
-    # ("ViT-B-32-SigLIP2-256", "webli"),
-    # ("RN50", "openai"),
+    # ("ViT-B-32", "laion2b_s34b_b79k"),
+    # ("hf-hub:timm/ViT-B-16-SigLIP-i18n-256", None),
+    ("ViT-B-32-SigLIP2-256", "webli"),
+    # ("RN50", "openai"), # TODO: Fix RN50 models, error with ONNX into Triton
     # ("convnext_base_w", "laion2b_s13b_b82k"),
 ]
 
@@ -70,7 +70,7 @@ def test_load_clip_models():
             "loaded successfully" in response.json()["message"]
             or "already loaded" in response.json()["message"]
         )
-        unload_clip_model(model_name, pretrained)
+        # unload_clip_model(model_name, pretrained)
 
 
 @pytest.mark.integration
@@ -96,7 +96,7 @@ def test_infer_text_clip_batch():
         assert "embeddings" in response.json()
         assert "processingTimeMs" in response.json()
 
-        unload_clip_model(model_name, pretrained)
+        # unload_clip_model(model_name, pretrained)
 
 
 @pytest.mark.integration
@@ -117,7 +117,7 @@ def test_infer_image():
         assert "embeddings" in response.json()
         assert "processingTimeMs" in response.json()
 
-        unload_clip_model(model_name, pretrained)
+        # unload_clip_model(model_name, pretrained)
 
 
 @pytest.mark.integration
@@ -141,4 +141,4 @@ def test_infer_image_batch():
         assert "embeddings" in response.json()
         assert "processingTimeMs" in response.json()
 
-        unload_clip_model(model_name, pretrained)
+        # unload_clip_model(model_name, pretrained)

@@ -45,10 +45,15 @@ services:
       - ./model_repository:/models
     restart:
       always
-
 ```
 
 To run without a GPU comment out the `runtime: nvidia` in the triton container.
+
+Spin up the server with:
+
+```bash
+docker compose up
+```
 
 ## What does it do?
 

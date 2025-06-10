@@ -173,10 +173,14 @@ def create_model_and_transforms_triton(
         config["embed_dim"],
     )
 
+    image_size = model.visual.preprocess_cfg["size"]
+    if isinstance(image_size, int):
+        image_size = (image_size, image_size)
+
     generate_image_clip_config(
         os.path.join(triton_model_repository_path, friendly_image_name),
         friendly_image_name,
-        (3, *model.visual.preprocess_cfg["size"]),
+        (3, *image_size),
         config["embed_dim"],
     )
 

@@ -89,9 +89,6 @@ def download_open_clip_model():
 @pytest.mark.custom_model
 def test_download_open_clip_model():
     response = download_open_clip_model()
-    print(response.status_code)
-    print(response.text)
-    print(response.json())
     assert response.status_code == 200
     assert "custom_mobile_clip" in response.json()["message"]
     assert "downloaded successfully" in response.json()["message"]

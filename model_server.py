@@ -264,13 +264,14 @@ async def loaded_models() -> LoadedModelResponse:
 @app.get("/repository_models")
 async def repository_models() -> RepositoryModelResponse:
     model_repo_information = TRITON_CLIENT.get_model_repository_index(as_json=True)
+    print(model_repo_information)
     repository_models = []
     for model in model_repo_information.get("models", []):
         model_data = {"name": model["name"]}
-        if "state" in model:
-            model_data["state"] = model["state"]
+        model_data["state"] = model.get("state", "NOT READY")
 
         repository_models.append(model_data)
+    print(repository_models)
     return {"models": repository_models}
 
 

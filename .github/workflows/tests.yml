@@ -3,6 +3,7 @@ name: Ingrain Server Unit Tests
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
 
   push:
     branches: [main]

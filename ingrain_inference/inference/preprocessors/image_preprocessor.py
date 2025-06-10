@@ -9,6 +9,7 @@ class ImageTransformBase:
     def __call__(self, image: Image.Image) -> Image.Image:
         raise NotImplementedError
 
+
 class ParameterisedImageTransformBase(ImageTransformBase):
     @classmethod
     def from_dict(cls, data: dict):
@@ -19,6 +20,7 @@ class NonParameterisedImageTransformBase(ImageTransformBase):
     @classmethod
     def from_dict(cls):
         raise NotImplementedError
+
 
 class ImagePreprocessor:
     def __init__(
@@ -35,6 +37,7 @@ class ImagePreprocessor:
         image = image / 255.0
         image = np.moveaxis(image, -1, 0)
         return np.array(image)
+
 
 class ResizeImage(ParameterisedImageTransformBase):
     def __init__(self, size: tuple | list, method: int = 2):

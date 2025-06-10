@@ -25,7 +25,7 @@ def get_model_name(model_name: str, pretrained: Union[str, bool, None] = None) -
 
 def get_text_image_model_names(
     model_name: str, pretrained: Union[str, None] = None
-) -> Tuple[str]:
+) -> Tuple[str, str]:
     """Get the text and image encoder model names.
 
     Args:
@@ -35,9 +35,7 @@ def get_text_image_model_names(
     Returns:
         Tuple[str]: The text and image encoder model names.
     """
-    name = model_name.replace("/", "_")
-    if pretrained is not None:
-        name += f"_{pretrained}"
+    name = get_model_name(model_name, pretrained)
 
     text_encoder_name = name + "_text_encoder"
     image_encoder_name = name + "_image_encoder"
