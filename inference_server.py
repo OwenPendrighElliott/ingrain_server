@@ -23,7 +23,7 @@ from ingrain_inference.inference.triton_sentence_transformers.sentence_transform
 from ingrain_inference.inference.triton_timm.timm_inference import (
     TritonTimmInferenceClient,
 )
-from ingrain_inference.inference.common import get_model_name
+from ingrain_common.common import get_model_name
 from ingrain_inference.inference.model_cache import LRUModelCache
 from threading import Lock
 import tritonclient.grpc as grpcclient
@@ -162,6 +162,10 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
     text = request.text
     normalize = request.normalize
     n_dims = request.n_dims
+
+    print(f"Received text inference request for model: {model_name}, pretrained: {pretrained}")
+    print(f"Text: {text}")
+    print(f"Normalize: {normalize}, n_dims: {n_dims}")
 
     client = client_from_cache(model_name, pretrained)
     if client is None:
