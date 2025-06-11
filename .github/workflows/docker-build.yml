@@ -1,104 +1,114 @@
-name: Build and Push Docker Images
+name: Build & Push multi-arch image
 
 on:
   push:
     tags:
       - '*'
 
+env:
+  IMAGE_NAME: owenpelliott/ingrain-server 
+
 jobs:
-  build-arm64-server:
-    name: Build and Push ARM64 Server Image
+  build-arm64:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.value }} 
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Extract Git Tag
-        id: extract_tag
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Build and Push ARM64 Server Image
+      - name: Build & push linux/arm64 image
         env:
-          TAG: ${{ env.TAG }}
+          TAG:   ${{ github.ref_name }}
+          IMAGE: ${{ env.IMAGE_NAME }}
         run: |
-          docker buildx build --platform linux/arm64 \
-            -t owenpelliott/ingrain-server:latest-arm64 \
-            -t owenpelliott/ingrain-server:${TAG}-arm64 \
-            . --push
+          docker buildx build \
+            --platform linux/arm64 \
+            -t $IMAGE:latest-arm64 \
+            -t $IMAGE:${TAG}-arm64 \
+            --push .
 
-  build-amd64-server:
-    name: Build and Push AMD64 Server Image
+      - id: digest
+        env:
+          TAG:   ${{ github.ref_name }}
+          IMAGE: ${{ env.IMAGE_NAME }}
+        run: |
+          d=$(docker buildx imagetools inspect $IMAGE:${TAG}-arm64 \
+               --format '{{ .Digest }}')
+          echo "value=$d" >> "$GITHUB_OUTPUT"
+
+  build-amd64:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.value }}
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Extract Git Tag
-        id: extract_tag
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Build and Push AMD64 Server Image
+      - name: Build & push linux/amd64 image
         env:
-          TAG: ${{ env.TAG }}
+          TAG:   ${{ github.ref_name }}
+          IMAGE: ${{ env.IMAGE_NAME }}
         run: |
-          docker buildx build --platform linux/amd64 \
-            -t owenpelliott/ingrain-server:latest-amd64 \
-            -t owenpelliott/ingrain-server:${TAG}-amd64 \
-            . --push
+          docker buildx build \
+            --platform linux/amd64 \
+            -t $IMAGE:latest-amd64 \
+            -t $IMAGE:${TAG}-amd64 \
+            --push .
+
+      - id: digest
+        env:
+          TAG:   ${{ github.ref_name }}
+          IMAGE: ${{ env.IMAGE_NAME }}
+        run: |
+          d=$(docker buildx imagetools inspect $IMAGE:${TAG}-amd64 \
+               --format '{{ .Digest }}')
+          echo "value=$d" >> "$GITHUB_OUTPUT"
 
   create-manifest:
-    name: Create and Push Multi-Arch Manifest
     runs-on: ubuntu-latest
-    needs: [build-arm64-server, build-amd64-server]
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    needs: [build-arm64, build-amd64]
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Extract Git Tag
-        id: extract_tag
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Create and Push Multi-Arch Manifest
+      - name: Create & push multi-arch manifest
         env:
-          TAG: ${{ env.TAG }}
+          IMAGE:        ${{ env.IMAGE_NAME }}
+          TAG:          ${{ github.ref_name }}
+          ARM_DIGEST:   ${{ needs.build-arm64.outputs.digest }}
+          AMD_DIGEST:   ${{ needs.build-amd64.outputs.digest }}
         run: |
-          docker manifest create owenpelliott/ingrain-server:latest \
-            --amend owenpelliott/ingrain-server:latest-arm64 \
-            --amend owenpelliott/ingrain-server:latest-amd64
+          set -eux
 
-          docker manifest create owenpelliott/ingrain-server:${TAG} \
-            --amend owenpelliott/ingrain-server:${TAG}-arm64 \
-            --amend owenpelliott/ingrain-server:${TAG}-amd64
+          docker manifest rm $IMAGE:latest 2>/dev/null || true
+          docker manifest rm $IMAGE:$TAG    2>/dev/null || true
 
-          docker manifest push owenpelliott/ingrain-server:latest
-          docker manifest push owenpelliott/ingrain-server:${TAG}
+          docker manifest create $IMAGE:latest \
+            $IMAGE@${ARM_DIGEST} \
+            $IMAGE@${AMD_DIGEST}
+
+          docker manifest create $IMAGE:$TAG \
+            $IMAGE@${ARM_DIGEST} \
+            $IMAGE@${AMD_DIGEST}
+
+          docker manifest push $IMAGE:latest
+          docker manifest push $IMAGE:$TAG
