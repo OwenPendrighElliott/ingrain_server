@@ -10,6 +10,13 @@ def test_get_model_name():
     assert get_model_name("model/name", None) == "model_name"
 
 
+def test_hf_hub_model_name():
+    assert (
+        get_model_name("hf-hub:timm/ViT-b-16-SigLIP2-256", None)
+        == "hf-hub___timm_ViT-b-16-SigLIP2-256"
+    )
+
+
 def test_get_text_image_model_names():
     text_encoder, image_encoder = get_text_image_model_names("model/name")
     assert text_encoder == "model_name_text_encoder"

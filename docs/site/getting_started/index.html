@@ -560,7 +560,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - LD_PRELOAD=/usr/lib/$(uname -m)-linux-gnu/libtcmalloc.so.4
-    shm_size: &quot;1g&quot;
+    shm_size: &quot;256m&quot;
     command: &gt;
       tritonserver
       --model-repository=/models

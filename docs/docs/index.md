@@ -32,7 +32,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - LD_PRELOAD=/usr/lib/$(uname -m)-linux-gnu/libtcmalloc.so.4
-    shm_size: "1g"
+    shm_size: "256m"
     command: >
       tritonserver
       --model-repository=/models

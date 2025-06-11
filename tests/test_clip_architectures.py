@@ -1,8 +1,5 @@
 import pytest
 import requests
-import numpy as np
-
-from typing import Literal
 
 INFERENCE_BASE_URL = "http://127.0.0.1:8686"
 MODEL_BASE_URL = "http://127.0.0.1:8687"

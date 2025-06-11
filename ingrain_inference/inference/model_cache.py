@@ -1,12 +1,12 @@
 import collections
-from .triton_open_clip.clip_inference import (
+from ingrain_inference.inference.triton_open_clip.clip_inference import (
     TritonCLIPInferenceClient,
 )
-from .triton_timm.timm_inference import (
+from ingrain_inference.inference.triton_timm.timm_inference import (
     TritonTimmInferenceClient,
 )
 
-from .triton_sentence_transformers.sentence_transformer_inference import (
+from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_inference import (
     TritonSentenceTransformersInferenceClient,
 )
 from typing import Union, Dict, Tuple
