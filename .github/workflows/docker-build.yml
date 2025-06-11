@@ -33,10 +33,6 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ env.TAG }}
-            ${{ env.IMAGE_NAME }}:latest-amd64
-            ${{ env.IMAGE_NAME }}:${{ env.TAG }}-amd64
-            ${{ env.IMAGE_NAME }}:latest-arm64
-            ${{ env.IMAGE_NAME }}:${{ env.TAG }}-arm64
 
       - name: Inspect manifest
         run: docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ env.TAG }}
