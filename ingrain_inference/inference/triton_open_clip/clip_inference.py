@@ -4,9 +4,11 @@ from PIL import Image
 from tokenizers import Tokenizer, Encoding
 import os
 import json
-from ..preprocessors.image_preprocessor import load_image_transform_config
-from ..common import get_text_image_model_names
-from ..model_client import TritonModelInferenceClient
+from ingrain_inference.inference.preprocessors.image_preprocessor import (
+    load_image_transform_config,
+)
+from ingrain_common.common import get_text_image_model_names
+from ingrain_inference.inference.inference_client import TritonModelInferenceClient
 
 from typing import Union, List, Optional
 

@@ -1,4 +1,4 @@
-from ingrain_inference.inference.common import (
+from ingrain_common.common import (
     get_model_name,
     get_text_image_model_names,
 )
@@ -8,6 +8,13 @@ def test_get_model_name():
     assert get_model_name("model/name") == "model_name"
     assert get_model_name("model/name", "pretrained") == "model_name_pretrained"
     assert get_model_name("model/name", None) == "model_name"
+
+
+def test_hf_hub_model_name():
+    assert (
+        get_model_name("hf-hub:timm/ViT-b-16-SigLIP2-256", None)
+        == "hf-hub___timm_ViT-b-16-SigLIP2-256"
+    )
 
 
 def test_get_text_image_model_names():

@@ -1,21 +1,12 @@
 import collections
-from .triton_open_clip.clip_model import (
-    TritonCLIPModelClient,
-)
-from .triton_timm.timm_model import (
-    TritonTimmModelClient,
-)
-
-from .triton_open_clip.clip_inference import (
+from ingrain_inference.inference.triton_open_clip.clip_inference import (
     TritonCLIPInferenceClient,
 )
-from .triton_timm.timm_inference import (
+from ingrain_inference.inference.triton_timm.timm_inference import (
     TritonTimmInferenceClient,
 )
-from .triton_sentence_transformers.sentence_transformer_model import (
-    TritonSentenceTransformersModelClient,
-)
-from .triton_sentence_transformers.sentence_transformer_inference import (
+
+from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_inference import (
     TritonSentenceTransformersInferenceClient,
 )
 from typing import Union, Dict, Tuple
@@ -27,10 +18,9 @@ class LRUModelCache:
         self.data: Dict[
             Tuple[str, Union[str, None]],
             Union[
-                TritonCLIPModelClient,
-                TritonSentenceTransformersModelClient,
                 TritonCLIPInferenceClient,
                 TritonSentenceTransformersInferenceClient,
+                TritonTimmInferenceClient,
             ],
         ] = {}
         self.loaded: Dict[Tuple[str, Union[str, None]], bool] = {}
@@ -52,8 +42,7 @@ class LRUModelCache:
             del self.usage_order[key]
 
     def get(self, key: Tuple[str, Union[str, None]]) -> Union[
-        TritonCLIPModelClient,
-        TritonSentenceTransformersModelClient,
+        TritonTimmInferenceClient,
         TritonCLIPInferenceClient,
         TritonSentenceTransformersInferenceClient,
         None,
@@ -76,8 +65,7 @@ class LRUModelCache:
         self,
         key: Tuple[str, Union[str, None]],
         value: Union[
-            TritonCLIPModelClient,
-            TritonSentenceTransformersModelClient,
+            TritonTimmInferenceClient,
             TritonCLIPInferenceClient,
             TritonSentenceTransformersInferenceClient,
         ],

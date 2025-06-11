@@ -3,16 +3,61 @@
 
 Ingrain is a wrapper for [Triton Inference Server](https://developer.nvidia.com/triton-inference-server) that makes using it with sentence transformers and open CLIP models easy.
 
-To use:
-```bash
-docker run --name ingrain_server -p 8686:8686 -p 8687:8687 --gpus all owenpelliott/ingrain-server:latest
+For more detailed getting started instructions, please see the [getting started guide](getting_started/index.html).
+
+The recommended way to run Ingrain locally is via Docker with a docker compose file to network with triton.
+
+```yml
+version: "3.9"
+
+services:
+  ingrain:
+    image: owenpelliott/ingrain-server:latest
+    container_name: ingrain
+    ports:
+      - "8686:8686"
+      - "8687:8687"
+    environment:
+      TRITON_GRPC_URL: triton:8001
+      MAX_BATCH_SIZE: 8
+    depends_on:
+      - triton
+    volumes:
+      - ./model_repository:/app/model_repository 
+      - ${HOME}/.cache/huggingface:/app/model_cache/
+  triton:
+    image: nvcr.io/nvidia/tritonserver:25.04-py3
+    container_name: triton
+    runtime: nvidia # comment out if not using GPU
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - LD_PRELOAD=/usr/lib/$(uname -m)-linux-gnu/libtcmalloc.so.4
+    shm_size: "256m"
+    command: >
+      tritonserver
+      --model-repository=/models
+      --model-control-mode=explicit
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    volumes:
+      - ./model_repository:/models
+    restart:
+      always
 ```
 
-To run without a GPU remove the `--gpus all` flag.
+To run without a GPU comment out the `runtime: nvidia` in the triton container.
+
+Spin up the server with:
+
+```bash
+docker compose up
+```
 
 ## Usage
 
-The serve is available via a REST API, there is also a Python client available.
+The server is available via a REST API, there is also a Python client available.
 
 ```bash
 pip install ingrain

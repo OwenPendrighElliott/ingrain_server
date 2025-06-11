@@ -5,10 +5,27 @@ import json
 from typing import List
 
 
+class ImageTransformBase:
+    def __call__(self, image: Image.Image) -> Image.Image:
+        raise NotImplementedError
+
+
+class ParameterisedImageTransformBase(ImageTransformBase):
+    @classmethod
+    def from_dict(cls, data: dict):
+        raise NotImplementedError
+
+
+class NonParameterisedImageTransformBase(ImageTransformBase):
+    @classmethod
+    def from_dict(cls):
+        raise NotImplementedError
+
+
 class ImagePreprocessor:
     def __init__(
         self,
-        steps: list,
+        steps: list[ImageTransformBase],
     ):
         self.steps = steps
 
@@ -20,24 +37,6 @@ class ImagePreprocessor:
         image = image / 255.0
         image = np.moveaxis(image, -1, 0)
         return np.array(image)
-
-
-class ParameterisedImageTransformBase:
-    def __call__(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedError
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        raise NotImplementedError
-
-
-class NonParameterisedImageTransformBase:
-    def __call__(self, image: Image.Image) -> Image.Image:
-        raise NotImplementedError
-
-    @classmethod
-    def from_dict(cls):
-        raise NotImplementedError
 
 
 class ResizeImage(ParameterisedImageTransformBase):

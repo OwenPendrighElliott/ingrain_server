@@ -4,12 +4,57 @@
 
 This is a wrapper for [Triton Inference Server](https://developer.nvidia.com/triton-inference-server) that makes using it with sentence transformers and open CLIP models easy.
 
-To use:
-```bash
-docker run --name ingrain_server -p 8686:8686 -p 8687:8687 --gpus all owenpelliott/ingrain-server:latest
+Ingrain server works in tandem with Triton to automate much of the process for serving OpenCLIP, sentence transformers, and timm models. 
+
+The easiest way to get started is with a docker compose file, which will run Triton and the Ingrain server.
+
+```yml
+version: "3.9"
+
+services:
+  ingrain:
+    image: owenpelliott/ingrain-server:latest
+    container_name: ingrain
+    ports:
+      - "8686:8686"
+      - "8687:8687"
+    environment:
+      TRITON_GRPC_URL: triton:8001
+      MAX_BATCH_SIZE: 8
+    depends_on:
+      - triton
+    volumes:
+      - ./model_repository:/app/model_repository 
+      - ${HOME}/.cache/huggingface:/app/model_cache/
+  triton:
+    image: nvcr.io/nvidia/tritonserver:25.04-py3
+    container_name: triton
+    runtime: nvidia # comment out if not using GPU
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - LD_PRELOAD=/usr/lib/$(uname -m)-linux-gnu/libtcmalloc.so.4
+    shm_size: "256m"
+    command: >
+      tritonserver
+      --model-repository=/models
+      --model-control-mode=explicit
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    volumes:
+      - ./model_repository:/models
+    restart:
+      always
 ```
 
-To run without a GPU remove the `--gpus all` flag.
+To run without a GPU comment out the `runtime: nvidia` in the triton container.
+
+Spin up the server with:
+
+```bash
+docker compose up
+```
 
 ## What does it do?
 
@@ -157,16 +202,10 @@ Details omitted for brevity.
 
 ## Build Container Locally
 
-Build the Docker image:
+You can build and run Ingrain with docker locally by using the included docker compose file.
 
 ```bash
-docker build -t ingrain-server .
-```
-
-Run the Docker container:
-
-```bash
-docker run --name ingrain_server -p 8686:8686 -p 8687:8687 --gpus all ingrain-server
+docker compose up --build
 ```
 
 ## Performance test

@@ -4,7 +4,9 @@ import json
 
 
 def main():
-    config_dir = os.path.join("inference", "triton_open_clip", "preprocessors")
+    config_dir = os.path.join(
+        "ingrain_inference", "inference", "triton_open_clip", "preprocessors"
+    )
     os.makedirs(config_dir, exist_ok=True)
 
     exported_model_configs = set(f.split(".")[0] for f in os.listdir(config_dir))
@@ -21,7 +23,6 @@ def main():
                 model, pretrained=pretrained
             )
         except RuntimeError as e:
-            print(f"Error creating model {model}: {e}")
             continue
 
         models.append(model)

@@ -1,4 +1,5 @@
 model_repository/
+model_cache/
 examples/image_search_vecdb/
 playspace/
 custom_model_files/

@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.342714a4.min.css">
       
       
 
@@ -106,11 +106,13 @@
     
     
     
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
@@ -142,6 +144,7 @@
     </div>
   </div>
 </div>
+      
     
     
   </nav>
@@ -161,12 +164,14 @@
         
   
   
+  
     
   
   
     <li class="md-tabs__item md-tabs__item--active">
       <a href="." class="md-tabs__link">
         
+  
   
     
   
@@ -181,9 +186,11 @@
   
   
   
+  
     <li class="md-tabs__item">
       <a href="getting_started/" class="md-tabs__link">
         
+  
   
     
   
@@ -198,9 +205,11 @@
   
   
   
+  
     <li class="md-tabs__item">
       <a href="model_server/" class="md-tabs__link">
         
+  
   
     
   
@@ -215,9 +224,11 @@
   
   
   
+  
     <li class="md-tabs__item">
       <a href="inference_server/" class="md-tabs__link">
         
+  
   
     
   
@@ -280,6 +291,7 @@
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
+  
   <span class="md-ellipsis">
     Home
     
@@ -291,6 +303,7 @@
       
       <a href="." class="md-nav__link md-nav__link--active">
         
+  
   
   <span class="md-ellipsis">
     Home
@@ -369,6 +382,7 @@
       <a href="getting_started/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Getting Started
     
@@ -390,6 +404,7 @@
       <a href="model_server/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Model Server API
     
@@ -410,6 +425,7 @@
     <li class="md-nav__item">
       <a href="inference_server/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Inference Server API
@@ -502,12 +518,52 @@
 
 <h1 id="welcome">Welcome<a class="headerlink" href="#welcome" title="Permanent link">&para;</a></h1>
 <p>Ingrain is a wrapper for <a href="https://developer.nvidia.com/triton-inference-server">Triton Inference Server</a> that makes using it with sentence transformers and open CLIP models easy.</p>
-<p>To use:
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--name<span class="w"> </span>ingrain_server<span class="w"> </span>-p<span class="w"> </span><span class="m">8686</span>:8686<span class="w"> </span>-p<span class="w"> </span><span class="m">8687</span>:8687<span class="w"> </span>--gpus<span class="w"> </span>all<span class="w"> </span>owenpelliott/ingrain-server:latest
-</code></pre></div></p>
-<p>To run without a GPU remove the <code>--gpus all</code> flag.</p>
+<p>For more detailed getting started instructions, please see the <a href="getting_started/index.html">getting started guide</a>.</p>
+<p>The recommended way to run Ingrain locally is via Docker with a docker compose file to network with triton.</p>
+<div class="highlight"><pre><span></span><code>version: &quot;3.9&quot;
+
+services:
+  ingrain:
+    image: owenpelliott/ingrain-server:latest
+    container_name: ingrain
+    ports:
+      - &quot;8686:8686&quot;
+      - &quot;8687:8687&quot;
+    environment:
+      TRITON_GRPC_URL: triton:8001
+      MAX_BATCH_SIZE: 8
+    depends_on:
+      - triton
+    volumes:
+      - ./model_repository:/app/model_repository 
+      - ${HOME}/.cache/huggingface:/app/model_cache/
+  triton:
+    image: nvcr.io/nvidia/tritonserver:25.04-py3
+    container_name: triton
+    runtime: nvidia # comment out if not using GPU
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - LD_PRELOAD=/usr/lib/$(uname -m)-linux-gnu/libtcmalloc.so.4
+    shm_size: &quot;256m&quot;
+    command: &gt;
+      tritonserver
+      --model-repository=/models
+      --model-control-mode=explicit
+    ports:
+      - &quot;8000:8000&quot;
+      - &quot;8001:8001&quot;
+      - &quot;8002:8002&quot;
+    volumes:
+      - ./model_repository:/models
+    restart:
+      always
+</code></pre></div>
+<p>To run without a GPU comment out the <code>runtime: nvidia</code> in the triton container.</p>
+<p>Spin up the server with:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>up
+</code></pre></div>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>The serve is available via a REST API, there is also a Python client available.</p>
+<p>The server is available via a REST API, there is also a Python client available.</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>ingrain
 </code></pre></div>
 <h2 id="what-does-it-do">What does it do?<a class="headerlink" href="#what-does-it-do" title="Permanent link">&para;</a></h2>
@@ -563,10 +619,12 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": ["content.code.copy", "content.code.annotate", "navigation.tabs"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+      
+      <script id="__config" type="application/json">{"base": ".", "features": ["content.code.copy", "content.code.annotate", "navigation.tabs"], "search": "assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="assets/javascripts/bundle.13a4f30d.min.js"></script>
       
     
   </body>

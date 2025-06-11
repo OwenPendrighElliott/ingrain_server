@@ -3,8 +3,8 @@ import json
 import numpy as np
 import tritonclient.grpc as grpcclient
 from tokenizers import Tokenizer, Encoding
-from ..model_client import TritonModelInferenceClient
-from ..common import get_model_name, custom_model_exists
+from ingrain_inference.inference.inference_client import TritonModelInferenceClient
+from ingrain_common.common import get_model_name, custom_model_exists
 
 from typing import Union, List, Optional
 

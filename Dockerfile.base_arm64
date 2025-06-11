@@ -1,8 +1,0 @@
-
-#
-# Multistage build.
-#
-ARG TRITON_VERSION=2.54.0
-ARG TRITON_CONTAINER_VERSION=25.01
-
-FROM nvcr.io/nvidia/tritonserver:${TRITON_CONTAINER_VERSION}-py3

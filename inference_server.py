@@ -23,7 +23,7 @@ from ingrain_inference.inference.triton_sentence_transformers.sentence_transform
 from ingrain_inference.inference.triton_timm.timm_inference import (
     TritonTimmInferenceClient,
 )
-from ingrain_inference.inference.common import get_model_name
+from ingrain_common.common import get_model_name
 from ingrain_inference.inference.model_cache import LRUModelCache
 from threading import Lock
 import tritonclient.grpc as grpcclient
@@ -31,7 +31,7 @@ import os
 from typing import Union
 
 
-TRITON_GRPC_URL = "localhost:8001"
+TRITON_GRPC_URL = os.getenv("TRITON_GRPC_URL", "localhost:8001")
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
 CUSTOM_MODEL_DIR = "custom_model_files"

@@ -1,11 +1,12 @@
-import json
 import os
 from PIL import Image
 import numpy as np
-from ..preprocessors.image_preprocessor import load_image_transform_config
+from ingrain_inference.inference.preprocessors.image_preprocessor import (
+    load_image_transform_config,
+)
 import tritonclient.grpc as grpcclient
-from ..model_client import TritonModelInferenceClient
-from ..common import get_model_name
+from ingrain_inference.inference.inference_client import TritonModelInferenceClient
+from ingrain_common.common import get_model_name
 
 from typing import List
 

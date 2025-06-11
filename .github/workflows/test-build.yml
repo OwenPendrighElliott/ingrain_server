@@ -1,0 +1,39 @@
+name: PR Build Check
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-arm64-server:
+    name: Build ARM64 Server Image (PR Check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build ARM64 Server Image
+        run: |
+          docker buildx build --platform linux/arm64 \
+            -t test-arm64-server \
+            . --load
+
+  build-amd64-server:
+    name: Build AMD64 Server Image (PR Check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build AMD64 Server Image
+        run: |
+          docker buildx build --platform linux/amd64 \
+            -t test-amd64-server \
+            . --load
