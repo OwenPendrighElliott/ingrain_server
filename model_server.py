@@ -16,7 +16,12 @@ from ingrain_models.api_models.response_models import (
 )
 from ingrain_models.models.model_client import TritonModelLoadingClient
 
-from ingrain_common.common import delete_model_from_repo
+from ingrain_common.common import (
+    delete_model_from_repo,
+    get_library_name,
+    get_model_name,
+    get_text_image_model_names,
+)
 from ingrain_models.models.custom_model_utils import (
     download_custom_open_clip_model,
     download_custom_sentence_transformers_model,
@@ -40,17 +45,6 @@ os.makedirs(CUSTOM_MODEL_DIR, exist_ok=True)
 
 app = FastAPI()
 
-MODEL_CACHE: Dict[
-    Tuple[str, str | None],
-    Tuple[
-        str,
-        str | None,
-        Literal["open_clip", "sentence_transformers", "timm"],
-        Literal["loaded", "unloaded"],
-    ],
-] = {}
-CACHE_LOCK = Lock()
-
 
 def count_loaded_models() -> int:
     """Count the number of currently loaded models in the Triton server."""
@@ -58,30 +52,30 @@ def count_loaded_models() -> int:
         as_json=True
     )
     models = [
-        model
+        model["name"].replace("_text_encoder", "").replace("_image_encoder", "")
         for model in model_repo_information.get("models", [])
         if "state" in model and model["state"] == "READY"
     ]
+    models = list(set(models))
     return len(models), models
 
 
-def update_model_cache(
-    model_name: str,
-    pretrained: Union[str, None],
-    model_library: Literal["open_clip", "sentence_transformers", "timm"] | None,
-    operation: Literal["load", "unload", "delete"],
-) -> None:
-    cache_key = (model_name, pretrained)
-    with CACHE_LOCK:
-        if operation == "load":
-            MODEL_CACHE[cache_key] = (model_name, pretrained, model_library, "loaded")
-        elif operation == "unload":
-            MODEL_CACHE[cache_key] = (model_name, pretrained, model_library, "unloaded")
-        elif operation == "delete":
-            if cache_key in MODEL_CACHE:
-                del MODEL_CACHE[cache_key]
+def get_library_name_for_model(model_name: str, pretrained: Union[str, None]) -> str:
+    triton_model_name = get_model_name(model_name, pretrained)
+    try:
+        library_name = get_library_name(
+            os.path.join(TRITON_MODEL_REPOSITORY_PATH, triton_model_name)
+        )
+    except FileNotFoundError:
+        try:
+            text_triton_name, _ = get_text_image_model_names(model_name, pretrained)
+            library_name = get_library_name(
+                os.path.join(TRITON_MODEL_REPOSITORY_PATH, text_triton_name)
+            )
+        except FileNotFoundError:
+            library_name = None
 
-    print(MODEL_CACHE)
+    return library_name
 
 
 def get_model_creation_client(
@@ -144,14 +138,12 @@ async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageRespon
                 detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(model['name'] for model in models)}",
             )
     else:
-        update_model_cache(model_name, pretrained, "open_clip", operation="load")
         return {
             "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
         }
 
     try:
         client.load()
-        update_model_cache(model_name, pretrained, "open_clip", operation="load")
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
@@ -176,7 +168,6 @@ async def load_sentence_transformer_model(
         if not client.is_in_repository():
             client.create_triton_model()
     except ValueError as e:
-        print(e)
         raise HTTPException(
             status_code=400,
             detail=f"Error in creating model client: {str(e)}",
@@ -184,21 +175,16 @@ async def load_sentence_transformer_model(
 
     if not client.is_ready():
         loaded_models, models = count_loaded_models()
-        print(loaded_models, models)
         if loaded_models >= MAX_LOADED_MODELS:
             raise HTTPException(
                 status_code=503,
                 detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(model['name'] for model in models)}",
             )
     else:
-        update_model_cache(model_name, None, "open_clip", operation="load")
-        return {
-            "message": f"Model {model_name} is already loaded."
-        }
+        return {"message": f"Model {model_name} is already loaded."}
 
     try:
         client.load()
-        update_model_cache(model_name, None, "open_clip", operation="load")
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
@@ -231,14 +217,12 @@ async def load_timm_model(request: TimmModelRequest) -> GenericMessageResponse:
                 detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(model['name'] for model in models)}",
             )
     else:
-        update_model_cache(model_name, pretrained, "open_clip", operation="load")
         return {
             "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
         }
 
     try:
         client.load()
-        update_model_cache(model_name, pretrained, "open_clip", operation="load")
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
@@ -255,20 +239,28 @@ async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
     model_name = request.name
     pretrained = request.pretrained
 
-    print(model_name, pretrained)
-    print(MODEL_CACHE)
-    print(TRITON_CLIENT.get_model_repository_index())
-
-    with CACHE_LOCK:
-        _, _, model_library, _ = MODEL_CACHE.get(
-            (model_name, pretrained), (None, None, None, None)
+    model_library = get_library_name_for_model(model_name, pretrained)
+    triton_model_name = get_model_name(model_name, pretrained)
+    if model_library == "open_clip":
+        text_triton_name, image_triton_name = get_text_image_model_names(
+            model_name, pretrained
         )
-        if model_library is None:
-            update_model_cache(model_name, pretrained, model_library, operation="unload")
-            raise HTTPException(
-                status_code=404,
-                detail=f"Model {model_name} with checkpoint {pretrained} is not loaded.",
-            )
+        ready = TRITON_CLIENT.is_model_ready(
+            text_triton_name
+        ) and TRITON_CLIENT.is_model_ready(image_triton_name)
+    else:
+        ready = TRITON_CLIENT.is_model_ready(triton_model_name)
+
+    if model_library and not ready:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded.",
+        )
+    if not model_library:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_name} with checkpoint {pretrained} does not exist in the repository.",
+        )
 
     client = get_model_creation_client(
         model_name, pretrained, model_library=model_library
@@ -276,7 +268,6 @@ async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
 
     try:
         client.unload()
-        update_model_cache(model_name, pretrained, model_library, operation="unload")
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
@@ -292,13 +283,9 @@ async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
     model_name = request.name
     pretrained = request.pretrained
 
-    with CACHE_LOCK:
-        _, _, model_library, state = MODEL_CACHE.get(
-            (model_name, pretrained), (None, None, None, None)
-        )
+    model_library = get_library_name_for_model(model_name, pretrained)
 
-    if state is None:
-        update_model_cache(model_name, pretrained, model_library, operation="delete")
+    if not model_library:
         raise HTTPException(
             status_code=404,
             detail=f"Model {model_name} with checkpoint {pretrained} does not exist.",
@@ -311,7 +298,6 @@ async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
     try:
         client.unload()
         delete_model_from_repo(model_name, pretrained, TRITON_MODEL_REPOSITORY_PATH)
-        update_model_cache(model_name, pretrained, model_library, operation="delete")
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,

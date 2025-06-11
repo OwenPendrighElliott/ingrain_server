@@ -16,16 +16,13 @@ def main():
 
     for model, pretrained in checkpoints:
         if model in models or model in exported_model_configs:
-            print(f"Skipping already processed model: {model}")
             continue
 
         try:
-            print(f"Processing model: {model} with pretrained: {pretrained}")
             _, _, preprocess = open_clip.create_model_and_transforms(
                 model, pretrained=pretrained
             )
         except RuntimeError as e:
-            print(f"Error creating model {model}: {e}")
             continue
 
         models.append(model)

@@ -163,10 +163,6 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
     normalize = request.normalize
     n_dims = request.n_dims
 
-    print(f"Received text inference request for model: {model_name}, pretrained: {pretrained}")
-    print(f"Text: {text}")
-    print(f"Normalize: {normalize}, n_dims: {n_dims}")
-
     client = client_from_cache(model_name, pretrained)
     if client is None:
         raise HTTPException(

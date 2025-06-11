@@ -94,20 +94,3 @@ class TritonModelInferenceClient:
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             return list(executor.map(load_with_headers, images))
-
-
-class TritonModelLoadingClient:
-    def __init__(self, triton_grpc_url: str):
-        self.triton_client = grpcclient.InferenceServerClient(
-            url=triton_grpc_url, verbose=False
-        )
-        self.modalities = set()
-
-    def unload(self):
-        raise NotImplementedError
-
-    def load(self):
-        raise NotImplementedError
-
-    def is_ready(self) -> bool:
-        raise NotImplementedError

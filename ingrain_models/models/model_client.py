@@ -75,12 +75,7 @@ class TritonModelLoadingClient:
             # self.triton_client.load_model(self.image_model_name)
 
     def _create_triton_sentence_transformer_model(self):
-        print(
-            f"Creating Triton model for {self.model_name} using Sentence Transformers."
-        )
-        print(self.model)
         if not self.triton_client.is_model_ready(self.model_name):
-            print("MODEL NOT READY")
             create_model_sentence_transformers(
                 self.model,
                 self.triton_model_repository_path,
@@ -104,7 +99,7 @@ class TritonModelLoadingClient:
         repository_index = self.triton_client.get_model_repository_index(as_json=True)
         if "models" not in repository_index:
             return False
-            
+
         model_names = [model["name"] for model in repository_index["models"]]
         if self.library_name == "open_clip":
             return (

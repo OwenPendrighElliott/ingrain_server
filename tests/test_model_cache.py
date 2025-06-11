@@ -1,17 +1,17 @@
 import pytest
 from unittest.mock import MagicMock
-from ingrain_inference.inference.triton_open_clip.clip_model import (
-    TritonCLIPModelClient,
+from ingrain_inference.inference.triton_open_clip.clip_inference import (
+    TritonCLIPInferenceClient,
 )
-from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_model import (
-    TritonSentenceTransformersModelClient,
+from ingrain_inference.inference.triton_sentence_transformers.sentence_transformer_inference import (
+    TritonSentenceTransformersInferenceClient,
 )
 from ingrain_inference.inference.model_cache import LRUModelCache
 
 
 @pytest.fixture
 def mock_clip_client():
-    client = MagicMock(spec=TritonCLIPModelClient)
+    client = MagicMock(spec=TritonCLIPInferenceClient)
     client.load = MagicMock()
     client.unload = MagicMock()
     return client
@@ -19,7 +19,7 @@ def mock_clip_client():
 
 @pytest.fixture
 def mock_sentence_client():
-    client = MagicMock(spec=TritonSentenceTransformersModelClient)
+    client = MagicMock(spec=TritonSentenceTransformersInferenceClient)
     client.load = MagicMock()
     client.unload = MagicMock()
     return client

@@ -5,6 +5,9 @@ import platform
 from typing import Union, Tuple
 
 MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
+DYNAMIC_BATCHING = os.getenv("DYNAMIC_BATCHING", "true").lower() == "true"
+INSTANCE_KIND = os.getenv("INSTANCE_KIND")
+MODEL_INSTANCES = int(os.getenv("MODEL_INSTANCES", "-1"))
 
 
 def get_model_name(model_name: str, pretrained: Union[str, bool, None] = None) -> str:
@@ -87,6 +90,7 @@ def save_library_name(output_dir: str, library_name: str):
     with open(os.path.join(output_dir, "library_name.txt"), "w") as f:
         f.write(library_name)
 
+
 def get_library_name(output_dir: str) -> str:
     """Get the library name from a file.
 
@@ -102,7 +106,7 @@ def get_library_name(output_dir: str) -> str:
 
     with open(library_name_path, "r") as f:
         return f.read().strip()
-        
+
 
 def is_valid_dir_name(name: str) -> bool:
     invalid_chars = r'<>:"/\\|?*'

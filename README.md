@@ -20,6 +20,7 @@ services:
       - "8687:8687"
     environment:
       TRITON_GRPC_URL: triton:8001
+      MAX_BATCH_SIZE: 8
     depends_on:
       - triton
     volumes:
@@ -201,16 +202,10 @@ Details omitted for brevity.
 
 ## Build Container Locally
 
-Build the Docker image:
+You can build and run Ingrain with docker locally by using the included docker compose file.
 
 ```bash
-docker build -t ingrain-server .
-```
-
-Run the Docker container:
-
-```bash
-docker run --name ingrain_server -p 8686:8686 -p 8687:8687 --gpus all ingrain-server
+docker compose up --build
 ```
 
 ## Performance test

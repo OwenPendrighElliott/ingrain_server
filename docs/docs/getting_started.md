@@ -22,6 +22,7 @@ services:
       - "8687:8687"
     environment:
       TRITON_GRPC_URL: triton:8001
+      MAX_BATCH_SIZE: 8
     depends_on:
       - triton
     volumes:

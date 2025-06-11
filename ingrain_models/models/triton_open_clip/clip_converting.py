@@ -11,7 +11,12 @@ from ingrain_models.models.triton_open_clip.open_clip_wrappers import (
     CLIPTextEncoderWrapper,
     CLIPImageEncoderWrapper,
 )
-from ingrain_common.common import MAX_BATCH_SIZE
+from ingrain_common.common import (
+    MAX_BATCH_SIZE,
+    DYNAMIC_BATCHING,
+    MODEL_INSTANCES,
+    INSTANCE_KIND,
+)
 
 
 def decompose_clip_preprocess(preprocess: Compose) -> Tuple[Compose, nn.Sequential]:
@@ -97,7 +102,19 @@ output [
         dims: [ {embedding_dim} ]
     }}
 ]
-dynamic_batching {{}}"""
+"""
+    if DYNAMIC_BATCHING:
+        config += f"\n\ndynamic_batching {{}}"
+
+    if MODEL_INSTANCES > 0 and INSTANCE_KIND:
+        f"""\n\ninstance_group [
+            {{
+                count: {MODEL_INSTANCES}
+                kind: {INSTANCE_KIND}
+            }}
+        ]
+        """
+
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
 
@@ -127,7 +144,19 @@ output [
         dims: [ {embedding_dim} ]
     }}
 ]
-dynamic_batching {{}}"""
+"""
+    if DYNAMIC_BATCHING:
+        config += f"\n\ndynamic_batching {{}}"
+
+    if MODEL_INSTANCES > 0 and INSTANCE_KIND:
+        f"""\n\ninstance_group [
+            {{
+                count: {MODEL_INSTANCES}
+                kind: {INSTANCE_KIND}
+            }}
+        ]
+        """
+
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
 

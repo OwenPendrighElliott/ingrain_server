@@ -6,7 +6,12 @@ from torchvision.transforms import Compose, ToTensor, Resize
 from timm.data import MaybeToTensor, MaybePILToTensor
 import base64
 from ingrain_models.models.triton_timm.timm_wrappers import TimmClassifierWrapper
-from ingrain_common.common import MAX_BATCH_SIZE
+from ingrain_common.common import (
+    MAX_BATCH_SIZE,
+    DYNAMIC_BATCHING,
+    INSTANCE_KIND,
+    MODEL_INSTANCES,
+)
 from typing import Tuple, Any
 
 
@@ -63,7 +68,19 @@ output [
         dims: [ {num_classes} ]
     }}
 ]
-dynamic_batching {{}}"""
+"""
+    if DYNAMIC_BATCHING:
+        config += f"\n\ndynamic_batching {{}}"
+
+    if MODEL_INSTANCES > 0 and INSTANCE_KIND:
+        f"""\n\ninstance_group [
+            {{
+                count: {MODEL_INSTANCES}
+                kind: {INSTANCE_KIND}
+            }}
+        ]
+        """
+
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
 
