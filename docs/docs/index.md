@@ -31,7 +31,6 @@ services:
     runtime: nvidia # comment out if not using GPU
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - LD_PRELOAD=/usr/lib/$(uname -m)-linux-gnu/libtcmalloc.so.4
     shm_size: "256m"
     command: >
       tritonserver
