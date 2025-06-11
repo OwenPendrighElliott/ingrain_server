@@ -9,7 +9,6 @@ jobs:
   build-arm64-server:
     name: Build and Push ARM64 Server Image
     runs-on: ubuntu-latest
-    needs: [build-arm64-base]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -41,7 +40,6 @@ jobs:
   build-amd64-server:
     name: Build and Push AMD64 Server Image
     runs-on: ubuntu-latest
-    needs: [build-amd64-base]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
