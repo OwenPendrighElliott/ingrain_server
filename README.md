@@ -1,7 +1,7 @@
 # Ingrain Server
 
-![Test Status](https://github.com/OwenPendrighElliott/ingrain-server/actions/workflows/tests.yml/badge.svg)
-![Build Status](https://github.com/OwenPendrighElliott/ingrain-server/actions/workflows/test-build.yml/badge.svg)
+![Test Status](https://github.com/OwenPendrighElliott/ingrain_server/actions/workflows/tests.yml/badge.svg)
+![Build Status](https://github.com/OwenPendrighElliott/ingrain_server/actions/workflows/test-build.yml/badge.svg)
 
 > __This project is under active development, expect breaking changes between versions until v1.0.0.__
 
