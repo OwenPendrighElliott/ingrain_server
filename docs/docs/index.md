@@ -8,8 +8,6 @@ For more detailed getting started instructions, please see the [getting started 
 The recommended way to run Ingrain locally is via Docker with a docker compose file to network with triton.
 
 ```yml
-version: "3.9"
-
 services:
   ingrain:
     image: owenpelliott/ingrain-server:latest

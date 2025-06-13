@@ -44,7 +44,7 @@ def main():
     client.load_clip_model(name=CLIP_MODEL_NAME, pretrained=CLIP_PRETRAINED)
 
     # Initialize HNSWLib index
-    response = requests.post(
+    _ = requests.post(
         f"{HNSWLIB_SERVER_URL}/create_index",
         json={
             "indexName": INDEX_NAME,
@@ -89,7 +89,7 @@ def main():
                 i += 1
 
     for i in tqdm(range(0, len(embeddings), INDEXING_BATCH_SIZE)):
-        response = requests.post(
+        _ = requests.post(
             f"{HNSWLIB_SERVER_URL}/add_documents",
             json={
                 "indexName": INDEX_NAME,
@@ -102,7 +102,7 @@ def main():
             },
         )
 
-    response = requests.post(
+    _ = requests.post(
         f"{HNSWLIB_SERVER_URL}/save_index",
         json={"indexName": INDEX_NAME},
     )

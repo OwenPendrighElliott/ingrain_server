@@ -1,5 +1,4 @@
 import time
-import numpy as np
 import ingrain
 import os
 import requests

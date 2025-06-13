@@ -2,20 +2,30 @@
 venv/
 __pycache__/
 README.md
+.ruff_cache/
+.venv/
+benchmark.py
+
+# Docker
+build_images.sh
+docker-compose.yml
+Dockerfile
 
 # Git
 .git
 .gitignore
 .github/
-model_repository/
-model_cache/
 
 # Repo files
 docs/
 examples/
+model_repository/
+model_cache/
 
 # Test Files
 tests
+pytest.ini
 .pytest_cache/
 custom_model_files/
 playspace/
+run_triton_server_dev.sh

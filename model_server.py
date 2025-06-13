@@ -28,9 +28,8 @@ from ingrain_models.models.custom_model_utils import (
     download_custom_timm_model,
 )
 import tritonclient.grpc as grpcclient
-from threading import Lock
 
-from typing import Union, Literal, Tuple, Dict
+from typing import Union, Literal
 
 TRITON_GRPC_URL = os.getenv("TRITON_GRPC_URL", "localhost:8001")
 MAX_LOADED_MODELS = int(os.getenv("MAX_LOADED_MODELS", 5))

@@ -11,8 +11,6 @@ To run Ingrain, you need to have Docker installed. Ingrain server works in tande
 The easiest way to get started is with a docker compose file, which will run Triton and the Ingrain server.
 
 ```yml
-version: "3.9"
-
 services:
   ingrain:
     image: owenpelliott/ingrain-server:latest

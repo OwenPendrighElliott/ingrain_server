@@ -23,6 +23,7 @@ def main():
                 model, pretrained=pretrained
             )
         except RuntimeError as e:
+            print(f"Skipping {model} due to error: {e}")
             continue
 
         models.append(model)
