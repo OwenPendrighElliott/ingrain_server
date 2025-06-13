@@ -2,6 +2,11 @@
 
 ![Test Status](https://github.com/OwenPendrighElliott/ingrain_server/actions/workflows/tests.yml/badge.svg)
 ![Build Status](https://github.com/OwenPendrighElliott/ingrain_server/actions/workflows/test-build.yml/badge.svg)
+![Style](https://github.com/OwenPendrighElliott/ingrain_server/actions/workflows/code-style-check.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![GitHub release](https://img.shields.io/github/v/release/owenpendrighelliott/ingrain_server)](https://github.com/owenpendrighelliott/ingrain_server)
+
 
 > __This project is under active development, expect breaking changes between versions until v1.0.0.__
 
