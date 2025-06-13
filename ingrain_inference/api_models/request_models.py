@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from typing import List, Optional, Union, Literal
+from typing import List, Optional, Union
 
 
 class InferenceRequest(BaseModel):

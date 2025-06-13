@@ -1,7 +1,7 @@
 import os
 import torch
 from torch import nn
-from torchvision.transforms import Compose, ToTensor, Resize
+from torchvision.transforms import Compose, ToTensor
 from PIL import Image
 from io import BytesIO
 import base64
@@ -104,7 +104,7 @@ output [
 ]
 """
     if DYNAMIC_BATCHING:
-        config += f"\n\ndynamic_batching {{}}"
+        config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
         f"""\n\ninstance_group [
@@ -146,7 +146,7 @@ output [
 ]
 """
     if DYNAMIC_BATCHING:
-        config += f"\n\ndynamic_batching {{}}"
+        config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
         f"""\n\ninstance_group [

@@ -2,7 +2,7 @@ import os
 import torch
 from PIL import Image
 from io import BytesIO
-from torchvision.transforms import Compose, ToTensor, Resize
+from torchvision.transforms import Compose, ToTensor
 from timm.data import MaybeToTensor, MaybePILToTensor
 import base64
 from ingrain_models.models.triton_timm.timm_wrappers import TimmClassifierWrapper
@@ -70,7 +70,7 @@ output [
 ]
 """
     if DYNAMIC_BATCHING:
-        config += f"\n\ndynamic_batching {{}}"
+        config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
         f"""\n\ninstance_group [

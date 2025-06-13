@@ -7,7 +7,6 @@ import base64
 import open_clip
 from sentence_transformers import SentenceTransformer
 
-from typing import Literal
 
 INFERENCE_BASE_URL = "http://127.0.0.1:8686"
 MODEL_BASE_URL = "http://127.0.0.1:8687"

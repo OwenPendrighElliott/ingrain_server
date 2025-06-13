@@ -12,8 +12,6 @@ Ingrain server works in tandem with Triton to automate much of the process for s
 The easiest way to get started is with a docker compose file, which will run Triton and the Ingrain server.
 
 ```yml
-version: "3.9"
-
 services:
   ingrain:
     image: owenpelliott/ingrain-server:latest
@@ -246,12 +244,13 @@ Standard deviation of inference times: 84.8669 ms
 
 Requires Docker and Python to be installed.
 
-### Create a virtual environment
+### Install dependencies
 
+This project uses `uv` for development, so you need to install it first.
+
+Setup project:
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+uv sync --dev
 ```
 
 ### Run the Triton Inference Server
@@ -263,29 +262,23 @@ bash run_triton_server_dev.sh
 ### Run the FastAPI server
 
 ```bash
-uvicorn inference_server:app --host 127.0.0.1 --port 8686 --reload
+uv run uvicorn inference_server:app --host 127.0.0.1 --port 8686 --reload
 ```
 
 ```bash
-uvicorn model_server:app --host 127.0.0.1 --port 8687 --reload
+uv run uvicorn model_server:app --host 127.0.0.1 --port 8687 --reload
 ```
 
 ### Testing
 
-Install `pytest`:
-    
-```bash
-pip install pytest
-```
-
 #### Unit tests
 
 ```bash
-pytest
+uv run pytest
 ```
 
 #### Integration tests and unit tests
 
 ```bash
-pytest --integration
+uv run pytest --integration
 ```

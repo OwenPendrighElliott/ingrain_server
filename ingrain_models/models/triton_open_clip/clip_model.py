@@ -22,7 +22,7 @@ from ingrain_models.models.torchvision_transform_conversion import (
     image_transform_dict_from_torch_transforms,
 )
 
-from typing import Optional, Union, List
+from typing import Union
 
 _PREPROCESSOR_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "preprocessors")
 PREPROCESS_CONFIGS = {

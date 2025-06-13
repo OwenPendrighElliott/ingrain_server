@@ -9,7 +9,7 @@ from ingrain_models.models.torchvision_transform_conversion import (
     image_transform_dict_from_torch_transforms,
 )
 
-from ingrain_common.common import get_model_name, save_library_name, custom_model_exists
+from ingrain_common.common import save_library_name, custom_model_exists
 
 
 def create_model(

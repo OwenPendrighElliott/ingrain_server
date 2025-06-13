@@ -49,7 +49,7 @@ output [
 ]
 """
     if DYNAMIC_BATCHING:
-        config += f"\n\ndynamic_batching {{}}"
+        config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
         f"""\n\ninstance_group [
