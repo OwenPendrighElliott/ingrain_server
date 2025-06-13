@@ -1,9 +1,8 @@
 name: Build Success Check
 
 on:
-  pull_request:
+  push:
     branches: [main]
-    types: [opened, synchronize, reopened]
 
 jobs:
   build-arm64-server:
