@@ -1,10 +1,13 @@
 import os
 import torch
+from ingrain_models.models.model_optimisation import generate_tensorrt_config, convert_to_float16
 from ingrain_common.common import (
     MAX_BATCH_SIZE,
     DYNAMIC_BATCHING,
     MODEL_INSTANCES,
     INSTANCE_KIND,
+    TENSORRT_ENABLED,
+    FP16_ENABLED,
 )
 from sentence_transformers import SentenceTransformer
 
@@ -59,6 +62,11 @@ output [
             }}
         ]
         """
+    if TENSORRT_ENABLED:
+        tensorrt_config = generate_tensorrt_config(
+            {"input_ids": [256], "attention_mask": [256]}
+        )
+        config += f"\n\n{tensorrt_config}"
 
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
@@ -82,9 +90,10 @@ def onnx_transformer_model(
     }
 
     torch.onnx.export(
-        wrapped_model,
-        (dummy_input["input_ids"], dummy_input["attention_mask"]),
-        output_path,
+        model=wrapped_model,
+        args=(dummy_input["input_ids"], dummy_input["attention_mask"]),
+        f=output_path,
+        opset_version=20,
         input_names=["input_ids", "attention_mask"],
         output_names=["sentence_embedding"],
         dynamic_axes={
@@ -93,3 +102,6 @@ def onnx_transformer_model(
             "sentence_embedding": {0: "batch_size"},
         },
     )
+
+    if FP16_ENABLED and not TENSORRT_ENABLED:
+        convert_to_float16(output_path, output_path)

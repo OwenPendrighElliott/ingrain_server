@@ -5,12 +5,14 @@ from io import BytesIO
 from torchvision.transforms import Compose, ToTensor
 from timm.data import MaybeToTensor, MaybePILToTensor
 import base64
+from ingrain_models.models.model_optimisation import generate_tensorrt_config
 from ingrain_models.models.triton_timm.timm_wrappers import TimmClassifierWrapper
 from ingrain_common.common import (
     MAX_BATCH_SIZE,
     DYNAMIC_BATCHING,
     INSTANCE_KIND,
     MODEL_INSTANCES,
+    TENSORRT_ENABLED,
 )
 from typing import Tuple, Any
 
@@ -36,7 +38,7 @@ def convert_timm_to_onnx(
         image_dummy_input,
         output_path,
         export_params=True,
-        opset_version=14,
+        opset_version=20,
         input_names=["input"],
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
@@ -80,6 +82,10 @@ output [
             }}
         ]
         """
+
+    if TENSORRT_ENABLED:
+        tensorrt_config = generate_tensorrt_config({"input": list(image_shape)})
+        config += f"\n\n{tensorrt_config}"
 
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)

@@ -21,6 +21,7 @@ from ingrain_common.common import (
     get_library_name,
     get_model_name,
     get_text_image_model_names,
+    validate_env_vars,
 )
 from ingrain_models.models.custom_model_utils import (
     download_custom_open_clip_model,
@@ -43,6 +44,9 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 os.makedirs(CUSTOM_MODEL_DIR, exist_ok=True)
 
 app = FastAPI()
+
+
+validate_env_vars()
 
 
 def count_loaded_models() -> int:

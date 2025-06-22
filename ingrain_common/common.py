@@ -1,12 +1,44 @@
 import os
 import shutil
 import platform
-from typing import Union, Tuple
+from typing import Union, Tuple, Literal
 
 MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
 DYNAMIC_BATCHING = os.getenv("DYNAMIC_BATCHING", "true").lower() == "true"
-INSTANCE_KIND = os.getenv("INSTANCE_KIND")
-MODEL_INSTANCES = int(os.getenv("MODEL_INSTANCES", "-1"))
+INSTANCE_KIND: Literal["KIND_GPU", "KIND_CPU", None] = os.getenv("INSTANCE_KIND")
+TENSORRT_ENABLED = os.getenv("TENSORRT_ENABLED", "false").lower() == "true"
+FP16_ENABLED = os.getenv("FP16_ENABLED", "false").lower() == "true"
+MODEL_INSTANCES = int(os.getenv("MODEL_INSTANCES", -1))
+
+
+def validate_env_vars() -> None:
+    """Validate environment variables."""
+    if not isinstance(MAX_BATCH_SIZE, int) or MAX_BATCH_SIZE <= 0:
+        raise ValueError("MAX_BATCH_SIZE must be a positive integer.")
+
+    if INSTANCE_KIND not in [None, "KIND_GPU", "KIND_CPU"]:
+        raise ValueError(
+            "INSTANCE_KIND must be either 'KIND_GPU', 'KIND_CPU', or None (not set)."
+        )
+    if INSTANCE_KIND and MODEL_INSTANCES == -1:
+        raise ValueError(
+            "MODEL_INSTANCES must be set to a non-negative integer when INSTANCE_KIND is set."
+        )
+
+    if INSTANCE_KIND and MODEL_INSTANCES < 0:
+        raise ValueError(
+            "MODEL_INSTANCES cannot be less that 0 when INSTANCE_KIND is set."
+        )
+
+    if INSTANCE_KIND != "KIND_GPU":
+        if TENSORRT_ENABLED:
+            raise ValueError(
+                "TENSORRT_ENABLED can only be set to True when INSTANCE_KIND is 'KIND_GPU'."
+            )
+        if FP16_ENABLED:
+            raise ValueError(
+                "FP16_ENABLED can only be set to True when INSTANCE_KIND is 'KIND_GPU'."
+            )
 
 
 def get_model_name(model_name: str, pretrained: Union[str, bool, None] = None) -> str:

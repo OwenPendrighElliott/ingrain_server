@@ -11,11 +11,13 @@ from ingrain_models.models.triton_open_clip.open_clip_wrappers import (
     CLIPTextEncoderWrapper,
     CLIPImageEncoderWrapper,
 )
+from ingrain_models.models.model_optimisation import generate_tensorrt_config
 from ingrain_common.common import (
     MAX_BATCH_SIZE,
     DYNAMIC_BATCHING,
     MODEL_INSTANCES,
     INSTANCE_KIND,
+    TENSORRT_ENABLED,
 )
 
 
@@ -51,7 +53,7 @@ def convert_image_encoder_to_onnx(
         image_dummy_input,
         output_path,
         export_params=True,
-        opset_version=14,
+        opset_version=20,
         input_names=["input"],
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
@@ -71,7 +73,7 @@ def convert_text_encoder_to_onnx(
         dummy_input,
         output_path,
         export_params=True,
-        opset_version=14,
+        opset_version=20,
         input_names=["input"],
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
@@ -115,6 +117,10 @@ output [
         ]
         """
 
+    if TENSORRT_ENABLED:
+        tensorrt_config = generate_tensorrt_config({"input": [context_length]})
+        config += f"\n\n{tensorrt_config}"
+
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)
 
@@ -156,6 +162,10 @@ output [
             }}
         ]
         """
+
+    if TENSORRT_ENABLED:
+        tensorrt_config = generate_tensorrt_config({"input": image_shape})
+        config += f"\n\n{tensorrt_config}"
 
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
         f.write(config)

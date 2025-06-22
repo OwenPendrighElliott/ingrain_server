@@ -7,7 +7,7 @@ import statistics
 model_name = "intfloat/e5-small-v2"
 # model_name = "intfloat/e5-base-v2"
 # model_name = "Snowflake/snowflake-arctic-embed-m"
-num_threads = 100
+num_threads = 10
 num_requests_per_thread = 100
 delay_between_requests = 0
 

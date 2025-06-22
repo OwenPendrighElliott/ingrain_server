@@ -5,15 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "certifi>=2025.4.26",
-    "fastapi==0.115.12",
+    "certifi>=2025.6.15",
+    "fastapi==0.115.13",
     "hf-transfer==0.1.9",
     "onnx==1.18.0",
+    "onnxconverter-common>=1.13.0",
+    "onnxscript>=0.3.0",
     "open-clip-torch==2.32.0",
     "orjson==3.10.18",
     "pillow==11.2.1",
     "pycurl==7.45.6",
-    "pydantic==2.11.5",
+    "pydantic==2.11.7",
     "sentence-transformers==4.1.0",
     "timm==1.0.15",
     "tokenizers==0.21.1",
@@ -30,6 +32,6 @@ dev = [
     "black>=25.1.0",
     "flask>=3.1.1",
     "ingrain>=0.0.7",
-    "pytest>=8.4.0",
-    "ruff>=0.11.13",
+    "pytest>=8.4.1",
+    "ruff>=0.12.0",
 ]
