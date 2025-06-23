@@ -10,6 +10,7 @@ dependencies = [
     "hf-transfer==0.1.9",
     "onnx==1.18.0",
     "onnxconverter-common>=1.13.0",
+    "onnxoptimizer>=0.3.13",
     "onnxscript>=0.3.0",
     "open-clip-torch==2.32.0",
     "orjson==3.10.18",

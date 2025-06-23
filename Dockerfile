@@ -2,7 +2,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 # Install the required packages
-RUN apt-get update && apt-get install -y supervisor
+RUN apt-get update && apt-get install -y supervisor cmake build-essential
 
 # Set the working directory
 WORKDIR /app
@@ -17,7 +17,7 @@ ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --no-dev
+    CMAKE_POLICY_VERSION_MINIMUM=3.5 uv sync --locked --no-install-project --no-dev
 
 # Copy the rest of the application code into the container
 COPY . /app

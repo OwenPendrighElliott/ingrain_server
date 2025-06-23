@@ -351,6 +351,7 @@ dependencies = [
     { name = "hf-transfer" },
     { name = "onnx" },
     { name = "onnxconverter-common" },
+    { name = "onnxoptimizer" },
     { name = "onnxscript" },
     { name = "open-clip-torch" },
     { name = "orjson" },
@@ -384,6 +385,7 @@ requires-dist = [
     { name = "hf-transfer", specifier = "==0.1.9" },
     { name = "onnx", specifier = "==1.18.0" },
     { name = "onnxconverter-common", specifier = ">=1.13.0" },
+    { name = "onnxoptimizer", specifier = ">=0.3.13" },
     { name = "onnxscript", specifier = ">=0.3.0" },
     { name = "open-clip-torch", specifier = "==2.32.0" },
     { name = "orjson", specifier = "==3.10.18" },
@@ -802,6 +804,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ec/44/54c6b7f1a28d919a15caf642113fb44651087d1bb0658f028c54b93df8e3/onnxconverter-common-1.13.0.tar.gz", hash = "sha256:03db8a6033a3d6590f22df3f64234079caa826375d1fcb0b37b8123c06bf598c", size = 73935, upload-time = "2022-11-03T12:11:37.783Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/51/a4/4439174c879c33557eab08e4dd480c1e096bc26c487c85a62e4c0d8f78ff/onnxconverter_common-1.13.0-py2.py3-none-any.whl", hash = "sha256:5ee1c025ef6c3b4abaede8425bc6b393248941a6cf8c21563d0d0e3f04634a0a", size = 83796, upload-time = "2022-11-03T12:11:35.767Z" },
+]
+
+[[package]]
+name = "onnxoptimizer"
+version = "0.3.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "onnx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/bd/e8671229c2f1f99eb02961cac51e55ca64dbbe0d62791b6743cc8b9950b1/onnxoptimizer-0.3.13.tar.gz", hash = "sha256:e08b726e0d4577e51e529f36bc324bf11b7cff12852cf3eee081f05c8b8c6f33", size = 18466575, upload-time = "2023-04-19T14:51:52.511Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/70/8f/4a9bb2ba490b7e8f9e8f5ad7a2e6f9c43bd5590f7affed4e2e9874fd2a0e/onnxoptimizer-0.3.13-cp311-cp311-macosx_10_15_universal2.whl", hash = "sha256:dcd1c529cb3d285f1bc75480ebe198a43f6bcc84ad010386f6e2d7bcd3052501", size = 1014993, upload-time = "2023-04-19T14:51:27.821Z" },
+    { url = "https://files.pythonhosted.org/packages/38/82/dd92b6515a4965bb9136775a3cae84224a258285f8d84f2f2bbfd2fdaa15/onnxoptimizer-0.3.13-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:a65b2ff1d480f966f906fdc3731cd6a844762e0aae1876eeafb7586048d6be96", size = 578239, upload-time = "2023-04-19T14:51:29.114Z" },
+    { url = "https://files.pythonhosted.org/packages/28/1b/6dbb0e6f62c00b3c14f027316d0e4173f4ed82068ae64b40770d60a2156f/onnxoptimizer-0.3.13-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2f985cfef0fa2b7cf9ae64a36ca8dacb3e1861e31fa41fb85645cdbd73ccab6a", size = 678146, upload-time = "2023-04-19T14:51:30.168Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/0a/edd2900c20702fbd7ccce59337720ad936d55da196e248804d91128b9b5f/onnxoptimizer-0.3.13-cp311-cp311-win_amd64.whl", hash = "sha256:82e606024a6dce999a8586d1f4b6af2ec454f7c5fd69807672a79067017a4812", size = 381769, upload-time = "2023-04-19T14:51:31.56Z" },
 ]
 
 [[package]]

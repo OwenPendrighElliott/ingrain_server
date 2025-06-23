@@ -5,7 +5,10 @@ from io import BytesIO
 from torchvision.transforms import Compose, ToTensor
 from timm.data import MaybeToTensor, MaybePILToTensor
 import base64
-from ingrain_models.models.model_optimisation import generate_tensorrt_config
+from ingrain_models.models.model_optimisation import (
+    generate_tensorrt_config,
+    optimize_onnx_model,
+)
 from ingrain_models.models.triton_timm.timm_wrappers import TimmClassifierWrapper
 from ingrain_common.common import (
     MAX_BATCH_SIZE,
@@ -43,6 +46,8 @@ def convert_timm_to_onnx(
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
+
+    optimize_onnx_model(output_path, output_path)
 
 
 def generate_timm_config(

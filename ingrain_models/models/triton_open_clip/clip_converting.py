@@ -11,7 +11,10 @@ from ingrain_models.models.triton_open_clip.open_clip_wrappers import (
     CLIPTextEncoderWrapper,
     CLIPImageEncoderWrapper,
 )
-from ingrain_models.models.model_optimisation import generate_tensorrt_config
+from ingrain_models.models.model_optimisation import (
+    generate_tensorrt_config,
+    optimize_onnx_model,
+)
 from ingrain_common.common import (
     MAX_BATCH_SIZE,
     DYNAMIC_BATCHING,
@@ -59,6 +62,8 @@ def convert_image_encoder_to_onnx(
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
 
+    optimize_onnx_model(output_path, output_path)
+
 
 def convert_text_encoder_to_onnx(
     model: torch.nn.Module, dummy_input: torch.Tensor, output_path: str
@@ -78,6 +83,8 @@ def convert_text_encoder_to_onnx(
         output_names=["output"],
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
+
+    optimize_onnx_model(output_path, output_path)
 
 
 def generate_text_clip_config(

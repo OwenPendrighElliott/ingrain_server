@@ -3,7 +3,7 @@ import shutil
 import platform
 from typing import Union, Tuple, Literal
 
-MAX_BATCH_SIZE = os.getenv("MAX_BATCH_SIZE", 32)
+MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", 32))
 DYNAMIC_BATCHING = os.getenv("DYNAMIC_BATCHING", "true").lower() == "true"
 INSTANCE_KIND: Literal["KIND_GPU", "KIND_CPU", None] = os.getenv("INSTANCE_KIND")
 TENSORRT_ENABLED = os.getenv("TENSORRT_ENABLED", "false").lower() == "true"

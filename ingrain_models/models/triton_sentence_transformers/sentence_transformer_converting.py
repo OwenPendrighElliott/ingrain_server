@@ -1,6 +1,10 @@
 import os
 import torch
-from ingrain_models.models.model_optimisation import generate_tensorrt_config, convert_to_float16
+from ingrain_models.models.model_optimisation import (
+    generate_tensorrt_config,
+    convert_to_float16,
+    optimize_onnx_model,
+)
 from ingrain_common.common import (
     MAX_BATCH_SIZE,
     DYNAMIC_BATCHING,
@@ -102,6 +106,8 @@ def onnx_transformer_model(
             "sentence_embedding": {0: "batch_size"},
         },
     )
+
+    optimize_onnx_model(output_path, output_path)
 
     if FP16_ENABLED and not TENSORRT_ENABLED:
         convert_to_float16(output_path, output_path)
