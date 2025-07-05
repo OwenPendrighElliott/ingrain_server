@@ -17,7 +17,7 @@ from sentence_transformers import SentenceTransformer
 
 
 class SentenceTransformerWrapper(torch.nn.Module):
-    def __init__(self, model):
+    def __init__(self, model: SentenceTransformer):
         super(SentenceTransformerWrapper, self).__init__()
         self.model = model
 
@@ -59,16 +59,16 @@ output [
         config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
-        f"""\n\ninstance_group [
-            {{
-                count: {MODEL_INSTANCES}
-                kind: {INSTANCE_KIND}
-            }}
-        ]
+        config += f"""\n\ninstance_group [
+    {{
+        count: {MODEL_INSTANCES}
+        kind: {INSTANCE_KIND}
+    }}
+]
         """
     if TENSORRT_ENABLED:
         tensorrt_config = generate_tensorrt_config(
-            {"input_ids": [256], "attention_mask": [256]}
+            {"input_ids": [256], "attention_mask": [256]}, "INT64"
         )
         config += f"\n\n{tensorrt_config}"
 

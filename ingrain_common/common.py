@@ -8,7 +8,7 @@ DYNAMIC_BATCHING = os.getenv("DYNAMIC_BATCHING", "true").lower() == "true"
 INSTANCE_KIND: Literal["KIND_GPU", "KIND_CPU", None] = os.getenv("INSTANCE_KIND")
 TENSORRT_ENABLED = os.getenv("TENSORRT_ENABLED", "false").lower() == "true"
 FP16_ENABLED = os.getenv("FP16_ENABLED", "false").lower() == "true"
-MODEL_INSTANCES = int(os.getenv("MODEL_INSTANCES", -1))
+MODEL_INSTANCES = int(os.getenv("MODEL_INSTANCES", 0))
 
 
 def validate_env_vars() -> None:
@@ -20,7 +20,7 @@ def validate_env_vars() -> None:
         raise ValueError(
             "INSTANCE_KIND must be either 'KIND_GPU', 'KIND_CPU', or None (not set)."
         )
-    if INSTANCE_KIND and MODEL_INSTANCES == -1:
+    if INSTANCE_KIND and MODEL_INSTANCES < 0:
         raise ValueError(
             "MODEL_INSTANCES must be set to a non-negative integer when INSTANCE_KIND is set."
         )

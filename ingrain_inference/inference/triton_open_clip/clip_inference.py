@@ -66,8 +66,6 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
         normalize: bool = True,
         n_dims: Optional[int] = None,
     ) -> np.ndarray:
-        # tokens = self.tokenizer(text).numpy()
-        # tokens = tokens.astype(np.int32)
         if isinstance(text, str):
             text = [text]
         encoding: List[Encoding] = self.tokenizer.encode_batch(

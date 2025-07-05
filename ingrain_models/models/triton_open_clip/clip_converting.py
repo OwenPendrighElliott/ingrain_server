@@ -116,16 +116,16 @@ output [
         config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
-        f"""\n\ninstance_group [
-            {{
-                count: {MODEL_INSTANCES}
-                kind: {INSTANCE_KIND}
-            }}
-        ]
+        config += f"""\n\ninstance_group [
+    {{
+        count: {MODEL_INSTANCES}
+        kind: {INSTANCE_KIND}
+    }}
+]
         """
 
     if TENSORRT_ENABLED:
-        tensorrt_config = generate_tensorrt_config({"input": [context_length]})
+        tensorrt_config = generate_tensorrt_config({"input": [context_length]}, "INT32")
         config += f"\n\n{tensorrt_config}"
 
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:
@@ -162,16 +162,16 @@ output [
         config += "\n\ndynamic_batching {}"
 
     if MODEL_INSTANCES > 0 and INSTANCE_KIND:
-        f"""\n\ninstance_group [
-            {{
-                count: {MODEL_INSTANCES}
-                kind: {INSTANCE_KIND}
-            }}
-        ]
+        config += f"""\n\ninstance_group [
+    {{
+        count: {MODEL_INSTANCES}
+        kind: {INSTANCE_KIND}
+    }}
+]
         """
 
     if TENSORRT_ENABLED:
-        tensorrt_config = generate_tensorrt_config({"input": image_shape})
+        tensorrt_config = generate_tensorrt_config({"input": image_shape}, "FP32")
         config += f"\n\n{tensorrt_config}"
 
     with open(os.path.join(cfg_path, "config.pbtxt"), "w") as f:

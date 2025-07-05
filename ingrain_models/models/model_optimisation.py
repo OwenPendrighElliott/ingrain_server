@@ -3,7 +3,7 @@ from onnxconverter_common import float16
 from onnxoptimizer import optimize
 from ingrain_common.common import FP16_ENABLED, MAX_BATCH_SIZE
 
-from typing import List, Dict
+from typing import List, Dict, Literal
 
 
 def convert_to_float16(onnx_model_path: str, output_path: str) -> None:
@@ -67,7 +67,7 @@ def optimize_onnx_model(onnx_model_path: str, output_path: str) -> None:
     onnx.save(optimized_model, output_path)
 
 
-def generate_tensorrt_config(input_shapes: Dict[str, List[int]]) -> str:
+def generate_tensorrt_config(input_shapes: Dict[str, List[int]], input_dtype: Literal["FP16", "FP32", "INT32", "INT64"]) -> str:
     if FP16_ENABLED:
         precision_mode = "FP16"
     else:
@@ -82,11 +82,11 @@ def generate_tensorrt_config(input_shapes: Dict[str, List[int]]) -> str:
             inputs += f"""        inputs {{
             key: "{shape_name}"
             value: {{
-                data_type: TYPE_FP32
+                data_type: TYPE_{input_dtype}
                 dims: [ {', '.join(map(str, input_shapes[shape_name]))} ]
                 random_data: true
             }}
-        }}
+        }},
         """
 
         warmup_batches += f"""{{
@@ -94,11 +94,11 @@ def generate_tensorrt_config(input_shapes: Dict[str, List[int]]) -> str:
     batch_size: {batch_size}
     {inputs}
     count: 1
-  }}"""
+  }},"""
 
     warmup_config = f"""
 model_warmup [
-  {warmup_batches}
+  {warmup_batches[:-1]}
 ]
 """
 
