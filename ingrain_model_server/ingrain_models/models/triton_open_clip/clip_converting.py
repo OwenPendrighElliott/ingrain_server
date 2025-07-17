@@ -49,6 +49,8 @@ def convert_image_encoder_to_onnx(
         transforms=preprocess.transforms[: to_tensor_index + 1]
     )
 
+    model_with_baked_preprocess = model_with_baked_preprocess.eval()
+
     image_dummy_input = pre_tensor_transforms(dummy_input).unsqueeze(0)
 
     torch.onnx.export(
@@ -72,6 +74,9 @@ def convert_text_encoder_to_onnx(
         text_tower = model.text
     elif isinstance(model, CLIP):
         text_tower = CLIPTextEncoderWrapper(model)
+
+    text_tower = text_tower.eval()
+
     dummy_input = dummy_input.to(torch.int32)
     torch.onnx.export(
         text_tower,

@@ -82,30 +82,30 @@ def onnx_transformer_model(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     wrapped_model = SentenceTransformerWrapper(model)
-    wrapped_model.to(device)
+    wrapped_model.eval().to(device)
+    with torch.inference_mode():
+        dummy_input = {
+            "input_ids": torch.tensor(
+                [[101, 2023, 2003, 1037, 1398, 102]], dtype=torch.int64, device=device
+            ),
+            "attention_mask": torch.tensor(
+                [[1, 1, 1, 1, 1, 1]], dtype=torch.int64, device=device
+            ),
+        }
 
-    dummy_input = {
-        "input_ids": torch.tensor(
-            [[101, 2023, 2003, 1037, 1398, 102]], dtype=torch.int64, device=device
-        ),
-        "attention_mask": torch.tensor(
-            [[1, 1, 1, 1, 1, 1]], dtype=torch.int64, device=device
-        ),
-    }
-
-    torch.onnx.export(
-        model=wrapped_model,
-        args=(dummy_input["input_ids"], dummy_input["attention_mask"]),
-        f=output_path,
-        opset_version=20,
-        input_names=["input_ids", "attention_mask"],
-        output_names=["sentence_embedding"],
-        dynamic_axes={
-            "input_ids": {0: "batch_size", 1: "sequence_length"},
-            "attention_mask": {0: "batch_size", 1: "sequence_length"},
-            "sentence_embedding": {0: "batch_size"},
-        },
-    )
+        torch.onnx.export(
+            model=wrapped_model,
+            args=(dummy_input["input_ids"], dummy_input["attention_mask"]),
+            f=output_path,
+            opset_version=20,
+            input_names=["input_ids", "attention_mask"],
+            output_names=["sentence_embedding"],
+            dynamic_axes={
+                "input_ids": {0: "batch_size", 1: "sequence_length"},
+                "attention_mask": {0: "batch_size", 1: "sequence_length"},
+                "sentence_embedding": {0: "batch_size"},
+            },
+        )
 
     optimize_onnx_model(output_path, output_path)
 

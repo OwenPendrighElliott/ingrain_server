@@ -33,19 +33,19 @@ def convert_timm_to_onnx(
     pre_tensor_transforms = Compose(
         transforms=preprocess.transforms[: to_tensor_index + 1]
     )
+    with torch.inference_mode():
+        image_dummy_input = pre_tensor_transforms(image).unsqueeze(0)
 
-    image_dummy_input = pre_tensor_transforms(image).unsqueeze(0)
-
-    torch.onnx.export(
-        model_with_baked_preprocess,
-        image_dummy_input,
-        output_path,
-        export_params=True,
-        opset_version=20,
-        input_names=["input"],
-        output_names=["output"],
-        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
-    )
+        torch.onnx.export(
+            model_with_baked_preprocess,
+            image_dummy_input,
+            output_path,
+            export_params=True,
+            opset_version=20,
+            input_names=["input"],
+            output_names=["output"],
+            dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
+        )
 
     optimize_onnx_model(output_path, output_path)
 

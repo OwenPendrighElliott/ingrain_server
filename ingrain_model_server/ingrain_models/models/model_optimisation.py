@@ -67,7 +67,10 @@ def optimize_onnx_model(onnx_model_path: str, output_path: str) -> None:
     onnx.save(optimized_model, output_path)
 
 
-def generate_tensorrt_config(input_shapes: Dict[str, List[int]], input_dtype: Literal["FP16", "FP32", "INT32", "INT64"]) -> str:
+def generate_tensorrt_config(
+    input_shapes: Dict[str, List[int]],
+    input_dtype: Literal["FP16", "FP32", "INT32", "INT64"],
+) -> str:
     if FP16_ENABLED:
         precision_mode = "FP16"
     else:

@@ -5,6 +5,7 @@ import statistics
 
 # Configuration
 model_name = "intfloat/e5-small-v2"
+# model_name="Qwen/Qwen3-Embedding-0.6B"
 # model_name = "intfloat/e5-base-v2"
 # model_name = "Snowflake/snowflake-arctic-embed-m"
 num_threads = 100
