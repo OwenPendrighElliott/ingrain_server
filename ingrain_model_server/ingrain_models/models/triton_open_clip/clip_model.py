@@ -5,7 +5,6 @@ from open_clip.transform import PreprocessCfg
 from huggingface_hub import hf_hub_download
 import json
 from ingrain_common.common import (
-    get_text_image_model_names,
     save_library_name,
     custom_model_exists,
 )
@@ -23,47 +22,6 @@ from ingrain_models.models.torchvision_transform_conversion import (
 )
 
 from typing import Union
-
-_PREPROCESSOR_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "preprocessors")
-PREPROCESS_CONFIGS = {
-    os.path.basename(fname).split(".")[0]: json.load(
-        open(os.path.join(_PREPROCESSOR_CONFIG_DIR, fname), "r")
-    )
-    for fname in os.listdir(_PREPROCESSOR_CONFIG_DIR)
-}
-
-
-def create_transforms(
-    model_name: str, pretrained: Union[str, None], custom_model_dir: str
-):
-    """Create the transforms.
-
-    Args:
-        model_name (str): The model name.
-        pretrained (Union[str, None]): The pretrained checkpoint.
-
-    Returns:
-        Tuple: The text and image model names, preprocess function, and tokenizer.
-    """
-    preprocessor_config = PREPROCESS_CONFIGS[model_name]
-    if custom_model_exists(custom_model_dir, pretrained):
-        with open(
-            os.path.join(custom_model_dir, pretrained, "_ingrain_model_meta.json"), "r"
-        ) as f:
-            model_meta = json.load(f)
-            del model_meta["model_type"]
-            preprocessor_config.update(model_meta)
-
-    preprocess = image_transform_v2(
-        cfg=PreprocessCfg(**preprocessor_config),
-        is_train=False,
-    )
-
-    tokenizer = open_clip.get_tokenizer(model_name)
-    friendly_text_name, friendly_image_name = get_text_image_model_names(
-        model_name, pretrained
-    )
-    return friendly_text_name, friendly_image_name, preprocess, tokenizer
 
 
 def create_model_and_transforms_triton(

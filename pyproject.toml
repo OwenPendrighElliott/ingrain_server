@@ -1,0 +1,16 @@
+[project]
+name = "ingrain-server"
+version = "0.1.0"
+description = "Dev tools for Repo"
+readme = "README.md"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "numpy>=2.3.1",
+    "open-clip-torch>=2.32.0",
+    "pillow>=11.3.0",
+    "pytest>=8.4.1",
+    "requests>=2.32.4",
+    "sentence-transformers>=5.0.0",
+]

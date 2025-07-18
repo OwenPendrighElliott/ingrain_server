@@ -1,4 +1,4 @@
-from ingrain_common.ingrain_common.common import (
+from ingrain_inference_server.ingrain_common.common import (
     get_model_name,
     get_text_image_model_names,
 )
