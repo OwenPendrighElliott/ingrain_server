@@ -3,10 +3,8 @@ from starlette.responses import JSONResponse
 import os
 import asyncio
 from ingrain_models.api_models.request_models import (
-    GenericModelRequest,
-    SentenceTransformerModelRequest,
-    OpenCLIPModelRequest,
-    TimmModelRequest,
+    LoadModelRequest,
+    UnloadModelRequest,
     DownloadCustomModelRequest,
 )
 from ingrain_models.api_models.response_models import (
@@ -98,11 +96,7 @@ def get_model_creation_client(
 
 @app.middleware("http")
 async def route_timeout_middleware(request: Request, call_next):
-    if request.url.path in {
-        "/load_clip_model",
-        "/load_sentence_transformer_model",
-        "/load_timm_model",
-    }:
+    if request.url.path == "/load_model":
         try:
             return await asyncio.wait_for(call_next(request), timeout=600)
         except asyncio.TimeoutError:
@@ -116,58 +110,13 @@ async def health() -> GenericMessageResponse:
     return {"message": "The model server is running."}
 
 
-@app.post("/load_clip_model")
-async def load_clip_model(request: OpenCLIPModelRequest) -> GenericMessageResponse:
+@app.post("/load_model")
+async def load_clip_model(request: LoadModelRequest) -> GenericMessageResponse:
     model_name = request.name
-    pretrained = request.pretrained
+    library = request.library
 
     try:
-        client = get_model_creation_client(
-            model_name, pretrained, model_library="open_clip"
-        )
-        if not client.is_in_repository():
-            client.create_triton_model()
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error in creating model client: {str(e)}",
-        )
-
-    if not client.is_ready():
-        loaded_models, models = count_loaded_models()
-        if loaded_models >= MAX_LOADED_MODELS:
-            raise HTTPException(
-                status_code=503,
-                detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(model['name'] for model in models)}",
-            )
-    else:
-        return {
-            "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
-        }
-
-    try:
-        client.load()
-    except grpcclient.InferenceServerException as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error loading model {model_name} with checkpoint {pretrained}: {str(e)}",
-        )
-
-    return {
-        "message": f"Model {model_name} with checkpoint {pretrained} loaded successfully."
-    }
-
-
-@app.post("/load_sentence_transformer_model")
-async def load_sentence_transformer_model(
-    request: SentenceTransformerModelRequest,
-) -> GenericMessageResponse:
-    model_name = request.name
-
-    try:
-        client = get_model_creation_client(
-            model_name, None, model_library="sentence_transformers"
-        )
+        client = get_model_creation_client(model_name, None, model_library=library)
         if not client.is_in_repository():
             client.create_triton_model()
     except ValueError as e:
@@ -197,56 +146,15 @@ async def load_sentence_transformer_model(
     return {"message": f"Model {model_name} loaded successfully."}
 
 
-@app.post("/load_timm_model")
-async def load_timm_model(request: TimmModelRequest) -> GenericMessageResponse:
-    model_name = request.name
-    pretrained = request.pretrained
-
-    try:
-        client = get_model_creation_client(model_name, pretrained, model_library="timm")
-        if not client.is_in_repository():
-            client.create_triton_model()
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error in creating model client: {str(e)}",
-        )
-
-    if not client.is_ready():
-        loaded_models, models = count_loaded_models()
-        if loaded_models >= MAX_LOADED_MODELS:
-            raise HTTPException(
-                status_code=503,
-                detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(model['name'] for model in models)}",
-            )
-    else:
-        return {
-            "message": f"Model {model_name} with checkpoint {pretrained} is already loaded."
-        }
-
-    try:
-        client.load()
-    except grpcclient.InferenceServerException as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error loading model {model_name} with checkpoint {pretrained}: {str(e)}",
-        )
-
-    return {
-        "message": f"Model {model_name} with checkpoint {pretrained} loaded successfully."
-    }
-
-
 @app.post("/unload_model")
-async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
+async def unload_model(request: UnloadModelRequest) -> GenericMessageResponse:
     model_name = request.name
-    pretrained = request.pretrained
 
-    model_library = get_library_name_for_model(model_name, pretrained)
-    triton_model_name = get_model_name(model_name, pretrained)
+    model_library = get_library_name_for_model(model_name, None)
+    triton_model_name = get_model_name(model_name, None)
     if model_library == "open_clip":
         text_triton_name, image_triton_name = get_text_image_model_names(
-            model_name, pretrained
+            model_name, None
         )
         ready = TRITON_CLIENT.is_model_ready(
             text_triton_name
@@ -257,58 +165,49 @@ async def unload_model(request: GenericModelRequest) -> GenericMessageResponse:
     if model_library and not ready:
         raise HTTPException(
             status_code=404,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded.",
+            detail=f"Model {model_name} is not loaded.",
         )
     if not model_library:
         raise HTTPException(
             status_code=404,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not exist in the repository.",
+            detail=f"Model {model_name} does not exist in the repository.",
         )
 
-    client = get_model_creation_client(
-        model_name, pretrained, model_library=model_library
-    )
+    client = get_model_creation_client(model_name, None, model_library=model_library)
 
     try:
         client.unload()
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error unloading model {model_name} with checkpoint {pretrained}: {str(e)}",
+            detail=f"Error unloading model {model_name}: {str(e)}",
         )
-    return {
-        "message": f"Model {model_name} with checkpoint {pretrained} unloaded successfully."
-    }
+    return {"message": f"Model {model_name} unloaded successfully."}
 
 
 @app.delete("/delete_model")
-async def delete_model(request: GenericModelRequest) -> GenericMessageResponse:
+async def delete_model(request: UnloadModelRequest) -> GenericMessageResponse:
     model_name = request.name
-    pretrained = request.pretrained
 
-    model_library = get_library_name_for_model(model_name, pretrained)
+    model_library = get_library_name_for_model(model_name, None)
 
     if not model_library:
         raise HTTPException(
             status_code=404,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not exist.",
+            detail=f"Model {model_name} does not exist.",
         )
 
-    client = get_model_creation_client(
-        model_name, pretrained, model_library=model_library
-    )
+    client = get_model_creation_client(model_name, None, model_library=model_library)
 
     try:
         client.unload()
-        delete_model_from_repo(model_name, pretrained, TRITON_MODEL_REPOSITORY_PATH)
+        delete_model_from_repo(model_name, None, TRITON_MODEL_REPOSITORY_PATH)
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error deleting model {model_name} with checkpoint {pretrained}: {str(e)}",
+            detail=f"Error deleting model {model_name}: {str(e)}",
         )
-    return {
-        "message": f"Model {model_name} with checkpoint {pretrained} deleted successfully."
-    }
+    return {"message": f"Model {model_name} deleted successfully."}
 
 
 @app.get("/loaded_models")

@@ -13,10 +13,7 @@ MODEL_BASE_URL = "http://127.0.0.1:8687"
 
 # test models
 SENTENCE_TRANSFORMER_MODEL = "intfloat/e5-small-v2"
-OPENCLIP_MODEL = "ViT-B-32"
-OPENCLIP_PRETRAINED = "laion2b_s34b_b79k"
-CUSTOM_TEXT_CLIP_MODEL = "ViT-B-32-SigLIP2-256"
-CUSTOM_TEXT_CLIP_MODEL_PRETRAINED = "webli"
+OPENCLIP_MODEL = "hf-hub:laion/CLIP-ViT-B-32-laion2B-s34B-b79K"
 
 
 def check_server_running():
@@ -30,19 +27,17 @@ def check_server_running():
 
 
 def load_openclip_model():
-    model_name = OPENCLIP_MODEL
-    pretrained = OPENCLIP_PRETRAINED
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_clip_model",
-        json={"name": model_name, "pretrained": pretrained},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": OPENCLIP_MODEL, "library": "open_clip"},
     )
     response.raise_for_status()
 
 
 def load_sentence_transformer_model():
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_sentence_transformer_model",
-        json={"name": SENTENCE_TRANSFORMER_MODEL},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "library": "sentence_transformers"},
     )
     response.raise_for_status()
 
@@ -85,7 +80,6 @@ def test_infer_openclip_text():
         f"{INFERENCE_BASE_URL}/infer_text",
         json={
             "name": OPENCLIP_MODEL,
-            "pretrained": OPENCLIP_PRETRAINED,
             "text": test_text,
         },
     )
@@ -95,9 +89,7 @@ def test_infer_openclip_text():
 
     ingrain_embeddings = response.json()["embeddings"]
 
-    model, _, _ = open_clip.create_model_and_transforms(
-        OPENCLIP_MODEL, OPENCLIP_PRETRAINED
-    )
+    model, _, _ = open_clip.create_model_and_transforms(OPENCLIP_MODEL)
     tokenizer = open_clip.get_tokenizer(OPENCLIP_MODEL)
     tokens = tokenizer([test_text])
     model_embeddings = model.encode_text(tokens)
@@ -117,7 +109,6 @@ def test_infer_openclip_image():
         f"{INFERENCE_BASE_URL}/infer_image",
         json={
             "name": OPENCLIP_MODEL,
-            "pretrained": OPENCLIP_PRETRAINED,
             "image": test_image,
         },
     )
@@ -127,9 +118,7 @@ def test_infer_openclip_image():
 
     ingrain_embeddings = response.json()["embeddings"]
 
-    model, _, preprocess = open_clip.create_model_and_transforms(
-        OPENCLIP_MODEL, OPENCLIP_PRETRAINED
-    )
+    model, _, preprocess = open_clip.create_model_and_transforms(OPENCLIP_MODEL)
 
     img = Image.open(BytesIO(base64.b64decode(test_image.split(",")[1]))).convert("RGB")
     processed_im = preprocess(img).unsqueeze(0)

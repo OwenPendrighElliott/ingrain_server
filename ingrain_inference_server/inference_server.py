@@ -45,6 +45,16 @@ MODEL_CACHE_LOCK = Lock()
 
 def get_model_library(model_name: str, pretrained: Union[str, None]) -> str:
     friendly_name = get_model_name(model_name, pretrained)
+    print(f"Getting model library for {friendly_name}")
+    print(TRITON_MODEL_REPOSITORY_PATH, friendly_name)
+    print(os.path.join(TRITON_MODEL_REPOSITORY_PATH, friendly_name, "library_name.txt"))
+    print(
+        os.path.join(
+            TRITON_MODEL_REPOSITORY_PATH,
+            friendly_name + "_image_encoder",
+            "library_name.txt",
+        )
+    )
     try:
         with open(
             os.path.join(
@@ -85,6 +95,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
 
     # if this worker is aware of the model, check if it's ready
     if client is not None:
+        print(f"Using cached client for {model_name} with checkpoint {pretrained}")
         if not client.is_ready():
             # if its not ready, remove it from the cache as this worker is out of sync
             with MODEL_CACHE_LOCK:
@@ -95,6 +106,8 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
 
     nice_model_name = get_model_name(model_name, pretrained)
     model_library = get_model_library(model_name, pretrained)
+    print("Model not in cache, checking if it's ready:", nice_model_name)
+    print("Model library:", model_library)
     if not model_library:
         return None
 

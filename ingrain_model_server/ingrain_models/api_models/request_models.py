@@ -3,23 +3,13 @@ from pydantic import BaseModel
 from typing import List, Optional, Literal
 
 
-class GenericModelRequest(BaseModel):
+class LoadModelRequest(BaseModel):
     name: str
-    pretrained: Optional[str] = None
+    library: Literal["open_clip", "sentence_transformers", "timm"]
 
 
-class SentenceTransformerModelRequest(BaseModel):
+class UnloadModelRequest(BaseModel):
     name: str
-
-
-class TimmModelRequest(BaseModel):
-    name: str
-    pretrained: Optional[str | bool] = None
-
-
-class OpenCLIPModelRequest(BaseModel):
-    name: str
-    pretrained: Optional[str] = None
 
 
 class DownloadCustomModelRequest(BaseModel):
