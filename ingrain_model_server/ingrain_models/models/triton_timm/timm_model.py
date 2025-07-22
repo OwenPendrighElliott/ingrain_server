@@ -14,15 +14,13 @@ from ingrain_common.common import save_library_name, custom_model_exists
 
 def create_model(
     model_name: str,
-    pretrained: str | bool,
+    pretrained: str | None,
     triton_model_repository_path: str,
     custom_model_dir: str,
     friendly_name: str,
 ) -> None:
 
-    if isinstance(pretrained, str) and custom_model_exists(
-        custom_model_dir, pretrained
-    ):
+    if pretrained is not None and custom_model_exists(custom_model_dir, pretrained):
         model_file_path = os.path.join(
             custom_model_dir, pretrained, "model.safetensors"
         )
@@ -43,12 +41,7 @@ def create_model(
             checkpoint_path=model_file_path,
             num_classes=model_meta["num_classes"],
         )
-    elif isinstance(pretrained, bool):
-        model = timm.create_model(model_name, pretrained=pretrained)
-    else:
-        raise ValueError(
-            "Invalid pretrained value. It is string and is not a valid custom model, must be bool for timm models that are not custom."
-        )
+    model = timm.create_model(model_name, pretrained=True)
 
     model_cfg = timm.get_pretrained_cfg(model_name.split("/")[-1].split(".")[0])
     if model_cfg is None:

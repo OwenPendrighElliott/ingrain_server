@@ -71,8 +71,6 @@ class TritonModelLoadingClient:
                     self.image_model_name,
                 )
             )
-            # self.triton_client.load_model(self.text_model_name)
-            # self.triton_client.load_model(self.image_model_name)
 
     def _create_triton_sentence_transformer_model(self):
         if not self.triton_client.is_model_ready(self.model_name):
@@ -82,10 +80,9 @@ class TritonModelLoadingClient:
                 self.custom_model_dir,
                 self.model_name,
             )
-            # self.triton_client.load_model(self.model_name)
 
     def _create_triton_timm_model(self):
-        if not self.triton_client.is_model_ready(self.model_nice_name):
+        if not self.triton_client.is_model_ready(self.model_name):
             create_model_timm(
                 self.model,
                 self.pretrained,
@@ -93,7 +90,6 @@ class TritonModelLoadingClient:
                 self.custom_model_dir,
                 self.model_name,
             )
-            # self.triton_client.load_model(self.model_nice_name)
 
     def is_in_repository(self) -> bool:
         repository_index = self.triton_client.get_model_repository_index(as_json=True)

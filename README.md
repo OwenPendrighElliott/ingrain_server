@@ -267,11 +267,11 @@ bash run_triton_server_dev.sh
 ### Run the FastAPI server
 
 ```bash
-uvicorn --app-dir ingrain_inference_server inference_server:app --host 127.0.0.1 --port 8686 --reload
+uv run uvicorn --app-dir ingrain_inference_server inference_server:app --host 127.0.0.1 --port 8686 --reload
 ```
 
 ```bash
-uvicorn --app-dir ingrain_model_server model_server:app --host 127.0.0.1 --port 8687 --reload
+uv run uvicorn --app-dir ingrain_model_server model_server:app --host 127.0.0.1 --port 8687 --reload
 ```
 
 ### Testing
