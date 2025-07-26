@@ -17,7 +17,7 @@ inference_times = []
 response_times_lock = threading.Lock()
 
 client = ingrain.Client()
-client.load_sentence_transformer_model(name=model_name)
+client.load_model(name=model_name, library="sentence_transformers")
 
 
 # Benchmarking function
