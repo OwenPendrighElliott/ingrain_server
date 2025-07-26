@@ -18,24 +18,37 @@ The easiest way to get started is with a docker compose file, which will run Tri
 
 ```yml
 services:
-  ingrain:
-    image: owenpelliott/ingrain-server:latest
-    container_name: ingrain
+  ingrain-models:
+    image: owenpelliott/ingrain-models:latest
+    container_name: ingrain-models
     ports:
-      - "8686:8686"
       - "8687:8687"
     environment:
-      TRITON_GRPC_URL: triton:8001
-      MAX_BATCH_SIZE: 8
+      - TRITON_GRPC_URL=triton:8001
+      - MAX_BATCH_SIZE=16
+      - MODEL_INSTANCES=1
+      - INSTANCE_KIND=KIND_GPU
     depends_on:
       - triton
     volumes:
       - ./model_repository:/app/model_repository 
       - ${HOME}/.cache/huggingface:/app/model_cache/
+  ingrain-inference:
+    image: owenpelliott/ingrain-inference:latest
+    container_name: ingrain-inference
+    ports:
+      - "8686:8686"
+    environment:
+      - TRITON_GRPC_URL=triton:8001
+    depends_on:
+      - triton
+    volumes:
+      - ./model_repository:/app/model_repository 
+      - ./model_cache:/app/model_cache/
   triton:
-    image: nvcr.io/nvidia/tritonserver:25.04-py3
+    image: nvcr.io/nvidia/tritonserver:25.06-py3
     container_name: triton
-    runtime: nvidia # comment out if not using GPU
+    runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     shm_size: "256m"
