@@ -10,7 +10,7 @@ import timm
 INFERENCE_BASE_URL = "http://127.0.0.1:8686"
 MODEL_BASE_URL = "http://127.0.0.1:8687"
 
-TIMM_MODEL = "hf_hub:Marqo/nsfw-image-detection-384"
+TIMM_MODEL = "hf_hub:timm/mobilenetv4_hybrid_medium.e200_r256_in12k_ft_in1k"
 
 
 def check_server_running():

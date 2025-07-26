@@ -68,8 +68,12 @@ def create_model(
         generate_timm_config(
             cfg_path, friendly_name, model_cfg.input_size, model_cfg.num_classes
         )
-
+        print(
+            f"Model {friendly_name} converted to ONNX and saved at {image_encoder_path}"
+        )
+        print(preprocess)
         image_transform_config = image_transform_dict_from_torch_transforms(preprocess)
+        print(f"Image transform config: {image_transform_config}")
         transform_config_path = os.path.join(
             triton_model_repository_path, friendly_name, "image_transform_config.json"
         )
