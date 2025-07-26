@@ -5,34 +5,50 @@ on:
     branches: [main]
 
 jobs:
-  build-arm64-server:
-    name: Build ARM64 Server Image (PR Check)
+  build-arm64:
+    name: Build ARM64 Images (PR Check)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build ARM64 Server Image
+      - name: Build ingrain-models (ARM64)
         run: |
           docker buildx build --platform linux/arm64 \
-            -t test-arm64-server \
-            . --load
+            -t test-ingrain-models-arm64 \
+            -f ./ingrain_model_server/Dockerfile \
+            ./ingrain_model_server --load
 
-  build-amd64-server:
-    name: Build AMD64 Server Image (PR Check)
+      - name: Build ingrain-inference (ARM64)
+        run: |
+          docker buildx build --platform linux/arm64 \
+            -t test-ingrain-inference-arm64 \
+            -f ./ingrain_inference_server/Dockerfile \
+            ./ingrain_inference_server --load
+
+  build-amd64:
+    name: Build AMD64 Images (PR Check)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build AMD64 Server Image
+      - name: Build ingrain-models (AMD64)
         run: |
           docker buildx build --platform linux/amd64 \
-            -t test-amd64-server \
-            . --load
+            -t test-ingrain-models-amd64 \
+            -f ./ingrain_model_server/Dockerfile \
+            ./ingrain_model_server --load
+
+      - name: Build ingrain-inference (AMD64)
+        run: |
+          docker buildx build --platform linux/amd64 \
+            -t test-ingrain-inference-amd64 \
+            -f ./ingrain_inference_server/Dockerfile \
+            ./ingrain_inference_server --load

@@ -1,4 +1,4 @@
-from ingrain_inference.inference.preprocessors.image_preprocessor import (
+from ingrain_inference_server.ingrain_inference.inference.preprocessors.image_preprocessor import (
     ImagePreprocessor,
     ResizeImage,
     ConvertToRGB,

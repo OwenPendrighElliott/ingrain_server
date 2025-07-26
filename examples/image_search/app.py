@@ -8,8 +8,7 @@ from flask import Flask, request, render_template, jsonify, send_from_directory
 HNSWLIB_SERVER_URL = "http://localhost:8685"
 IMAGE_DIR = "images"
 INDEX_NAME = "image_search"
-CLIP_MODEL_NAME = "MobileCLIP-S2"
-CLIP_PRETRAINED = "datacompdr"
+CLIP_MODEL_NAME = "hf-hub:timm/PE-Core-B-16"
 MODEL_DIM = 512
 K = 20
 
@@ -27,9 +26,7 @@ def search():
     query_text = request.json["query_text"]
 
     client = ingrain.Client()
-    response = client.infer_text(
-        name=CLIP_MODEL_NAME, pretrained=CLIP_PRETRAINED, text=query_text
-    )
+    response = client.infer_text(name=CLIP_MODEL_NAME, text=query_text)
     query_embedding = response["embeddings"][0]
 
     # Search the index for similar images
@@ -40,7 +37,7 @@ def search():
             "indexName": INDEX_NAME,
             "queryVector": query_embedding,
             "k": K,
-            "efSearch": 256,
+            "efSearch": 512,
             "filter": "",
             "returnMetadata": True,
         },

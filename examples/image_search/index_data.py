@@ -10,11 +10,10 @@ from concurrent.futures import ProcessPoolExecutor
 HNSWLIB_SERVER_URL = "http://localhost:8685"
 IMAGE_DIR = "images"
 INDEX_NAME = "image_search"
-CLIP_MODEL_NAME = "MobileCLIP-S2"
-CLIP_PRETRAINED = "datacompdr"
+CLIP_MODEL_NAME = "hf-hub:timm/PE-Core-B-16"
 MODEL_DIM = 512
 INDEXING_BATCH_SIZE = 512
-NUM_THREADS = 8
+NUM_THREADS = 2
 BATCH_SIZE = 4
 
 
@@ -30,9 +29,7 @@ def process_batch(filenames):
             image_data_uri = f"data:image/{data_type};base64,{image_data}"
             image_datas.append(image_data_uri)
 
-    response = client.infer_image(
-        name=CLIP_MODEL_NAME, pretrained=CLIP_PRETRAINED, image=image_datas
-    )
+    response = client.infer_image(name=CLIP_MODEL_NAME, image=image_datas)
     embeddings = response["embeddings"]
 
     return list(zip(filenames, embeddings))
@@ -41,7 +38,7 @@ def process_batch(filenames):
 def main():
     # Initialize ingrain client
     client = ingrain.Client(return_numpy=False)
-    client.load_clip_model(name=CLIP_MODEL_NAME, pretrained=CLIP_PRETRAINED)
+    client.load_model(name=CLIP_MODEL_NAME, library="open_clip")
 
     # Initialize HNSWLib index
     _ = requests.post(

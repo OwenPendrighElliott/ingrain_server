@@ -28,7 +28,6 @@ Performs text inference using the specified model.
 **Request Body:**
 
 - `name`: Model name.
-- `pretrained`: Pretrained checkpoint identifier. Not used for Sentence Transformers models.
 - `text`: Text input for inference. Can be a list to infer a batch.
 - `normalize`: Boolean flag for normalization.
 - `n_dims`: Number of dimensions for the embedding. Only useful for MRL models.
@@ -37,7 +36,7 @@ Performs text inference using the specified model.
     ```bash
     curl -X POST "http://127.0.0.1:8686/infer_text" \
     -H "Content-Type: application/json" \
-    -d '{"name": "intfloat/e5-small-v2", "pretrained": null, "text": "sample text", "normalize": true, "n_dims": null}'
+    -d '{"name": "intfloat/e5-small-v2" "text": "sample text", "normalize": true, "n_dims": null}'
     ```
 
 === "Python"
@@ -59,7 +58,6 @@ Performs image inference using the specified model.
 **Request Body:**
 
 - `name`: Model name.
-- `pretrained`: Pretrained checkpoint identifier.
 - `image`: Image URL or base64 encoded image. Can be a list to infer a batch.
 - `normalize`: Boolean flag for normalization.
 - `n_dims`: Number of dimensions for the embedding. Only useful for MRL models.
@@ -69,7 +67,7 @@ Performs image inference using the specified model.
     ```bash
     curl -X POST "http://127.0.0.1:8686/infer_image" \
     -H "Content-Type: application/json" \
-    -d '{"name": "MobileCLIP-S2", "pretrained": "datacompdr", "image": "http://example.com/image.jpg", "normalize": true, "n_dims": null}'
+    -d '{"name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "image": "http://example.com/image.jpg", "normalize": true, "n_dims": null}'
     ```
 
 === "Python"
@@ -78,8 +76,7 @@ Performs image inference using the specified model.
 
     client = ingrain.Client()
     response = client.infer_image(
-        name="MobileCLIP-S2", 
-        pretrained="datacompdr", 
+        name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", 
         image="http://example.com/image.jpg"
     )
     ```
@@ -91,7 +88,6 @@ Performs both text and image inference concurrently, can do either or both toget
 **Request Body:**
 
 - `name`: Model name.
-- `pretrained`: Pretrained checkpoint identifier.
 - `text`: Text input for inference. Can be a list to infer a batch.
 - `image`: Image URL or base64 encoded image. Can be a list to infer a batch.
 - `normalize`: Boolean flag for normalization.
@@ -102,7 +98,7 @@ Performs both text and image inference concurrently, can do either or both toget
     ```bash
     curl -X POST "http://127.0.0.1:8686/infer" \
     -H "Content-Type: application/json" \
-    -d '{""name": "MobileCLIP-S2", "pretrained": "datacompdr", "text": "sample text", "image": "http://example.com/image.jpg", "normalize": true, "n_dims": 512}'
+    -d '{""name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "text": "sample text", "image": "http://example.com/image.jpg", "normalize": true, "n_dims": 512}'
     ```
 
 === "Python"
@@ -111,8 +107,7 @@ Performs both text and image inference concurrently, can do either or both toget
 
     client = ingrain.Client()
     response = client.infer_image(
-        name="MobileCLIP-S2", 
-        pretrained="datacompdr", 
+        name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", 
         image="http://example.com/image.jpg", 
         text="sample text"
     )

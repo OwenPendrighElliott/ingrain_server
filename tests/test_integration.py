@@ -9,10 +9,8 @@ MODEL_BASE_URL = "http://127.0.0.1:8687"
 
 # test models
 SENTENCE_TRANSFORMER_MODEL = "intfloat/e5-small-v2"
-OPENCLIP_MODEL = "ViT-B-32"
-OPENCLIP_PRETRAINED = "laion2b_s34b_b79k"
-CUSTOM_TEXT_CLIP_MODEL = "ViT-B-32-SigLIP2-256"
-CUSTOM_TEXT_CLIP_MODEL_PRETRAINED = "webli"
+OPENCLIP_MODEL = "hf-hub:laion/CLIP-ViT-B-32-laion2B-s34B-b79K"
+CUSTOM_TEXT_CLIP_MODEL = "hf-hub:timm/ViT-B-32-SigLIP2-256"
 
 
 def check_server_running():
@@ -28,24 +26,22 @@ def check_server_running():
 def load_openclip_model(clip_type: Literal["CLIP", "CustomTextCLIP"] = "CLIP"):
     if clip_type == "CLIP":
         model_name = OPENCLIP_MODEL
-        pretrained = OPENCLIP_PRETRAINED
     elif clip_type == "CustomTextCLIP":
         model_name = CUSTOM_TEXT_CLIP_MODEL
-        pretrained = CUSTOM_TEXT_CLIP_MODEL_PRETRAINED
     else:
         raise ValueError("Invalid model type. Must be 'CLIP' or 'CustomTextCLIP'.")
 
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_clip_model",
-        json={"name": model_name, "pretrained": pretrained},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": model_name, "library": "open_clip"},
     )
     response.raise_for_status()
 
 
 def load_sentence_transformer_model():
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_sentence_transformer_model",
-        json={"name": SENTENCE_TRANSFORMER_MODEL},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "library": "sentence_transformers"},
     )
     response.raise_for_status()
 
@@ -62,8 +58,8 @@ def test_health():
 def test_load_sentence_transformer_model():
     check_server_running()
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_sentence_transformer_model",
-        json={"name": SENTENCE_TRANSFORMER_MODEL},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "library": "sentence_transformers"},
     )
     assert response.status_code == 200
     assert (
@@ -77,8 +73,8 @@ def test_load_loaded_sentence_transformer_model():
     check_server_running()
     load_sentence_transformer_model()
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_sentence_transformer_model",
-        json={"name": SENTENCE_TRANSFORMER_MODEL},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "library": "sentence_transformers"},
     )
     assert response.status_code == 200
     assert "already loaded" in response.json()["message"]
@@ -88,8 +84,8 @@ def test_load_loaded_sentence_transformer_model():
 def test_load_clip_model():
     check_server_running()
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_clip_model",
-        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": OPENCLIP_MODEL, "library": "open_clip"},
     )
     assert response.status_code == 200
     assert (
@@ -102,10 +98,10 @@ def test_load_clip_model():
 def test_load_custom_text_clip_model():
     check_server_running()
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_clip_model",
+        f"{MODEL_BASE_URL}/load_model",
         json={
             "name": CUSTOM_TEXT_CLIP_MODEL,
-            "pretrained": CUSTOM_TEXT_CLIP_MODEL_PRETRAINED,
+            "library": "open_clip",
         },
     )
     assert response.status_code == 200
@@ -175,7 +171,6 @@ def test_infer_text_clip_batch():
         f"{INFERENCE_BASE_URL}/infer_text",
         json={
             "name": OPENCLIP_MODEL,
-            "pretrained": OPENCLIP_PRETRAINED,
             "text": test_text,
         },
     )
@@ -193,7 +188,6 @@ def test_infer_image():
         f"{INFERENCE_BASE_URL}/infer_image",
         json={
             "name": OPENCLIP_MODEL,
-            "pretrained": OPENCLIP_PRETRAINED,
             "image": test_image,
         },
     )
@@ -213,7 +207,6 @@ def test_infer_image_batch():
         f"{INFERENCE_BASE_URL}/infer_image",
         json={
             "name": OPENCLIP_MODEL,
-            "pretrained": OPENCLIP_PRETRAINED,
             "image": test_image,
         },
     )
@@ -236,7 +229,6 @@ def test_infer_text_image():
         f"{INFERENCE_BASE_URL}/infer",
         json={
             "name": OPENCLIP_MODEL,
-            "pretrained": OPENCLIP_PRETRAINED,
             "text": test_texts,
             "image": test_image,
         },
@@ -275,8 +267,8 @@ def test_unload_and_load_sentence_transformer_model():
     assert response.status_code == 200
     assert "unloaded successfully" in response.json()["message"]
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_sentence_transformer_model",
-        json={"name": SENTENCE_TRANSFORMER_MODEL},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "library": "sentence_transformers"},
     )
     assert response.status_code == 200
     assert "loaded successfully" in response.json()["message"]
@@ -287,14 +279,13 @@ def test_unload_and_load_clip_model():
     check_server_running()
     load_openclip_model()
     response = requests.post(
-        f"{MODEL_BASE_URL}/unload_model",
-        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        f"{MODEL_BASE_URL}/unload_model", json={"name": OPENCLIP_MODEL}
     )
     assert response.status_code == 200
     assert "unloaded successfully" in response.json()["message"]
     response = requests.post(
-        f"{MODEL_BASE_URL}/load_clip_model",
-        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        f"{MODEL_BASE_URL}/load_model",
+        json={"name": OPENCLIP_MODEL, "library": "open_clip"},
     )
     assert response.status_code == 200
     assert "loaded successfully" in response.json()["message"]
@@ -317,7 +308,7 @@ def test_delete_clip_model():
     load_openclip_model()
     response = requests.delete(
         f"{MODEL_BASE_URL}/delete_model",
-        json={"name": OPENCLIP_MODEL, "pretrained": OPENCLIP_PRETRAINED},
+        json={"name": OPENCLIP_MODEL},
     )
     assert response.status_code == 200
     assert "deleted successfully" in response.json()["message"]
