@@ -25,11 +25,11 @@ uv sync --dev
 The two FastAPI servers can then be started as follows:
 
 ```bash
-uv run uvicorn inference_server:app --host 127.0.0.1 --port 8686 --reload
+uv run uvicorn --app-dir ingrain_inference_server inference_server:app --host 127.0.0.1 --port 8686 --reload
 ```
 
 ```bash
-uv run uvicorn model_server:app --host 127.0.0.1 --port 8687 --reload
+uv run uvicorn --app-dir ingrain_model_server model_server:app --host 127.0.0.1 --port 8687 --reload
 ```
 
 ## Testing
@@ -51,6 +51,6 @@ uv run pytest --integration
 All code checks should pass before raising a PR. You can run the checks locally using:
 
 ```bash
-black . --check
-ruff check
+uv run black . --check
+uv run ruff check
 ```

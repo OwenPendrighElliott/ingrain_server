@@ -26,7 +26,7 @@ services:
       - triton
     volumes:
       - ./model_repository:/app/model_repository 
-      - ./model_cache:/app/model_cache/
+      - ${HOME}/.cache/huggingface:/app/model_cache/
   ingrain-inference:
     image: owenpelliott/ingrain-inference:latest
     container_name: ingrain-inference
