@@ -27,7 +27,7 @@ services:
       - TRITON_GRPC_URL=triton:8001
       - MAX_BATCH_SIZE=16
       - MODEL_INSTANCES=1
-      - INSTANCE_KIND=KIND_GPU
+      - INSTANCE_KIND=KIND_GPU # Change to KIND_CPU if using a CPU
     depends_on:
       - triton
     volumes:
@@ -44,11 +44,10 @@ services:
       - triton
     volumes:
       - ./model_repository:/app/model_repository 
-      - ./model_cache:/app/model_cache/
   triton:
     image: nvcr.io/nvidia/tritonserver:25.06-py3
     container_name: triton
-    runtime: nvidia
+    runtime: nvidia # Remove if using a CPU
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     shm_size: "256m"
