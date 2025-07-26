@@ -10,7 +10,7 @@ from typing import List
 HNSWLIB_SERVER_URL = "http://localhost:8685"
 MODEL_NAME = "intfloat/e5-small-v2"
 MODEL_DIM = 384
-NUM_THREADS = 20
+NUM_THREADS = 10
 BATCH_SIZE = 4
 INDEX_NAME = "scidocs_index"
 PASSAGE_PREFIX = "passage: "
@@ -19,7 +19,7 @@ CORPUS_FILE = os.path.join("data", "scidocs", "scidocs", "corpus.jsonl")
 
 # Initialize ingrain client
 client = ingrain.Client(return_numpy=False)
-client.load_sentence_transformer_model(name=MODEL_NAME)
+client.load_model(name=MODEL_NAME, library="sentence_transformers")
 
 # Initialize HNSWLib index
 response = requests.post(

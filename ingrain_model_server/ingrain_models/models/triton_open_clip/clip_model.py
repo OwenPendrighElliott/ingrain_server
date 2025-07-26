@@ -1,7 +1,5 @@
 import os
 import open_clip
-from open_clip.transform import image_transform_v2
-from open_clip.transform import PreprocessCfg
 from huggingface_hub import hf_hub_download
 import json
 from ingrain_common.common import (

@@ -47,7 +47,7 @@ app = FastAPI()
 validate_env_vars()
 
 
-def count_loaded_models() -> int:
+def count_loaded_models() -> tuple[int, list[str]]:
     """Count the number of currently loaded models in the Triton server."""
     model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
         as_json=True
@@ -111,7 +111,7 @@ async def health() -> GenericMessageResponse:
 
 
 @app.post("/load_model")
-async def load_clip_model(request: LoadModelRequest) -> GenericMessageResponse:
+async def load_model(request: LoadModelRequest) -> GenericMessageResponse:
     model_name = request.name
     library = request.library
 
@@ -124,13 +124,12 @@ async def load_clip_model(request: LoadModelRequest) -> GenericMessageResponse:
             status_code=400,
             detail=f"Error in creating model client: {str(e)}",
         )
-
     if not client.is_ready():
         loaded_models, models = count_loaded_models()
         if loaded_models >= MAX_LOADED_MODELS:
             raise HTTPException(
-                status_code=503,
-                detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(model['name'] for model in models)}",
+                status_code=400,
+                detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(models)}",
             )
     else:
         return {"message": f"Model {model_name} is already loaded."}
@@ -140,7 +139,7 @@ async def load_clip_model(request: LoadModelRequest) -> GenericMessageResponse:
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error loading model {model_name}: {str(e)}",
+            detail=f"Error loading model {model_name}: {str(e)}\nIt is possible that triton is unavailable, the model is not compatible, or that the incorrect model repository directory is being use.",
         )
 
     return {"message": f"Model {model_name} loaded successfully."}
@@ -180,7 +179,7 @@ async def unload_model(request: UnloadModelRequest) -> GenericMessageResponse:
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error unloading model {model_name}: {str(e)}",
+            detail=f"Error unloading model {model_name}: {str(e)}\nIt is possible that triton is unavailable, the model is not compatible, or that the incorrect model repository directory is being use",
         )
     return {"message": f"Model {model_name} unloaded successfully."}
 
@@ -205,7 +204,7 @@ async def delete_model(request: UnloadModelRequest) -> GenericMessageResponse:
     except grpcclient.InferenceServerException as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error deleting model {model_name}: {str(e)}",
+            detail=f"Error deleting model {model_name}: {str(e)}\nIt is possible that triton is unavailable, the model is not compatible, or that the incorrect model repository directory is being use",
         )
     return {"message": f"Model {model_name} deleted successfully."}
 

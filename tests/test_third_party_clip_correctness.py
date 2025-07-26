@@ -5,7 +5,6 @@ from PIL import Image
 from io import BytesIO
 import base64
 import open_clip
-from sentence_transformers import SentenceTransformer
 
 
 INFERENCE_BASE_URL = "http://127.0.0.1:8686"
@@ -59,12 +58,11 @@ def test_infer_openclip_text():
     ingrain_embeddings = response.json()["embeddings"]
 
     model, _, _ = open_clip.create_model_and_transforms(OPENCLIP_MODEL)
+    model.eval()
     tokenizer = open_clip.get_tokenizer(OPENCLIP_MODEL)
     tokens = tokenizer([test_text])
     model_embeddings = model.encode_text(tokens)
     model_embeddings /= model_embeddings.norm(dim=-1, keepdim=True)
-
-    print(np.abs(ingrain_embeddings - model_embeddings.detach().cpu().numpy()).sum())
 
     assert np.allclose(
         ingrain_embeddings, model_embeddings.detach().cpu().numpy(), atol=1e-5
@@ -91,7 +89,7 @@ def test_infer_openclip_image():
     ingrain_embeddings = response.json()["embeddings"]
 
     model, _, preprocess = open_clip.create_model_and_transforms(OPENCLIP_MODEL)
-
+    model.eval()
     img = Image.open(BytesIO(base64.b64decode(test_image.split(",")[1]))).convert("RGB")
     processed_im = preprocess(img).unsqueeze(0)
     model_embeddings = model.encode_image(processed_im)

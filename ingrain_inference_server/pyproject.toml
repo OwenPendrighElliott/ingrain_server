@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "certifi>=2025.7.14",
     "fastapi==0.116.1",
-    "orjson==3.11.0",
+    "orjson==3.11.1",
     "pillow==11.3.0",
     "pycurl==7.45.6",
     "pydantic==2.11.7",

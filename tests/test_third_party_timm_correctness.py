@@ -5,7 +5,6 @@ from PIL import Image
 from io import BytesIO
 import base64
 import timm
-from sentence_transformers import SentenceTransformer
 
 
 INFERENCE_BASE_URL = "http://127.0.0.1:8686"

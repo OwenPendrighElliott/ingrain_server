@@ -1,3 +1,4 @@
+import os
 import tritonclient.grpc as grpcclient
 from ingrain_models.models.triton_open_clip.clip_model import (
     create_model_and_transforms_triton,
@@ -8,7 +9,11 @@ from ingrain_models.models.triton_sentence_transformers.sentence_transformer_mod
 from ingrain_models.models.triton_timm.timm_model import (
     create_model as create_model_timm,
 )
-from ingrain_common.common import get_model_name, get_text_image_model_names
+from ingrain_common.common import (
+    get_model_name,
+    get_text_image_model_names,
+    delete_model_from_repo,
+)
 from typing import Union
 
 MODALITY_MAPPING = {
@@ -48,14 +53,34 @@ class TritonModelLoadingClient:
             )
 
     def create_triton_model(self):
+        if self.library_name not in MODALITY_MAPPING:
+            raise ValueError(
+                f"Unsupported library name: {self.library_name}. Supported libraries are: {', '.join(MODALITY_MAPPING.keys())}."
+            )
+
+        is_created, is_partially_created = self.is_created()
+        if is_created:
+            return
+
+        if is_partially_created:
+            print(
+                f"Model {self.model_name} is partially created in the Triton model repository. This is possibly due to an error in a previous run. Attempting to remove and recreate it."
+            )
+            delete_model_from_repo(
+                self.model, self.pretrained, self.triton_model_repository_path
+            )
+
         if self.library_name == "open_clip":
-            return self._create_triton_open_clip_model()
+            self._create_triton_open_clip_model()
         elif self.library_name == "sentence_transformers":
-            return self._create_triton_sentence_transformer_model()
+            self._create_triton_sentence_transformer_model()
         elif self.library_name == "timm":
-            return self._create_triton_timm_model()
-        else:
-            raise ValueError(f"Unsupported library name: {self.library_name}")
+            self._create_triton_timm_model()
+
+        if not self.is_created():
+            raise RuntimeError(
+                f"Model {self.model_name} is not created correctly in the Triton model repository, something has gone wrong."
+            )
 
     def _create_triton_open_clip_model(self):
         if not self.triton_client.is_model_ready(
@@ -126,3 +151,55 @@ class TritonModelLoadingClient:
             ) and self.triton_client.is_model_ready(self.image_model_name)
         else:
             return self.triton_client.is_model_ready(self.model_name)
+
+    def is_created(self) -> tuple[bool, bool]:
+        dirs: list[str] = []
+        if self.library_name == "open_clip":
+            dirs.append(
+                os.path.join(self.triton_model_repository_path, self.text_model_name)
+            )
+            dirs.append(
+                os.path.join(self.triton_model_repository_path, self.image_model_name)
+            )
+        else:
+            dirs.append(
+                os.path.join(self.triton_model_repository_path, self.model_name)
+            )
+
+        is_created = True
+        is_partially_created = False
+        for dir_path in dirs:
+            if not os.path.exists(dir_path):
+                is_created = False
+                break
+
+            if not os.path.exists(os.path.join(dir_path, "config.pbtxt")):
+                is_partially_created = True
+                is_created = False
+                break
+
+            if not os.path.exists(os.path.join(dir_path, "1", "model.onnx")):
+                is_partially_created = True
+                is_created = False
+                break
+
+            if not os.path.exists(os.path.join(dir_path, "library_name.txt")):
+                is_partially_created = True
+                is_created = False
+                break
+
+            if dir_path.endswith("_text_encoder"):
+                if not os.path.exists(os.path.join(dir_path, "tokenizer")):
+                    is_partially_created = True
+                    is_created = False
+                    break
+
+            if dir_path.endswith("_image_encoder") or self.library_name == "timm":
+                if not os.path.exists(
+                    os.path.join(dir_path, "image_transform_config.json")
+                ):
+                    is_partially_created = True
+                    is_created = False
+                    break
+
+        return is_created, is_partially_created

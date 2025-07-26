@@ -9,24 +9,37 @@ The recommended way to run Ingrain locally is via Docker with a docker compose f
 
 ```yml
 services:
-  ingrain:
-    image: owenpelliott/ingrain-server:latest
-    container_name: ingrain
+  ingrain-models:
+    image: owenpelliott/ingrain-models:latest
+    container_name: ingrain-models
     ports:
-      - "8686:8686"
       - "8687:8687"
     environment:
-      TRITON_GRPC_URL: triton:8001
-      MAX_BATCH_SIZE: 8
+      - TRITON_GRPC_URL=triton:8001
+      - MAX_BATCH_SIZE=16
+      - MODEL_INSTANCES=1
+      - INSTANCE_KIND=KIND_GPU
     depends_on:
       - triton
     volumes:
       - ./model_repository:/app/model_repository 
-      - ${HOME}/.cache/huggingface:/app/model_cache/
+      - ./model_cache:/app/model_cache/
+  ingrain-inference:
+    image: owenpelliott/ingrain-inference:latest
+    container_name: ingrain-inference
+    ports:
+      - "8686:8686"
+    environment:
+      - TRITON_GRPC_URL=triton:8001
+    depends_on:
+      - triton
+    volumes:
+      - ./model_repository:/app/model_repository 
+      - ./model_cache:/app/model_cache/
   triton:
-    image: nvcr.io/nvidia/tritonserver:25.04-py3
+    image: nvcr.io/nvidia/tritonserver:25.06-py3
     container_name: triton
-    runtime: nvidia # comment out if not using GPU
+    runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     shm_size: "256m"
@@ -68,7 +81,7 @@ Open CLIP models and sentence transformers are both converted to ONNX and served
 
 ## How does it perform?
 
-It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~1050 QPS, or `intfloat/e5-base-v2` to 500 clients at ~860 QPS.
+It retains all the performance of Triton. On 12 cores at 4.3 GHz with a 2080 SUPER 8GB card running in Docker using WSL2, it can serve `intfloat/e5-small-v2` to 500 clients at ~1500 QPS, or `intfloat/e5-base-v2` to 500 clients at ~860 QPS.
 
 ## How compatible is it?
 

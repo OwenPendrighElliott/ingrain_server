@@ -12,24 +12,37 @@ The easiest way to get started is with a docker compose file, which will run Tri
 
 ```yml
 services:
-  ingrain:
-    image: owenpelliott/ingrain-server:latest
-    container_name: ingrain
+  ingrain-models:
+    image: owenpelliott/ingrain-models:latest
+    container_name: ingrain-models
     ports:
-      - "8686:8686"
       - "8687:8687"
     environment:
-      TRITON_GRPC_URL: triton:8001
-      MAX_BATCH_SIZE: 8
+      - TRITON_GRPC_URL=triton:8001
+      - MAX_BATCH_SIZE=16
+      - MODEL_INSTANCES=1
+      - INSTANCE_KIND=KIND_GPU
     depends_on:
       - triton
     volumes:
       - ./model_repository:/app/model_repository 
-      - ${HOME}/.cache/huggingface:/app/model_cache/
+      - ./model_cache:/app/model_cache/
+  ingrain-inference:
+    image: owenpelliott/ingrain-inference:latest
+    container_name: ingrain-inference
+    ports:
+      - "8686:8686"
+    environment:
+      - TRITON_GRPC_URL=triton:8001
+    depends_on:
+      - triton
+    volumes:
+      - ./model_repository:/app/model_repository 
+      - ./model_cache:/app/model_cache/
   triton:
-    image: nvcr.io/nvidia/tritonserver:25.04-py3
+    image: nvcr.io/nvidia/tritonserver:25.06-py3
     container_name: triton
-    runtime: nvidia # comment out if not using GPU
+    runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     shm_size: "256m"
@@ -73,9 +86,9 @@ Models are accessable via the same naming conventions as their underlying librar
 ```python
 import open_clip
 
-model, _, preprocess = open_clip.create_model_and_transforms('MobileCLIP-S2', pretrained='datacompdr')
+model, _, preprocess = open_clip.create_model_and_transforms('Mhf-hub:apple/MobileCLIP-S1-OpenCLIP')
 model.eval()
-tokenizer = open_clip.get_tokenizer('MobileCLIP-S2')
+tokenizer = open_clip.get_tokenizer('hf-hub:apple/MobileCLIP-S1-OpenCLIP')
 ```
 
 To do the same in Ingrain, you would use the following code:
@@ -84,7 +97,7 @@ To do the same in Ingrain, you would use the following code:
 import ingrain
 
 client = ingrain.Client()
-client.load_clip_model(name="MobileCLIP-S2", pretrained="datacompdr")
+client.load_model(name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", library="open_clip")
 ```
 
 A similar pattern holds for `sentence_transformers` models:
@@ -103,7 +116,7 @@ Ingrain:
 import ingrain
 
 client = ingrain.Client()
-client.load_sentence_transformer_model(name="intfloat/e5-small-v2")
+client.load_model(name="intfloat/e5-small-v2", library="sentence_transformers")
 ```
 
 ### Inference
@@ -115,7 +128,7 @@ For example to encode a list of sentences using the `intfloat/e5-small-v2` model
 import ingrain
 
 client = ingrain.Client()
-client.load_sentence_transformer_model(name="intfloat/e5-small-v2")
+client.load_model(name="intfloat/e5-small-v2", library="sentence_transformers")
 
 response = client.infer(
     name="intfloat/e5-small-v2", 

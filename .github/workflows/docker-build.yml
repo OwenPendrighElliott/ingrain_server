@@ -2,11 +2,10 @@ name: Build & Push multi-arch Docker images
 
 on:
   push:
-    tags:     [ '*.*.*' ]
+    tags: [ '*.*.*' ]
 
 env:
-  IMAGE_NAME: owenpelliott/ingrain-server
-  TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
+  VERSION_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
 
 jobs:
   build-and-push:
@@ -24,15 +23,29 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build & push images
+      - name: Build & Push ingrain-models image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./ingrain_model_server
+          file: ./ingrain_model_server/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ env.TAG }}
+            owenpelliott/ingrain-models:latest
+            owenpelliott/ingrain-models:${{ env.VERSION_TAG }}
 
-      - name: Inspect manifest
-        run: docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ env.TAG }}
+      - name: Build & Push ingrain-inference image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ingrain_inference_server
+          file: ./ingrain_inference_server/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            owenpelliott/ingrain-inference:latest
+            owenpelliott/ingrain-inference:${{ env.VERSION_TAG }}
+
+      - name: Inspect pushed manifests
+        run: |
+          docker buildx imagetools inspect owenpelliott/ingrain-models:${{ env.VERSION_TAG }}
+          docker buildx imagetools inspect owenpelliott/ingrain-inference:${{ env.VERSION_TAG }}

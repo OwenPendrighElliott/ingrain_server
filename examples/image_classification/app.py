@@ -34,5 +34,5 @@ def classify():
 
 if __name__ == "__main__":
     client = ingrain.Client()
-    client.load_timm_model(MODEL)
+    client.load_model(MODEL, library="timm")
     app.run(port=5000, debug=True)
