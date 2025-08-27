@@ -163,28 +163,27 @@ async def health() -> GenericMessageResponse:
 @app.post("/embed_text", response_model=TextEmbeddingResponse)
 async def embed_text(request: TextEmbeddingRequest) -> TextEmbeddingResponse:
     model_name = request.name
-    pretrained = request.pretrained
     text = request.text
     normalize = request.normalize
     n_dims = request.n_dims
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     if "text" not in client.modalities:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not support text inference.",
+            detail=f"Model {model_name} does not support text inference.",
         )
 
     if client.library_name not in EMBEDDING_MODEL_LIBRARIES:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not an embedding model.",
+            detail=f"Model {model_name} is not an embedding model.",
         )
 
     start = time.perf_counter()
@@ -201,17 +200,16 @@ async def embed_text(request: TextEmbeddingRequest) -> TextEmbeddingResponse:
 @app.post("/embed_image", response_model=ImageEmbeddingResponse)
 async def embed_image(request: ImageEmbeddingRequest) -> ImageEmbeddingResponse:
     model_name = request.name
-    pretrained = request.pretrained
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
     image_download_headers = request.image_download_headers
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     if isinstance(images, str):
@@ -230,13 +228,13 @@ async def embed_image(request: ImageEmbeddingRequest) -> ImageEmbeddingResponse:
     if "image" not in client.modalities:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not support image inference.",
+            detail=f"Model {model_name} does not support image inference.",
         )
 
     if client.library_name not in EMBEDDING_MODEL_LIBRARIES:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not an embedding model.",
+            detail=f"Model {model_name} is not an embedding model.",
         )
 
     start = time.perf_counter()
@@ -253,19 +251,18 @@ async def embed_image(request: ImageEmbeddingRequest) -> ImageEmbeddingResponse:
 @app.post("/embed", response_model=EmbeddingResponse)
 async def embed(request: EmbeddingRequest) -> EmbeddingResponse:
     model_name = request.name
-    pretrained = request.pretrained
     texts = request.text
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
     image_download_headers = request.image_download_headers
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
 
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     response = {}
@@ -275,7 +272,7 @@ async def embed(request: EmbeddingRequest) -> EmbeddingResponse:
         if "text" not in client.modalities:
             raise HTTPException(
                 status_code=400,
-                detail=f"Model {model_name} with checkpoint {pretrained} does not support text inference.",
+                detail=f"Model {model_name} does not support text inference.",
             )
         if isinstance(texts, str):
             texts = [texts]
@@ -285,7 +282,7 @@ async def embed(request: EmbeddingRequest) -> EmbeddingResponse:
         if "image" not in client.modalities:
             raise HTTPException(
                 status_code=400,
-                detail=f"Model {model_name} with checkpoint {pretrained} does not support image inference.",
+                detail=f"Model {model_name} does not support image inference.",
             )
         if isinstance(images, str):
             images = [images]
@@ -299,7 +296,7 @@ async def embed(request: EmbeddingRequest) -> EmbeddingResponse:
     if client.library_name not in EMBEDDING_MODEL_LIBRARIES:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not an embedding model.",
+            detail=f"Model {model_name} is not an embedding model.",
         )
 
     start = time.perf_counter()
@@ -329,15 +326,14 @@ async def classify_image(
     request: ImageClassificationRequest,
 ) -> ImageClassificationResponse:
     model_name = request.name
-    pretrained = request.pretrained
     images = request.image
     image_download_headers = request.image_download_headers
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     if isinstance(images, str):
@@ -356,13 +352,13 @@ async def classify_image(
     if "image" not in client.modalities:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not support image inference.",
+            detail=f"Model {model_name} does not support image inference.",
         )
 
     if client.library_name not in CLASSIFICATION_MODEL_LIBRARIES:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not a classification model.",
+            detail=f"Model {model_name} is not a classification model.",
         )
 
     start = time.perf_counter()

@@ -18,7 +18,7 @@ class ModelMetadataRequest(CamelModel):
 
 class DownloadCustomModelRequest(CamelModel):
     library: Literal["open_clip", "sentence_transformers", "timm"]
-    pretrained_name: str
+    name: str
     safetensors_url: str
     config_json_url: Optional[str] = None  # sentence_transformers
     tokenizer_json_url: Optional[str] = None  # sentence_transformers

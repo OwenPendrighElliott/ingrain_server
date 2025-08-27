@@ -247,7 +247,7 @@ async def download_custom_model(
     request: DownloadCustomModelRequest,
 ) -> GenericMessageResponse:
     model_library = request.library
-    model_name = request.pretrained_name
+    model_name = request.name
     model_url = request.safetensors_url
 
     if model_library == "open_clip":
