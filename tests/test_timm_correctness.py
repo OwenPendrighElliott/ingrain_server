@@ -46,17 +46,17 @@ def test_infer_timm_image():
 
     test_image = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIAAACVT/22AAACkElEQVR4nOzUMQ0CYRgEUQ5wgwAUnA+EUKKJBkeowAHVJd/kz3sKtpjs9fH9nDjO/npOT1jKeXoA/CNQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKRtl/t7esNSbvs2PWEpHpQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIl7RcAAP//iL8GbQ2nM1wAAAAASUVORK5CYII="
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_image",
+        f"{INFERENCE_BASE_URL}/classify_image",
         json={
             "name": TIMM_MODEL,
             "image": test_image,
         },
     )
     assert response.status_code == 200
-    assert "embeddings" in response.json()
+    assert "probabilities" in response.json()
     assert "processingTimeMs" in response.json()
 
-    ingrain_embeddings = response.json()["embeddings"]
+    ingrain_embeddings = response.json()["probabilities"]
 
     model = timm.create_model(TIMM_MODEL, pretrained=True)
     model = model.eval()
@@ -71,3 +71,18 @@ def test_infer_timm_image():
     assert np.allclose(
         ingrain_embeddings, model_embeddings.detach().cpu().numpy(), atol=1e-5
     )
+
+
+@pytest.mark.integration
+def test_get_timm_classes():
+    check_server_running()
+    load_timm_model()
+
+    response = requests.post(
+        f"{MODEL_BASE_URL}/model_classification_labels",
+        json={"name": TIMM_MODEL},
+    )
+    assert response.status_code == 200
+    assert "labels" in response.json()
+    assert len(response.json()["labels"]) == 1000
+    assert response.json()["labels"][0] == "tench, Tinca tinca"

@@ -11,6 +11,12 @@ OPEN_CLIP_MODELS = [
     ("hf-hub:laion/CLIP-convnext_base_w-laion2B-s13B-b82K-augreg", "open_clip"),
 ]
 
+MODEL_EMBEDDING_SIZES = {
+    "hf-hub:timm/ViT-B-16-SigLIP-i18n-256": 768,
+    "hf-hub:timm/ViT-B-32-SigLIP2-256": 768,
+    "hf-hub:laion/CLIP-convnext_base_w-laion2B-s13B-b82K-augreg": 640,
+}
+
 
 def check_server_running():
     try:
@@ -76,7 +82,7 @@ def test_infer_text_clip_batch():
     for model_name, library in OPEN_CLIP_MODELS:
         load_clip_model(model_name, library)
         response = requests.post(
-            f"{INFERENCE_BASE_URL}/infer_text",
+            f"{INFERENCE_BASE_URL}/embed_text",
             json={
                 "name": model_name,
                 "text": test_text,
@@ -96,14 +102,13 @@ def test_infer_image():
     for model_name, library in OPEN_CLIP_MODELS:
         load_clip_model(model_name, library)
         response = requests.post(
-            f"{INFERENCE_BASE_URL}/infer_image",
+            f"{INFERENCE_BASE_URL}/embed_image",
             json={
                 "name": model_name,
                 "image": test_image,
             },
         )
-        print(response.text)
-        print(response.json())
+
         assert response.status_code == 200
         assert "embeddings" in response.json()
         assert "processingTimeMs" in response.json()
@@ -120,7 +125,7 @@ def test_infer_image_batch():
     for model_name, library in OPEN_CLIP_MODELS:
         load_clip_model(model_name, library)
         response = requests.post(
-            f"{INFERENCE_BASE_URL}/infer_image",
+            f"{INFERENCE_BASE_URL}/embed_image",
             json={
                 "name": model_name,
                 "image": test_image,
@@ -131,4 +136,20 @@ def test_infer_image_batch():
         assert "embeddings" in response.json()
         assert "processingTimeMs" in response.json()
 
+        unload_clip_model(model_name)
+
+
+@pytest.mark.integration
+def test_embedding_size_endpoint_clip():
+    check_server_running()
+    for model_name, library in OPEN_CLIP_MODELS:
+        load_clip_model(model_name, library)
+        response = requests.post(
+            f"{MODEL_BASE_URL}/model_embedding_size",
+            json={"name": model_name},
+        )
+        assert response.status_code == 200
+        assert "embeddingSize" in response.json()
+        target_size = MODEL_EMBEDDING_SIZES.get(model_name)
+        assert response.json()["embeddingSize"] == target_size
         unload_clip_model(model_name)

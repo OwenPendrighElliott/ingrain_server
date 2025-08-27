@@ -1,18 +1,22 @@
-from pydantic import BaseModel
+from ingrain_models.api_models.camel_model import CamelModel
 
 from typing import List, Optional, Literal
 
 
-class LoadModelRequest(BaseModel):
+class LoadModelRequest(CamelModel):
     name: str
     library: Literal["open_clip", "sentence_transformers", "timm"]
 
 
-class UnloadModelRequest(BaseModel):
+class UnloadModelRequest(CamelModel):
     name: str
 
 
-class DownloadCustomModelRequest(BaseModel):
+class ModelMetadataRequest(CamelModel):
+    name: str
+
+
+class DownloadCustomModelRequest(CamelModel):
     library: Literal["open_clip", "sentence_transformers", "timm"]
     pretrained_name: str
     safetensors_url: str

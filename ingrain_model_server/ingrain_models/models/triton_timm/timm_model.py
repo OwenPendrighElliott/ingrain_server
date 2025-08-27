@@ -53,6 +53,21 @@ def create_model(
     data_config = timm.data.resolve_model_data_config(model)
     preprocess = timm.data.create_transform(**data_config, is_training=False)
 
+    # get label names
+    label_names = model.pretrained_cfg.get("label_names", None)
+    if label_names is None:
+        imagenet_subset = timm.data.infer_imagenet_subset(model)
+        if imagenet_subset:
+            dataset_info = timm.data.ImageNetInfo(imagenet_subset)
+            label_ids = dataset_info.label_names()
+            label_names = [
+                dataset_info.label_name_to_description(label_id)
+                for label_id in label_ids
+            ]
+        else:
+            # fallback label names
+            label_names = [f"LABEL_{i}" for i in range(model.num_classes)]
+
     os.makedirs(
         os.path.join(triton_model_repository_path, friendly_name, "1"), exist_ok=True
     )
@@ -62,18 +77,12 @@ def create_model(
     )
 
     if not os.path.exists(image_encoder_path):
-
         onnx_convert_timm_model(model, preprocess, image_encoder_path)
         cfg_path = os.path.join(triton_model_repository_path, friendly_name, "1")
         generate_timm_config(
             cfg_path, friendly_name, model_cfg.input_size, model_cfg.num_classes
         )
-        print(
-            f"Model {friendly_name} converted to ONNX and saved at {image_encoder_path}"
-        )
-        print(preprocess)
         image_transform_config = image_transform_dict_from_torch_transforms(preprocess)
-        print(f"Image transform config: {image_transform_config}")
         transform_config_path = os.path.join(
             triton_model_repository_path, friendly_name, "image_transform_config.json"
         )
@@ -83,6 +92,12 @@ def create_model(
         save_library_name(
             os.path.join(triton_model_repository_path, friendly_name), "timm"
         )
+
+        with open(
+            os.path.join(triton_model_repository_path, friendly_name, "classes.txt"),
+            "w",
+        ) as f:
+            f.write("\n".join(label_names))
 
         with open(
             os.path.join(

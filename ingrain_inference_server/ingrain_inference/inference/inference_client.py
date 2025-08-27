@@ -33,6 +33,18 @@ class TritonModelInferenceClient:
     ) -> np.ndarray:
         raise NotImplementedError
 
+    def classify_image(
+        self,
+        image: Union[Image.Image, List[Image.Image]],
+    ) -> Union[np.ndarray, List[List[str]]]:
+        raise NotImplementedError
+
+    def classify_text(
+        self,
+        text: Union[str, List[str]],
+    ) -> Union[np.ndarray, List[List[str]]]:
+        raise NotImplementedError
+
     def unload(self):
         raise NotImplementedError
 

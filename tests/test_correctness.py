@@ -56,7 +56,7 @@ def test_infer_text():
     load_sentence_transformer_model()
     test_text = "This is a test sentence."
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
+        f"{INFERENCE_BASE_URL}/embed_text",
         json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
     )
     assert response.status_code == 200
@@ -77,7 +77,7 @@ def test_infer_openclip_text():
     load_openclip_model()
     test_text = "This is a test sentence."
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
+        f"{INFERENCE_BASE_URL}/embed_text",
         json={
             "name": OPENCLIP_MODEL,
             "text": test_text,
@@ -106,7 +106,7 @@ def test_infer_openclip_image():
 
     test_image = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIAAACVT/22AAACkElEQVR4nOzUMQ0CYRgEUQ5wgwAUnA+EUKKJBkeowAHVJd/kz3sKtpjs9fH9nDjO/npOT1jKeXoA/CNQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKRtl/t7esNSbvs2PWEpHpQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIl7RcAAP//iL8GbQ2nM1wAAAAASUVORK5CYII="
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_image",
+        f"{INFERENCE_BASE_URL}/embed_image",
         json={
             "name": OPENCLIP_MODEL,
             "image": test_image,

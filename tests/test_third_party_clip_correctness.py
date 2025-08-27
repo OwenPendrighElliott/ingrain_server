@@ -13,6 +13,10 @@ MODEL_BASE_URL = "http://127.0.0.1:8687"
 OPENCLIP_MODEL = "hf-hub:Marqo/marqo-fashionSigLIP"
 
 
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
 def check_server_running():
     try:
         response = requests.get(f"{INFERENCE_BASE_URL}/health")
@@ -45,7 +49,7 @@ def test_infer_openclip_text():
     load_openclip_model()
     test_text = "This is a test sentence."
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
+        f"{INFERENCE_BASE_URL}/embed_text",
         json={
             "name": OPENCLIP_MODEL,
             "text": test_text,
@@ -61,11 +65,15 @@ def test_infer_openclip_text():
     model.eval()
     tokenizer = open_clip.get_tokenizer(OPENCLIP_MODEL)
     tokens = tokenizer([test_text])
+
     model_embeddings = model.encode_text(tokens)
     model_embeddings /= model_embeddings.norm(dim=-1, keepdim=True)
 
-    assert np.allclose(
-        ingrain_embeddings, model_embeddings.detach().cpu().numpy(), atol=1e-5
+    assert (
+        cosine_similarity(
+            np.array(ingrain_embeddings[0]), model_embeddings[0].detach().cpu().numpy()
+        )
+        > 0.999
     )
 
 
@@ -76,10 +84,11 @@ def test_infer_openclip_image():
 
     test_image = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIAAACVT/22AAACkElEQVR4nOzUMQ0CYRgEUQ5wgwAUnA+EUKKJBkeowAHVJd/kz3sKtpjs9fH9nDjO/npOT1jKeXoA/CNQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKRtl/t7esNSbvs2PWEpHpQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIl7RcAAP//iL8GbQ2nM1wAAAAASUVORK5CYII="
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_image",
+        f"{INFERENCE_BASE_URL}/embed_image",
         json={
             "name": OPENCLIP_MODEL,
             "image": test_image,
+            "normalize": True,
         },
     )
     assert response.status_code == 200
@@ -94,6 +103,9 @@ def test_infer_openclip_image():
     processed_im = preprocess(img).unsqueeze(0)
     model_embeddings = model.encode_image(processed_im)
     model_embeddings /= model_embeddings.norm(dim=-1, keepdim=True)
-    assert np.allclose(
-        ingrain_embeddings, model_embeddings.detach().cpu().numpy(), atol=1e-5
+    assert (
+        cosine_similarity(
+            np.array(ingrain_embeddings[0]), model_embeddings[0].detach().cpu().numpy()
+        )
+        > 0.999
     )

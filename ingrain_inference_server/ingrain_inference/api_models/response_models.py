@@ -1,41 +1,47 @@
-from pydantic import BaseModel
+from ingrain_inference.api_models.camel_model import CamelModel
+
 
 from typing import List, Optional, Dict
 
 
-class InferenceResponse(BaseModel):
-    textEmbeddings: Optional[List[List[float]]] = None
-    imageEmbeddings: Optional[List[List[float]]] = None
-    processingTimeMs: float
+class EmbeddingResponse(CamelModel):
+    text_embeddings: Optional[List[List[float]]] = None
+    image_embeddings: Optional[List[List[float]]] = None
+    processing_time_ms: float
 
 
-class TextInferenceResponse(BaseModel):
+class TextEmbeddingResponse(CamelModel):
     embeddings: List[List[float]]
-    processingTimeMs: float
+    processing_time_ms: float
 
 
-class ImageInferenceResponse(BaseModel):
+class ImageEmbeddingResponse(CamelModel):
     embeddings: List[List[float]]
-    processingTimeMs: float
+    processing_time_ms: float
 
 
-class GenericMessageResponse(BaseModel):
+class ImageClassificationResponse(CamelModel):
+    probabilities: List[List[float]]
+    processing_time_ms: float
+
+
+class GenericMessageResponse(CamelModel):
     message: str
 
 
-class InferenceStats(BaseModel):
+class InferenceStats(CamelModel):
     count: Optional[str] = None
     ns: Optional[str] = None
 
 
-class BatchStats(BaseModel):
+class BatchStats(CamelModel):
     batch_size: str
     compute_input: InferenceStats
     compute_infer: InferenceStats
     compute_output: InferenceStats
 
 
-class ModelStats(BaseModel):
+class ModelStats(CamelModel):
     name: str
     version: str
     last_inference: Optional[str] = None
@@ -45,5 +51,5 @@ class ModelStats(BaseModel):
     batch_stats: Optional[List[BatchStats]] = None
 
 
-class MetricsResponse(BaseModel):
+class MetricsResponse(CamelModel):
     modelStats: List[ModelStats]

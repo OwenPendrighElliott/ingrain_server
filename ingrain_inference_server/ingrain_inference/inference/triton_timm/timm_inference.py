@@ -36,17 +36,13 @@ class TritonTimmInferenceClient(TritonModelInferenceClient):
             )
             self.preprocess = load_image_transform_config(preprocess_config_path)
 
+        self.library_name = "timm"
         self.modalities = {"image"}
 
-    def encode_image(
+    def classify_image(
         self,
         image: Image.Image | List[Image.Image],
-        normalize: bool = True,
-        n_dims: int | None = None,
     ) -> np.ndarray:
-        if n_dims is not None:
-            raise ValueError("Timm models do not support n_dims parameter.")
-
         if isinstance(image, Image.Image):
             image = [image]
 
@@ -58,9 +54,7 @@ class TritonTimmInferenceClient(TritonModelInferenceClient):
             model_name=self.model_nice_name, inputs=[image_inputs]
         ).as_numpy("output")
 
-        if normalize:
-            # convert to logits
-            outputs = np.exp(outputs) / np.exp(outputs).sum(axis=-1, keepdims=True)
+        outputs = np.exp(outputs) / np.exp(outputs).sum(axis=-1, keepdims=True)
 
         return outputs
 

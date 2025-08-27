@@ -45,7 +45,7 @@ services:
     volumes:
       - ./model_repository:/app/model_repository 
   triton:
-    image: nvcr.io/nvidia/tritonserver:25.06-py3
+    image: nvcr.io/nvidia/tritonserver:25.08-py3
     container_name: triton
     runtime: nvidia # Remove if using a CPU
     environment:
@@ -120,101 +120,6 @@ model = client.load_sentence_transformer_model(name="intfloat/e5-small-v2")
 response = model.infer_text(text=["I am a sentence.", "I am another sentence.", "I am a third sentence."])
 
 print(type(response['embeddings']))
-```
-
-### Example Requests and Responses
-
-##### Loading a sentence transformer model `POST /load_sentence_transformer_model`:
-```
-{
-    "name": "intfloat/e5-small-v2",
-}
-```
-
-##### Loading a CLIP model `POST /load_clip_model`:
-```
-{
-    "name": "ViT-B-32",
-    "pretrained": "laion2b_s34b_b79k"
-}
-```
-
-##### Inference request `POST /infer`:
-```
-{
-    "name": "ViT-B-32",
-    "pretrained": "laion2b_s34b_b79k",
-    "text": ["I am a sentence.", "I am another sentence.", "I am a third sentence."],
-    "image": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"]
-}
-```
-Response
-```
-{
-    "textEmbeddings": [
-        [0.1, ..., 0.4],
-        [0.5, ..., 0.8],
-        [-0.2, ..., 0.3],
-    ]
-    "imageEmbeddings": [
-        [0.1, ..., 0.4],
-        [0.5, ..., 0.8],
-    ],
-    "processingTimeMs": 24.34
-}
-```
-
-##### Get inference metrics `GET /metrics`:
-Details omitted for brevity.
-```
-{
-  "modelStats": [
-    {
-      "name": "ViT-B-32_laion2b_s34b_b79k_image_encoder",
-      "version": "1",
-      "inference_stats": {
-        "success": {...},
-        "fail": {...},
-        "queue": {...},
-        "compute_input": {...},
-        "compute_infer": {...},
-        "compute_output": {...},
-        "cache_hit": {...},
-        "cache_miss": {...}
-      }
-    },
-    {
-      "name": "ViT-B-32_laion2b_s34b_b79k_text_encoder",
-      "version": "1",
-      "inference_stats": {
-        ...
-      }
-    },
-    {
-      "name": "intfloat_e5-small-v2",
-      "version": "1",
-      "inference_stats": {
-        ...
-      }
-    }
-  ]
-}
-```
-
-##### Unloading a model `POST /unload_model`:
-```
-{
-    "name": "ViT-B-32",
-    "pretrained": "laion2b_s34b_b79k"
-}
-```
-
-##### Delete a model `POST /delete_model`:
-```
-{
-    "name": "ViT-B-32",
-    "pretrained": "laion2b_s34b_b79k"
-}
 ```
 
 ## Build Container Locally

@@ -6,11 +6,14 @@ from ingrain_models.api_models.request_models import (
     LoadModelRequest,
     UnloadModelRequest,
     DownloadCustomModelRequest,
+    ModelMetadataRequest,
 )
 from ingrain_models.api_models.response_models import (
     GenericMessageResponse,
     LoadedModelResponse,
     RepositoryModelResponse,
+    ModelEmbeddingDimsResponse,
+    ModelClassificationLabelsResponse,
 )
 from ingrain_models.models.model_client import TritonModelLoadingClient
 
@@ -35,6 +38,9 @@ MAX_LOADED_MODELS = int(os.getenv("MAX_LOADED_MODELS", 5))
 TRITON_CLIENT = grpcclient.InferenceServerClient(url=TRITON_GRPC_URL, verbose=False)
 TRITON_MODEL_REPOSITORY_PATH = "model_repository"
 CUSTOM_MODEL_DIR = "custom_model_files"
+
+EMBEDDING_MODEL_LIBRARIES = ["open_clip", "sentence_transformers"]
+CLASSIFICATION_MODEL_LIBRARIES = ["timm"]
 
 # faster model downloads
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
@@ -105,12 +111,12 @@ async def route_timeout_middleware(request: Request, call_next):
         return await call_next(request)
 
 
-@app.get("/health")
+@app.get("/health", response_model=GenericMessageResponse)
 async def health() -> GenericMessageResponse:
-    return {"message": "The model server is running."}
+    return GenericMessageResponse(message="The model server is running.")
 
 
-@app.post("/load_model")
+@app.post("/load_model", response_model=GenericMessageResponse)
 async def load_model(request: LoadModelRequest) -> GenericMessageResponse:
     model_name = request.name
     library = request.library
@@ -132,7 +138,7 @@ async def load_model(request: LoadModelRequest) -> GenericMessageResponse:
                 detail=f"Maximum number of loaded models ({MAX_LOADED_MODELS}) reached. Please unload a model before loading a new one. Currently loaded models: {', '.join(models)}",
             )
     else:
-        return {"message": f"Model {model_name} is already loaded."}
+        return GenericMessageResponse(message=f"Model {model_name} is already loaded.")
 
     try:
         client.load()
@@ -142,10 +148,10 @@ async def load_model(request: LoadModelRequest) -> GenericMessageResponse:
             detail=f"Error loading model {model_name}: {str(e)}\nIt is possible that triton is unavailable, the model is not compatible, or that the incorrect model repository directory is being use.",
         )
 
-    return {"message": f"Model {model_name} loaded successfully."}
+    return GenericMessageResponse(message=f"Model {model_name} loaded successfully.")
 
 
-@app.post("/unload_model")
+@app.post("/unload_model", response_model=GenericMessageResponse)
 async def unload_model(request: UnloadModelRequest) -> GenericMessageResponse:
     model_name = request.name
 
@@ -181,10 +187,10 @@ async def unload_model(request: UnloadModelRequest) -> GenericMessageResponse:
             status_code=500,
             detail=f"Error unloading model {model_name}: {str(e)}\nIt is possible that triton is unavailable, the model is not compatible, or that the incorrect model repository directory is being use",
         )
-    return {"message": f"Model {model_name} unloaded successfully."}
+    return GenericMessageResponse(message=f"Model {model_name} unloaded successfully.")
 
 
-@app.delete("/delete_model")
+@app.delete("/delete_model", response_model=GenericMessageResponse)
 async def delete_model(request: UnloadModelRequest) -> GenericMessageResponse:
     model_name = request.name
 
@@ -206,10 +212,10 @@ async def delete_model(request: UnloadModelRequest) -> GenericMessageResponse:
             status_code=500,
             detail=f"Error deleting model {model_name}: {str(e)}\nIt is possible that triton is unavailable, the model is not compatible, or that the incorrect model repository directory is being use",
         )
-    return {"message": f"Model {model_name} deleted successfully."}
+    return GenericMessageResponse(message=f"Model {model_name} deleted successfully.")
 
 
-@app.get("/loaded_models")
+@app.get("/loaded_models", response_model=LoadedModelResponse)
 async def loaded_models() -> LoadedModelResponse:
     model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
         as_json=True
@@ -219,10 +225,10 @@ async def loaded_models() -> LoadedModelResponse:
         if "state" in model and model["state"] == "UNAVAILABLE":
             continue
         loaded_models.append(model["name"])
-    return {"models": loaded_models}
+    return LoadedModelResponse(models=loaded_models)
 
 
-@app.get("/repository_models")
+@app.get("/repository_models", response_model=RepositoryModelResponse)
 async def repository_models() -> RepositoryModelResponse:
     model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
         as_json=True
@@ -233,10 +239,10 @@ async def repository_models() -> RepositoryModelResponse:
         model_data["state"] = model.get("state", "NOT READY")
 
         repository_models.append(model_data)
-    return {"models": repository_models}
+    return RepositoryModelResponse(models=repository_models)
 
 
-@app.post("/download_custom_model")
+@app.post("/download_custom_model", response_model=GenericMessageResponse)
 async def download_custom_model(
     request: DownloadCustomModelRequest,
 ) -> GenericMessageResponse:
@@ -297,7 +303,76 @@ async def download_custom_model(
                 detail=f"Error in downloading custom model, original error: {str(e)}",
             )
 
-    return {"message": f"Custom model {model_name} downloaded successfully."}
+    return GenericMessageResponse(
+        message=f"Custom model {model_name} downloaded successfully."
+    )
+
+
+@app.post("/model_embedding_size", response_model=ModelEmbeddingDimsResponse)
+async def model_embedding_size(
+    request: ModelMetadataRequest,
+) -> ModelEmbeddingDimsResponse:
+    model_name = request.name
+    model_library = get_library_name_for_model(model_name, None)
+
+    if not model_library:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_name} does not exist in the repository.",
+        )
+
+    if model_library not in EMBEDDING_MODEL_LIBRARIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not an embedding model.",
+        )
+
+    # for open_clip models, get the text encoder embedding size
+    if model_library == "open_clip":
+        model_name, _ = get_text_image_model_names(model_name, None)
+
+    metadata = TRITON_CLIENT.get_model_metadata(
+        model_name=get_model_name(model_name, None), as_json=True
+    )
+    return ModelEmbeddingDimsResponse(
+        embedding_size=metadata["outputs"][0]["shape"][-1]
+    )
+
+
+@app.post(
+    "/model_classification_labels",
+    response_model=ModelClassificationLabelsResponse,
+)
+async def model_classification_labels(
+    request: ModelMetadataRequest,
+) -> ModelClassificationLabelsResponse:
+    model_name = request.name
+    model_library = get_library_name_for_model(model_name, None)
+    if not model_library:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model {model_name} does not exist in the repository.",
+        )
+
+    if model_library not in CLASSIFICATION_MODEL_LIBRARIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not a classification model.",
+        )
+
+    labels_path = os.path.join(
+        TRITON_MODEL_REPOSITORY_PATH, get_model_name(model_name, None), "classes.txt"
+    )
+    if not os.path.exists(labels_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Labels file for model {model_name} does not exist.",
+        )
+
+    with open(labels_path, "r") as f:
+        labels = [line.strip() for line in f.readlines()]
+
+    return ModelClassificationLabelsResponse(labels=labels)
 
 
 if __name__ == "__main__":

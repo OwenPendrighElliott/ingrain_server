@@ -9,6 +9,7 @@ MODEL_BASE_URL = "http://127.0.0.1:8687"
 
 # test models
 SENTENCE_TRANSFORMER_MODEL = "intfloat/e5-small-v2"
+SENTENCE_TRANSFORMER_MODEL_EMBEDDING_SIZE = 384
 OPENCLIP_MODEL = "hf-hub:laion/CLIP-ViT-B-32-laion2B-s34B-b79K"
 CUSTOM_TEXT_CLIP_MODEL = "hf-hub:timm/ViT-B-32-SigLIP2-256"
 
@@ -117,7 +118,7 @@ def test_infer_text():
     load_sentence_transformer_model()
     test_text = "This is a test sentence."
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
+        f"{INFERENCE_BASE_URL}/embed_text",
         json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
     )
     assert response.status_code == 200
@@ -131,8 +132,8 @@ def test_infer_text_truncated():
     load_sentence_transformer_model()
     test_text = "This is a test sentence."
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
-        json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text, "n_dims": 128},
+        f"{INFERENCE_BASE_URL}/embed_text",
+        json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text, "nDims": 128},
     )
     assert response.status_code == 200
     assert "embeddings" in response.json()
@@ -150,7 +151,7 @@ def test_infer_text_batch():
         "This is a third test sentence.",
     ]
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
+        f"{INFERENCE_BASE_URL}/embed_text",
         json={"name": SENTENCE_TRANSFORMER_MODEL, "text": test_text},
     )
     assert response.status_code == 200
@@ -168,7 +169,7 @@ def test_infer_text_clip_batch():
         "This is a third test sentence.",
     ]
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_text",
+        f"{INFERENCE_BASE_URL}/embed_text",
         json={
             "name": OPENCLIP_MODEL,
             "text": test_text,
@@ -185,7 +186,7 @@ def test_infer_image():
     load_openclip_model()
     test_image = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIAAACVT/22AAACkElEQVR4nOzUMQ0CYRgEUQ5wgwAUnA+EUKKJBkeowAHVJd/kz3sKtpjs9fH9nDjO/npOT1jKeXoA/CNQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKRtl/t7esNSbvs2PWEpHpQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIl7RcAAP//iL8GbQ2nM1wAAAAASUVORK5CYII="
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_image",
+        f"{INFERENCE_BASE_URL}/embed_image",
         json={
             "name": OPENCLIP_MODEL,
             "image": test_image,
@@ -204,7 +205,7 @@ def test_infer_image_batch():
         "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIAAACVT/22AAACkElEQVR4nOzUMQ0CYRgEUQ5wgwAUnA+EUKKJBkeowAHVJd/kz3sKtpjs9fH9nDjO/npOT1jKeXoA/CNQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKQJlDSBkiZQ0gRKmkBJEyhpAiVNoKRtl/t7esNSbvs2PWEpHpQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCZQ0gZImUNIESppASRMoaQIl7RcAAP//iL8GbQ2nM1wAAAAASUVORK5CYII="
     ] * 3
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer_image",
+        f"{INFERENCE_BASE_URL}/embed_image",
         json={
             "name": OPENCLIP_MODEL,
             "image": test_image,
@@ -226,7 +227,7 @@ def test_infer_text_image():
     test_texts = ["A green image", "A pink image"]
 
     response = requests.post(
-        f"{INFERENCE_BASE_URL}/infer",
+        f"{INFERENCE_BASE_URL}/embed",
         json={
             "name": OPENCLIP_MODEL,
             "text": test_texts,
@@ -338,3 +339,16 @@ def test_metrics():
     response = requests.get(f"{INFERENCE_BASE_URL}/metrics")
     assert response.status_code == 200
     assert "modelStats" in response.json()
+
+
+@pytest.mark.integration
+def test_embedding_size_endpoint():
+    check_server_running()
+    load_sentence_transformer_model()
+    response = requests.post(
+        f"{MODEL_BASE_URL}/model_embedding_size",
+        json={"name": SENTENCE_TRANSFORMER_MODEL},
+    )
+    assert response.status_code == 200
+    assert "embeddingSize" in response.json()
+    assert response.json()["embeddingSize"] == SENTENCE_TRANSFORMER_MODEL_EMBEDDING_SIZE
