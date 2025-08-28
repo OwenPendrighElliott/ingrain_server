@@ -88,9 +88,9 @@ def test_get_timm_classes():
     check_server_running()
     load_timm_model()
 
-    response = requests.post(
+    response = requests.get(
         f"{MODEL_BASE_URL}/model_classification_labels",
-        json={"name": TIMM_MODEL},
+        params={"name": TIMM_MODEL},
     )
     assert response.status_code == 200
     assert "labels" in response.json()

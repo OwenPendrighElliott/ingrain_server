@@ -12,10 +12,6 @@ class UnloadModelRequest(CamelModel):
     name: str
 
 
-class ModelMetadataRequest(CamelModel):
-    name: str
-
-
 class DownloadCustomModelRequest(CamelModel):
     library: Literal["open_clip", "sentence_transformers", "timm"]
     name: str

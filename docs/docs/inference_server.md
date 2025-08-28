@@ -21,7 +21,7 @@ Returns a JSON message confirming that the inference server is running.
     client.health()
     ```
 
-### POST `/infer_text`
+### POST `/embed_text`
 
 Performs text inference using the specified model.
 
@@ -30,13 +30,13 @@ Performs text inference using the specified model.
 - `name`: Model name.
 - `text`: Text input for inference. Can be a list to infer a batch.
 - `normalize`: Boolean flag for normalization.
-- `n_dims`: Number of dimensions for the embedding. Only useful for MRL models.
+- `nDims`: Number of dimensions for the embedding. Only useful for MRL models.
 
 === "cURL"
     ```bash
-    curl -X POST "http://127.0.0.1:8686/infer_text" \
+    curl -X POST "http://127.0.0.1:8686/embed_text" \
     -H "Content-Type: application/json" \
-    -d '{"name": "intfloat/e5-small-v2" "text": "sample text", "normalize": true, "n_dims": null}'
+    -d '{"name": "intfloat/e5-small-v2" "text": "sample text", "normalize": true, "nDims": null}'
     ```
 
 === "Python"
@@ -45,13 +45,22 @@ Performs text inference using the specified model.
 
     client = ingrain.Client()
 
-    response = client.infer_text(
+    response = client.embed_text(
         name="intfloat/e5-small-v2", 
         text="sample text", 
     )
     ```
 
-### POST `/infer_image`
+**Example Response:**
+
+```json
+{
+    "embeddings": [[0.235, 0.3754, -0.24645, ...], ...],
+    "processingTimeMs": 15
+}
+```
+
+### POST `/embed_image`
 
 Performs image inference using the specified model.
 
@@ -60,14 +69,14 @@ Performs image inference using the specified model.
 - `name`: Model name.
 - `image`: Image URL or base64 encoded image. Can be a list to infer a batch.
 - `normalize`: Boolean flag for normalization.
-- `n_dims`: Number of dimensions for the embedding. Only useful for MRL models.
+- `nDims`: Number of dimensions for the embedding. Only useful for MRL models.
 - `image_download_headers`: Optional headers for image downloading requests.
 
 === "cURL"
     ```bash
-    curl -X POST "http://127.0.0.1:8686/infer_image" \
+    curl -X POST "http://127.0.0.1:8686/embed_image" \
     -H "Content-Type: application/json" \
-    -d '{"name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "image": "http://example.com/image.jpg", "normalize": true, "n_dims": null}'
+    -d '{"name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "image": "http://example.com/image.jpg", "normalize": true, "nDims": null}'
     ```
 
 === "Python"
@@ -75,11 +84,20 @@ Performs image inference using the specified model.
     import ingrain
 
     client = ingrain.Client()
-    response = client.infer_image(
+    response = client.embed_image(
         name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", 
         image="http://example.com/image.jpg"
     )
     ```
+
+**Example Response:**
+
+```json
+{
+    "embeddings": [[0.235, 0.3754, -0.24645, ...], ...],
+    "processingTimeMs": 15
+}
+```
 
 ### POST `/infer`
 
@@ -91,14 +109,14 @@ Performs both text and image inference concurrently, can do either or both toget
 - `text`: Text input for inference. Can be a list to infer a batch.
 - `image`: Image URL or base64 encoded image. Can be a list to infer a batch.
 - `normalize`: Boolean flag for normalization.
-- `n_dims`: Number of dimensions for the embedding. Only useful for MRL models.
+- `nDims`: Number of dimensions for the embedding. Only useful for MRL models.
 - `image_download_headers`: Optional headers for image downloading.
 
 === "cURL"
     ```bash
-    curl -X POST "http://127.0.0.1:8686/infer" \
+    curl -X POST "http://127.0.0.1:8686/embed" \
     -H "Content-Type: application/json" \
-    -d '{""name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "text": "sample text", "image": "http://example.com/image.jpg", "normalize": true, "n_dims": 512}'
+    -d '{"name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "text": "sample text", "image": "http://example.com/image.jpg", "normalize": true, "nDims": 512}'
     ```
 
 === "Python"
@@ -106,12 +124,55 @@ Performs both text and image inference concurrently, can do either or both toget
     import ingrain
 
     client = ingrain.Client()
-    response = client.infer_image(
+    response = client.embed(
         name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", 
         image="http://example.com/image.jpg", 
         text="sample text"
     )
     ```
+
+```json
+{
+    "textEmbeddings": [[0.235, 0.3754, -0.24645, ...], ...],
+    "imageEmbeddings": [[0.25745, -0.73244, 0.8743, ...], ...],
+    "processingTimeMs": 15
+}
+```
+
+### Post `/classify_image`
+
+Performs image classification using the specified model.
+
+**Request Body:**
+
+- `name`: Model name.
+- `image`: Image URL or base64 encoded image. Can be a list to infer a batch.
+- `image_download_headers`: Optional headers for image downloading requests.
+
+=== "cURL"
+    ```bash
+    curl -X POST "http://127.0.0.1:8686/classify_image" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "hf-hub:apple/MobileCLIP-S1-OpenCLIP", "image": "http://example.com/image.jpg",}'
+    ```
+
+=== "Python"
+    ```python
+    import ingrain
+
+    client = ingrain.Client()
+    response = client.classify_image(
+        name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", 
+        image="http://example.com/image.jpg"
+    )
+    ```
+
+```json
+{
+    "probabilities": [[0.896, 0.002, 0.00234, ...], ...],
+    "processingTimeMs": 15
+}
+```
 
 ### GET `/metrics`
 
@@ -130,3 +191,112 @@ Retrieves server metrics.
 
     metrics = client.metrics()
     ```
+
+**Example Response:**
+
+```json
+{
+  "modelStats": [
+    {
+      "name": "hf-hub___timm_ViT-B-16-SigLIP-i18n-256_image_encoder",
+      "version": "1",
+      "lastInference": null,
+      "inferenceCount": null,
+      "executionCount": null,
+      "inferenceStats": {
+        "success": {
+          "count": null,
+          "ns": null
+        },
+        "fail": {
+          "count": null,
+          "ns": null
+        },
+        "queue": {
+          "count": null,
+          "ns": null
+        },
+        "compute_input": {
+          "count": null,
+          "ns": null
+        },
+        "compute_infer": {
+          "count": null,
+          "ns": null
+        },
+        "compute_output": {
+          "count": null,
+          "ns": null
+        },
+        "cache_hit": {
+          "count": null,
+          "ns": null
+        },
+        "cache_miss": {
+          "count": null,
+          "ns": null
+        }
+      },
+      "batchStats": null
+    },
+    {
+      "name": "hf-hub___timm_ViT-B-16-SigLIP-i18n-256_text_encoder",
+      "version": "1",
+      "lastInference": "1756351592249",
+      "inferenceCount": "48",
+      "executionCount": "48",
+      "inferenceStats": {
+        "success": {
+          "count": "48",
+          "ns": "7090273130"
+        },
+        "fail": {
+          "count": null,
+          "ns": null
+        },
+        "queue": {
+          "count": "48",
+          "ns": "8507746"
+        },
+        "compute_input": {
+          "count": "48",
+          "ns": "3113130"
+        },
+        "compute_infer": {
+          "count": "48",
+          "ns": "7021648834"
+        },
+        "compute_output": {
+          "count": "48",
+          "ns": "2755455"
+        },
+        "cache_hit": {
+          "count": null,
+          "ns": null
+        },
+        "cache_miss": {
+          "count": null,
+          "ns": null
+        }
+      },
+      "batchStats": [
+        {
+          "batchSize": "1",
+          "computeInput": {
+            "count": "48",
+            "ns": "3113130"
+          },
+          "computeInfer": {
+            "count": "48",
+            "ns": "7021648834"
+          },
+          "computeOutput": {
+            "count": "48",
+            "ns": "2755455"
+          }
+        }
+      ]
+    },
+  ]
+}
+```

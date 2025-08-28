@@ -144,9 +144,9 @@ def test_embedding_size_endpoint_clip():
     check_server_running()
     for model_name, library in OPEN_CLIP_MODELS:
         load_clip_model(model_name, library)
-        response = requests.post(
+        response = requests.get(
             f"{MODEL_BASE_URL}/model_embedding_size",
-            json={"name": model_name},
+            params={"name": model_name},
         )
         assert response.status_code == 200
         assert "embeddingSize" in response.json()

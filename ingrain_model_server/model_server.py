@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Query
 from starlette.responses import JSONResponse
 import os
 import asyncio
@@ -6,7 +6,6 @@ from ingrain_models.api_models.request_models import (
     LoadModelRequest,
     UnloadModelRequest,
     DownloadCustomModelRequest,
-    ModelMetadataRequest,
 )
 from ingrain_models.api_models.response_models import (
     GenericMessageResponse,
@@ -301,11 +300,11 @@ async def download_custom_model(
     )
 
 
-@app.post("/model_embedding_size", response_model=ModelEmbeddingDimsResponse)
+@app.get("/model_embedding_size", response_model=ModelEmbeddingDimsResponse)
 async def model_embedding_size(
-    request: ModelMetadataRequest,
+    name: str = Query(..., description="Name of the model"),
 ) -> ModelEmbeddingDimsResponse:
-    model_name = request.name
+    model_name = name
     model_library = get_library_name_for_model(model_name, None)
 
     if not model_library:
@@ -332,14 +331,14 @@ async def model_embedding_size(
     )
 
 
-@app.post(
+@app.get(
     "/model_classification_labels",
     response_model=ModelClassificationLabelsResponse,
 )
 async def model_classification_labels(
-    request: ModelMetadataRequest,
+    name: str = Query(..., description="Name of the model"),
 ) -> ModelClassificationLabelsResponse:
-    model_name = request.name
+    model_name = name
     model_library = get_library_name_for_model(model_name, None)
     if not model_library:
         raise HTTPException(

@@ -385,9 +385,9 @@ def test_metrics():
 def test_embedding_size_endpoint():
     check_server_running()
     load_sentence_transformer_model()
-    response = requests.post(
+    response = requests.get(
         f"{MODEL_BASE_URL}/model_embedding_size",
-        json={"name": SENTENCE_TRANSFORMER_MODEL},
+        params={"name": SENTENCE_TRANSFORMER_MODEL},
     )
     assert response.status_code == 200
     assert "embeddingSize" in response.json()
