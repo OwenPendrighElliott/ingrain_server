@@ -374,7 +374,7 @@ async def classify_image(
 @app.get("/metrics", response_model=MetricsResponse)
 async def metrics() -> MetricsResponse:
     triton_metrics = TRITON_CLIENT.get_inference_statistics(as_json=True)
-    triton_metrics["modelStats"] = triton_metrics["model_stats"]
+    triton_metrics["modelStats"] = triton_metrics.get("model_stats", [])
     return MetricsResponse(**triton_metrics)
 
 

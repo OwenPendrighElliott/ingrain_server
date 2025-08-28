@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 def to_camel(string: str) -> str:
@@ -7,6 +7,6 @@ def to_camel(string: str) -> str:
 
 
 class CamelModel(BaseModel):
-    class Config:
-        alias_generator = to_camel
-        validate_by_name = True
+    model_config = ConfigDict(
+        alias_generator=to_camel, validate_by_name=True, arbitrary_types_allowed=True
+    )

@@ -217,14 +217,7 @@ async def delete_model(request: UnloadModelRequest) -> GenericMessageResponse:
 
 @app.get("/loaded_models", response_model=LoadedModelResponse)
 async def loaded_models() -> LoadedModelResponse:
-    model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
-        as_json=True
-    )
-    loaded_models = []
-    for model in model_repo_information.get("models", []):
-        if "state" in model and model["state"] == "UNAVAILABLE":
-            continue
-        loaded_models.append(model["name"])
+    _, loaded_models = count_loaded_models()
     return LoadedModelResponse(models=loaded_models)
 
 

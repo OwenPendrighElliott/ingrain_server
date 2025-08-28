@@ -68,7 +68,7 @@ def noop(x: str) -> str:
 
 
 def get_clean_fn(
-    type: Literal["canonicalize", "lower", "whitespace"]
+    type: Literal["canonicalize", "lower", "whitespace"],
 ) -> Callable[[str], str]:
     if type == "canonicalize":
         return _clean_canonicalize

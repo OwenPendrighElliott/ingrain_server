@@ -35,6 +35,14 @@ def load_openclip_model():
     response.raise_for_status()
 
 
+def unload_openclip_model():
+    response = requests.post(
+        f"{MODEL_BASE_URL}/unload_model",
+        json={"name": OPENCLIP_MODEL},
+    )
+    response.raise_for_status()
+
+
 @pytest.mark.integration
 def test_health():
     check_server_running()
@@ -76,6 +84,8 @@ def test_infer_openclip_text():
         > 0.999
     )
 
+    unload_openclip_model()
+
 
 @pytest.mark.integration
 def test_infer_openclip_image():
@@ -109,3 +119,5 @@ def test_infer_openclip_image():
         )
         > 0.999
     )
+
+    unload_openclip_model()
