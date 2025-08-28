@@ -37,7 +37,7 @@ services:
       - ./model_repository:/app/model_repository 
       - ./model_cache:/app/model_cache/
   triton:
-    image: nvcr.io/nvidia/tritonserver:25.06-py3
+    image: nvcr.io/nvidia/tritonserver:25.08-py3
     container_name: triton
     runtime: nvidia
     environment:
@@ -72,6 +72,25 @@ The server is available via a REST API, there is also a Python client available.
 ```bash
 pip install ingrain
 ```
+
+The Python client has an optimised `pycurl` engine for which is much faster than other libraries like `requests`, the `ingrain` client is recommended as the most performant choice for Python applications.
+
+**Example:**
+
+```python
+import ingrain
+
+client = ingrain.Client()
+model = client.load_model(name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", library="open_clip")
+
+text_embedding_response = model.embed_text(["A sample text to embed.", "Another sample text."])
+
+embeddings = text_embedding_response.embeddings
+
+for i, embedding in enumerate(embeddings):
+    print(f"Embedding {i}: {embedding}")
+```
+
 
 ## What does it do?
 

@@ -1,11 +1,10 @@
-from pydantic import BaseModel
+from ingrain_inference.api_models.camel_model import CamelModel
 
 from typing import List, Optional, Union
 
 
-class InferenceRequest(BaseModel):
+class EmbeddingRequest(CamelModel):
     name: str
-    pretrained: Optional[str] = None
     text: Optional[Union[str, List[str]]] = None
     image: Optional[Union[str, List[str]]] = None
     normalize: Optional[bool] = True
@@ -13,18 +12,22 @@ class InferenceRequest(BaseModel):
     image_download_headers: Optional[dict] = None
 
 
-class TextInferenceRequest(BaseModel):
+class TextEmbeddingRequest(CamelModel):
     name: str
-    pretrained: Optional[str] = None
     text: Union[str, List[str]]
     normalize: Optional[bool] = True
     n_dims: Optional[int] = None
 
 
-class ImageInferenceRequest(BaseModel):
+class ImageEmbeddingRequest(CamelModel):
     name: str
-    pretrained: Optional[str] = None
     image: Union[str, List[str]]
     normalize: Optional[bool] = True
     n_dims: Optional[int] = None
+    image_download_headers: Optional[dict] = None
+
+
+class ImageClassificationRequest(CamelModel):
+    name: str
+    image: Union[str, List[str]]
     image_download_headers: Optional[dict] = None

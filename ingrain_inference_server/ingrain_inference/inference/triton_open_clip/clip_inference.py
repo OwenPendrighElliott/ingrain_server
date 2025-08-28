@@ -7,6 +7,7 @@ import json
 from ingrain_inference.inference.preprocessors.image_preprocessor import (
     load_image_transform_config,
 )
+from ingrain_inference.inference.preprocessors.text_preprocessor import get_clean_fn
 from ingrain_common.common import get_text_image_model_names
 from ingrain_inference.inference.inference_client import TritonModelInferenceClient
 
@@ -58,6 +59,23 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
             ) as f:
                 self.context_length = json.load(f)["context_length"]
 
+            with open(
+                os.path.join(
+                    triton_model_repository_path,
+                    self.text_model_name,
+                    "tokenizer",
+                    "_tokenizer_meta.json",
+                ),
+                "r",
+            ) as f:
+                tokenizer_meta = json.load(f)
+                clean_fn_name = tokenizer_meta.get("text_clean", None)
+                if clean_fn_name is not None and clean_fn_name != "":
+                    self.clean_fn = get_clean_fn(clean_fn_name)
+                else:
+                    self.clean_fn = None
+
+        self.library_name = "open_clip"
         self.modalities = {"text", "image"}
 
     def encode_text(
@@ -68,6 +86,10 @@ class TritonCLIPInferenceClient(TritonModelInferenceClient):
     ) -> np.ndarray:
         if isinstance(text, str):
             text = [text]
+
+        if self.clean_fn is not None:
+            text = [self.clean_fn(t) for t in text]
+
         encoding: List[Encoding] = self.tokenizer.encode_batch(
             text, is_pretokenized=False
         )

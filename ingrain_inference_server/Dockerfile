@@ -1,5 +1,5 @@
 # Use the base image specified in the build argument
-FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 # Install the required packages
 RUN apt-get update && apt-get install -y cmake build-essential

@@ -58,6 +58,7 @@ class TritonSentenceTransformersInferenceClient(TritonModelInferenceClient):
                     max_length=self.meta_parameters["max_length"]
                 )
 
+        self.library_name = "sentence_transformers"
         self.modalities = {"text"}
 
     def encode_text(

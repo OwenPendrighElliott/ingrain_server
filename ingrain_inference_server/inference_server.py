@@ -3,16 +3,18 @@ from fastapi.responses import ORJSONResponse
 import time
 import asyncio
 from ingrain_inference.api_models.request_models import (
-    InferenceRequest,
-    TextInferenceRequest,
-    ImageInferenceRequest,
+    EmbeddingRequest,
+    TextEmbeddingRequest,
+    ImageEmbeddingRequest,
+    ImageClassificationRequest,
 )
 from ingrain_inference.api_models.response_models import (
-    InferenceResponse,
-    TextInferenceResponse,
-    ImageInferenceResponse,
+    EmbeddingResponse,
+    TextEmbeddingResponse,
+    ImageEmbeddingResponse,
     GenericMessageResponse,
     MetricsResponse,
+    ImageClassificationResponse,
 )
 from ingrain_inference.inference.triton_open_clip.clip_inference import (
     TritonCLIPInferenceClient,
@@ -41,6 +43,9 @@ app = FastAPI(default_response_class=ORJSONResponse)
 # Model cache and lock
 MODEL_CACHE = LRUModelCache(capacity=5)
 MODEL_CACHE_LOCK = Lock()
+
+EMBEDDING_MODEL_LIBRARIES = ["open_clip", "sentence_transformers"]
+CLASSIFICATION_MODEL_LIBRARIES = ["timm"]
 
 
 def get_model_library(model_name: str, pretrained: Union[str, None]) -> str:
@@ -150,30 +155,35 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
     return None
 
 
-@app.get("/health")
+@app.get("/health", response_model=GenericMessageResponse)
 async def health() -> GenericMessageResponse:
-    return {"message": "The inference server is running."}
+    return GenericMessageResponse(message="The inference server is running.")
 
 
-@app.post("/infer_text")
-async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
+@app.post("/embed_text", response_model=TextEmbeddingResponse)
+async def embed_text(request: TextEmbeddingRequest) -> TextEmbeddingResponse:
     model_name = request.name
-    pretrained = request.pretrained
     text = request.text
     normalize = request.normalize
     n_dims = request.n_dims
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     if "text" not in client.modalities:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not support text inference.",
+            detail=f"Model {model_name} does not support text inference.",
+        )
+
+    if client.library_name not in EMBEDDING_MODEL_LIBRARIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not an embedding model.",
         )
 
     start = time.perf_counter()
@@ -182,23 +192,24 @@ async def infer_text(request: TextInferenceRequest) -> TextInferenceResponse:
 
     embedding_list = [e.tolist() for e in embedding]
 
-    return {"embeddings": embedding_list, "processingTimeMs": (end - start) * 1000}
+    return TextEmbeddingResponse(
+        embeddings=embedding_list, processing_time_ms=(end - start) * 1000
+    )
 
 
-@app.post("/infer_image")
-async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
+@app.post("/embed_image", response_model=ImageEmbeddingResponse)
+async def embed_image(request: ImageEmbeddingRequest) -> ImageEmbeddingResponse:
     model_name = request.name
-    pretrained = request.pretrained
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
     image_download_headers = request.image_download_headers
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     if isinstance(images, str):
@@ -217,7 +228,13 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     if "image" not in client.modalities:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} does not support image inference.",
+            detail=f"Model {model_name} does not support image inference.",
+        )
+
+    if client.library_name not in EMBEDDING_MODEL_LIBRARIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not an embedding model.",
         )
 
     start = time.perf_counter()
@@ -225,25 +242,27 @@ async def infer_image(request: ImageInferenceRequest) -> ImageInferenceResponse:
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
-    return {"embeddings": embedding_list, "processingTimeMs": (end - start) * 1000}
+    return ImageEmbeddingResponse(
+        embeddings=embedding_list,
+        processing_time_ms=(end - start) * 1000,
+    )
 
 
-@app.post("/infer")
-async def infer(request: InferenceRequest) -> InferenceResponse:
+@app.post("/embed", response_model=EmbeddingResponse)
+async def embed(request: EmbeddingRequest) -> EmbeddingResponse:
     model_name = request.name
-    pretrained = request.pretrained
     texts = request.text
     images = request.image
     normalize = request.normalize
     n_dims = request.n_dims
     image_download_headers = request.image_download_headers
 
-    client = client_from_cache(model_name, pretrained)
+    client = client_from_cache(model_name, None)
 
     if client is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model_name} with checkpoint {pretrained} is not loaded. Load the model first using /load_model on the model server.",
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
         )
 
     response = {}
@@ -253,7 +272,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
         if "text" not in client.modalities:
             raise HTTPException(
                 status_code=400,
-                detail=f"Model {model_name} with checkpoint {pretrained} does not support text inference.",
+                detail=f"Model {model_name} does not support text inference.",
             )
         if isinstance(texts, str):
             texts = [texts]
@@ -263,7 +282,7 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
         if "image" not in client.modalities:
             raise HTTPException(
                 status_code=400,
-                detail=f"Model {model_name} with checkpoint {pretrained} does not support image inference.",
+                detail=f"Model {model_name} does not support image inference.",
             )
         if isinstance(images, str):
             images = [images]
@@ -274,33 +293,89 @@ async def infer(request: InferenceRequest) -> InferenceResponse:
             asyncio.to_thread(client.encode_image, image_datas, normalize, n_dims)
         )
 
+    if client.library_name not in EMBEDDING_MODEL_LIBRARIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not an embedding model.",
+        )
+
     start = time.perf_counter()
     results = await asyncio.gather(*tasks)
     end = time.perf_counter()
 
     if texts is not None:
         text_embeddings = results[0]
-        response["textEmbeddings"] = [
+        response["text_embeddings"] = [
             embedding.tolist() for embedding in text_embeddings
         ]
 
     if images is not None:
         # Whether it's index 1 or 0 depends on whether texts were provided
         image_embeddings = results[-1]
-        response["imageEmbeddings"] = [
+        response["image_embeddings"] = [
             embedding.tolist() for embedding in image_embeddings
         ]
 
-    response["processingTimeMs"] = (end - start) * 1000
+    response["processing_time_ms"] = (end - start) * 1000
 
-    return response
+    return EmbeddingResponse(**response)
 
 
-@app.get("/metrics")
+@app.post("/classify_image", response_model=ImageClassificationResponse)
+async def classify_image(
+    request: ImageClassificationRequest,
+) -> ImageClassificationResponse:
+    model_name = request.name
+    images = request.image
+    image_download_headers = request.image_download_headers
+
+    client = client_from_cache(model_name, None)
+    if client is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not loaded. Load the model first using /load_model on the model server.",
+        )
+
+    if isinstance(images, str):
+        images = [images]
+
+    image_data = client.load_images_parallel(
+        images, image_download_headers=image_download_headers
+    )
+
+    if image_data is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image. Please provide a valid image URL or a base64 encoded image.",
+        )
+
+    if "image" not in client.modalities:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} does not support image inference.",
+        )
+
+    if client.library_name not in CLASSIFICATION_MODEL_LIBRARIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model_name} is not a classification model.",
+        )
+
+    start = time.perf_counter()
+    classifications = client.classify_image(image_data)
+    end = time.perf_counter()
+
+    return ImageClassificationResponse(
+        probabilities=classifications,
+        processing_time_ms=(end - start) * 1000,
+    )
+
+
+@app.get("/metrics", response_model=MetricsResponse)
 async def metrics() -> MetricsResponse:
     triton_metrics = TRITON_CLIENT.get_inference_statistics(as_json=True)
-    triton_metrics["modelStats"] = triton_metrics["model_stats"]
-    return triton_metrics
+    triton_metrics["modelStats"] = triton_metrics.get("model_stats", [])
+    return MetricsResponse(**triton_metrics)
 
 
 if __name__ == "__main__":

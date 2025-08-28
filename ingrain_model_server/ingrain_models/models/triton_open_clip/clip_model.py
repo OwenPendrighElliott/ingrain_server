@@ -158,9 +158,14 @@ def create_model_and_transforms_triton(
     with open(transform_config_path, "w") as f:
         json.dump(image_transform_config, f)
 
+    clean_fn_name = (
+        config.get("text_cfg", {}).get("tokenizer_kwargs", {}).get("clean", None)
+    )
+
     export_tokenizer(
         tokenizer,
         os.path.join(triton_model_repository_path, friendly_text_name, "tokenizer"),
+        text_clean=clean_fn_name,
     )
 
     return friendly_text_name, friendly_image_name
