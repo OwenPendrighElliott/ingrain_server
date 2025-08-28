@@ -73,6 +73,25 @@ The server is available via a REST API, there is also a Python client available.
 pip install ingrain
 ```
 
+The Python client has an optimised `pycurl` engine for which is much faster than other libraries like `requests`, the `ingrain` client is recommended as the most performant choice for Python applications.
+
+**Example:**
+
+```python
+import ingrain
+
+client = ingrain.Client()
+model = client.load_model(name="hf-hub:apple/MobileCLIP-S1-OpenCLIP", library="open_clip")
+
+text_embedding_response = model.embed_text(["A sample text to embed.", "Another sample text."])
+
+embeddings = text_embedding_response.embeddings
+
+for i, embedding in enumerate(embeddings):
+    print(f"Embedding {i}: {embedding}")
+```
+
+
 ## What does it do?
 
 This server handles all the model loading, ONNX conversion, memory management, parallelisation, dynamic batching, input pre-processing, image handling, and other complexities of running a model in production. The API is very simple but lets you serve models in a performant manner.

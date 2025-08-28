@@ -125,3 +125,45 @@ Retrieves a list of models in the repository.
     client = ingrain.Client()
     resp = client.repository_models()
     ```
+
+## GET `/model_embedding_size`
+
+Retrieves the embedding size for a specific model.
+
+**Query Parameters:**
+
+- `name`: Model name.
+
+=== "cURL"
+    ```bash
+    curl -X GET "http://127.0.0.1:8687/model_embedding_size?name=intfloat%2Fe5-small-v2" -H "accept: application/json"
+    ```
+
+=== "Python"
+    ```python
+    import ingrain
+
+    client = ingrain.Client()
+    resp = client.model_embedding_size(name="intfloat/e5-small-v2")
+    ```
+
+## GET `/model_classification_labels`
+
+Retrieves the classification labels for a specific model.
+
+**Query Parameters:**
+
+- `name`: Model name.
+
+=== "cURL"
+    ```bash
+    curl -X GET "http://127.0.0.1:8687/model_classification_labels?hf_hub%3Atimm%2Fmobilenetv4_conv_medium.e250_r384_in12k_ft_in1k" -H "accept: application/json"
+    ```
+
+=== "Python"
+    ```python
+    import ingrain
+
+    client = ingrain.Client()
+    resp = client.model_classification_labels(name="hf_hub:timm/mobilenetv4_conv_medium.e250_r384_in12k_ft_in1k")
+    ```
