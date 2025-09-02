@@ -361,8 +361,8 @@ def test_loaded_models():
     assert response.status_code == 200
     assert "models" in response.json()
 
-    assert SENTENCE_TRANSFORMER_MODEL in response.json()["models"]
-    assert OPENCLIP_MODEL in response.json()["models"]
+    assert SENTENCE_TRANSFORMER_MODEL in [m["name"] for m in response.json()["models"]]
+    assert OPENCLIP_MODEL in [m["name"] for m in response.json()["models"]]
 
     unload_sentence_transformer_model()
     unload_openclip_model()
@@ -376,8 +376,8 @@ def test_repository_models():
     response = requests.get(f"{MODEL_BASE_URL}/repository_models")
     assert response.status_code == 200
     assert "models" in response.json()
-    assert SENTENCE_TRANSFORMER_MODEL in response.json()["models"]
-    assert OPENCLIP_MODEL in response.json()["models"]
+    assert SENTENCE_TRANSFORMER_MODEL in [m["name"] for m in response.json()["models"]]
+    assert OPENCLIP_MODEL in [m["name"] for m in response.json()["models"]]
 
     unload_sentence_transformer_model()
     unload_openclip_model()

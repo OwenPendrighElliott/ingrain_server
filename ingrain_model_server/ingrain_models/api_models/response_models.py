@@ -3,12 +3,18 @@ from ingrain_models.api_models.camel_model import CamelModel
 from typing import List, Optional
 
 
+class LoadedModelData(CamelModel):
+    name: str
+    library: str
+
+
 class LoadedModelResponse(CamelModel):
-    models: List[str]
+    models: List[LoadedModelData]
 
 
 class RepositoryModel(CamelModel):
     name: str
+    library: str
     state: Optional[str]
 
 
