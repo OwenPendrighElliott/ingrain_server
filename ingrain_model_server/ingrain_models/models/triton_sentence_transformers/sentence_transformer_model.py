@@ -1,7 +1,11 @@
 import os
 import json
 from sentence_transformers import SentenceTransformer
-from ingrain_common.common import save_library_name, custom_model_exists
+from ingrain_common.common import (
+    save_library_name,
+    custom_model_exists,
+    save_model_source_name,
+)
 from ingrain_models.models.triton_sentence_transformers.sentence_transformer_converting import (
     onnx_transformer_model,
     generate_text_sentence_transformer_config,
@@ -59,6 +63,10 @@ def create_model(
     save_library_name(
         os.path.join(triton_model_repository_path, friendly_name),
         "sentence_transformers",
+    )
+
+    save_model_source_name(
+        os.path.join(triton_model_repository_path, friendly_name), model_name
     )
 
     with open(

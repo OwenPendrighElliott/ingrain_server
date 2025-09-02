@@ -9,7 +9,11 @@ from ingrain_models.models.torchvision_transform_conversion import (
     image_transform_dict_from_torch_transforms,
 )
 
-from ingrain_common.common import save_library_name, custom_model_exists
+from ingrain_common.common import (
+    save_library_name,
+    custom_model_exists,
+    save_model_source_name,
+)
 
 
 def create_model(
@@ -91,6 +95,10 @@ def create_model(
 
         save_library_name(
             os.path.join(triton_model_repository_path, friendly_name), "timm"
+        )
+
+        save_model_source_name(
+            os.path.join(triton_model_repository_path, friendly_name), model_name
         )
 
         with open(

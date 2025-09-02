@@ -22,6 +22,7 @@ from ingrain_common.common import (
     get_model_name,
     get_text_image_model_names,
     validate_env_vars,
+    get_model_source_name,
 )
 from ingrain_models.models.custom_model_utils import (
     download_custom_open_clip_model,
@@ -53,16 +54,27 @@ validate_env_vars()
 
 
 def count_loaded_models() -> tuple[int, list[str]]:
-    """Count the number of currently loaded models in the Triton server."""
+    """Count the number of currently loaded models in the Triton server, return the original name."""
     model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
         as_json=True
     )
-    models = [
-        model["name"].replace("_text_encoder", "").replace("_image_encoder", "")
-        for model in model_repo_information.get("models", [])
-        if "state" in model and model["state"] == "READY"
-    ]
-    models = list(set(models))
+
+    models = []
+
+    for model in model_repo_information.get("models", []):
+        if "state" in model and model["state"] != "READY":
+            continue
+
+        triton_model_name = model["name"]
+
+        if triton_model_name.endswith("_image_encoder"):
+            continue
+
+        source_name = get_model_source_name(
+            os.path.join(TRITON_MODEL_REPOSITORY_PATH, triton_model_name)
+        )
+        models.append(source_name)
+
     return len(models), models
 
 
@@ -227,7 +239,11 @@ async def repository_models() -> RepositoryModelResponse:
     )
     repository_models = []
     for model in model_repo_information.get("models", []):
-        model_data = {"name": model["name"]}
+        triton_model_name = model["name"]
+        source_name = get_model_source_name(
+            os.path.join(TRITON_MODEL_REPOSITORY_PATH, triton_model_name)
+        )
+        model_data = {"name": source_name}
         model_data["state"] = model.get("state", "NOT READY")
 
         repository_models.append(model_data)

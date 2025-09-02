@@ -47,5 +47,3 @@ services:
       - "8002:8002"
     volumes:
       - ./model_repository:/models
-    restart:
-      always
