@@ -10,7 +10,9 @@ from ingrain_models.api_models.request_models import (
 from ingrain_models.api_models.response_models import (
     GenericMessageResponse,
     LoadedModelResponse,
+    LoadedModelData,
     RepositoryModelResponse,
+    RepositoryModel,
     ModelEmbeddingDimsResponse,
     ModelClassificationLabelsResponse,
 )
@@ -22,6 +24,7 @@ from ingrain_common.common import (
     get_model_name,
     get_text_image_model_names,
     validate_env_vars,
+    get_model_source_name,
 )
 from ingrain_models.models.custom_model_utils import (
     download_custom_open_clip_model,
@@ -52,18 +55,37 @@ app = FastAPI()
 validate_env_vars()
 
 
-def count_loaded_models() -> tuple[int, list[str]]:
-    """Count the number of currently loaded models in the Triton server."""
+def count_loaded_models() -> tuple[int, list[str], list[str]]:
+    """Get all loaded models which are READY in the triton server. This is then
+    related back to the source model names and libraries.
+
+    Returns:
+        tuple[int, list[str], list[str]]: Number of loaded models, list of model names, list of model libraries.
+    """
     model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
         as_json=True
     )
-    models = [
-        model["name"].replace("_text_encoder", "").replace("_image_encoder", "")
-        for model in model_repo_information.get("models", [])
-        if "state" in model and model["state"] == "READY"
-    ]
-    models = list(set(models))
-    return len(models), models
+
+    models = []
+    libraries = []
+
+    for model in model_repo_information.get("models", []):
+        if "state" not in model or model["state"] != "READY":
+            continue
+
+        triton_model_name = model["name"]
+
+        if triton_model_name.endswith("_image_encoder"):
+            continue
+
+        source_name = get_model_source_name(
+            os.path.join(TRITON_MODEL_REPOSITORY_PATH, triton_model_name)
+        )
+        models.append(source_name)
+        library = get_library_name_for_model(triton_model_name, None)
+        libraries.append(library)
+
+    return len(models), models, libraries
 
 
 def get_library_name_for_model(model_name: str, pretrained: Union[str, None]) -> str:
@@ -130,7 +152,7 @@ async def load_model(request: LoadModelRequest) -> GenericMessageResponse:
             detail=f"Error in creating model client: {str(e)}",
         )
     if not client.is_ready():
-        loaded_models, models = count_loaded_models()
+        loaded_models, models, _ = count_loaded_models()
         if loaded_models >= MAX_LOADED_MODELS:
             raise HTTPException(
                 status_code=400,
@@ -216,8 +238,14 @@ async def delete_model(request: UnloadModelRequest) -> GenericMessageResponse:
 
 @app.get("/loaded_models", response_model=LoadedModelResponse)
 async def loaded_models() -> LoadedModelResponse:
-    _, loaded_models = count_loaded_models()
-    return LoadedModelResponse(models=loaded_models)
+    _, loaded_models, libraries = count_loaded_models()
+
+    return LoadedModelResponse(
+        models=[
+            LoadedModelData(name=name, library=lib)
+            for name, lib in zip(loaded_models, libraries)
+        ]
+    )
 
 
 @app.get("/repository_models", response_model=RepositoryModelResponse)
@@ -225,10 +253,20 @@ async def repository_models() -> RepositoryModelResponse:
     model_repo_information: dict = TRITON_CLIENT.get_model_repository_index(
         as_json=True
     )
-    repository_models = []
+    repository_models: list[RepositoryModel] = []
     for model in model_repo_information.get("models", []):
-        model_data = {"name": model["name"]}
-        model_data["state"] = model.get("state", "NOT READY")
+        triton_model_name = model["name"]
+        if triton_model_name.endswith("_image_encoder"):
+            continue
+        source_name = get_model_source_name(
+            os.path.join(TRITON_MODEL_REPOSITORY_PATH, triton_model_name)
+        )
+
+        library = get_library_name_for_model(source_name, None)
+
+        model_data = RepositoryModel(
+            name=source_name, library=library, state=model.get("state", None)
+        )
 
         repository_models.append(model_data)
     return RepositoryModelResponse(models=repository_models)

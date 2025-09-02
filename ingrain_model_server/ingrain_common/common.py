@@ -139,6 +139,34 @@ def get_library_name(output_dir: str) -> str:
         return f.read().strip()
 
 
+def save_model_source_name(output_dir: str, model_source_name: str):
+    """Save the model source name to a file.
+
+    Args:
+        output_dir (str): The output directory.
+        model_source_name (str): The model source name.
+    """
+    with open(os.path.join(output_dir, "model_source_name.txt"), "w") as f:
+        f.write(model_source_name)
+
+
+def get_model_source_name(output_dir: str) -> str:
+    """Get the model source name from a file.
+
+    Args:
+        output_dir (str): The output directory.
+
+    Returns:
+        str: The model source name.
+    """
+    model_source_name_path = os.path.join(output_dir, "model_source_name.txt")
+    if not os.path.exists(model_source_name_path):
+        raise FileNotFoundError(f"Model source name file not found in {output_dir}")
+
+    with open(model_source_name_path, "r") as f:
+        return f.read().strip()
+
+
 def is_valid_dir_name(name: str) -> bool:
     invalid_chars = r'<>:"/\\|?*'
     reserved_names = (

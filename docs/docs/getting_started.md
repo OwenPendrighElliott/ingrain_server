@@ -57,7 +57,7 @@ services:
     volumes:
       - ./model_repository:/models
     restart:
-      always
+      unless-stopped
 ```
 
 To run without a GPU comment out the `runtime: nvidia` in the triton container.

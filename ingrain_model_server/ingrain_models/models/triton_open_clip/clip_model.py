@@ -5,6 +5,7 @@ import json
 from ingrain_common.common import (
     save_library_name,
     custom_model_exists,
+    save_model_source_name,
 )
 from ingrain_models.models.triton_open_clip.clip_converting import (
     onnx_convert_open_clip_model,
@@ -147,8 +148,9 @@ def create_model_and_transforms_triton(
     save_library_name(
         os.path.join(triton_model_repository_path, friendly_text_name), "open_clip"
     )
-    save_library_name(
-        os.path.join(triton_model_repository_path, friendly_image_name), "open_clip"
+
+    save_model_source_name(
+        os.path.join(triton_model_repository_path, friendly_text_name), model_name
     )
 
     image_transform_config = image_transform_dict_from_torch_transforms(preprocess)

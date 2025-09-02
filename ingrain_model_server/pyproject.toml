@@ -8,8 +8,8 @@ dependencies = [
     "certifi>=2025.8.3",
     "fastapi==0.116.1",
     "hf-transfer==0.1.9",
-    "onnx==1.18.0",
-    "onnxconverter-common>=1.13.0",
+    "onnx==1.19.0",
+    "onnxconverter-common>=1.16.0",
     "onnxoptimizer>=0.3.13",
     "onnxscript>=0.4.0",
     "open-clip-torch==3.1.0",
@@ -19,12 +19,25 @@ dependencies = [
     "pydantic==2.11.7",
     "sentence-transformers==5.1.0",
     "timm==1.0.19",
-    "tokenizers==0.21.4",
-    "torch==2.8.0",
-    "torchvision==0.23.0",
-    "transformers==4.55.4",
+    "tokenizers==0.22.0",
+    "torch==2.8.0+cpu",
+    "torchvision==0.23.0+cpu",
+    "transformers==4.56.0",
     "tritonclient[grpc]>=2.60.0",
     "uvicorn==0.35.0",
     "validators==0.35.0",
     "huggingface_hub[hf_xet]>=0.33.4",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" },
+]
+torchvision = [
+  { index = "pytorch-cpu" },
 ]

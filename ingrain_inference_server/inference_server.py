@@ -65,7 +65,7 @@ def get_model_library(model_name: str, pretrained: Union[str, None]) -> str:
         with open(
             os.path.join(
                 TRITON_MODEL_REPOSITORY_PATH,
-                friendly_name + "_image_encoder",
+                friendly_name + "_text_encoder",
                 "library_name.txt",
             ),
             "r",
@@ -100,6 +100,7 @@ def client_from_cache(model_name: str, pretrained: Union[str, None]) -> Union[
 
     nice_model_name = get_model_name(model_name, pretrained)
     model_library = get_model_library(model_name, pretrained)
+
     if not model_library:
         return None
 
