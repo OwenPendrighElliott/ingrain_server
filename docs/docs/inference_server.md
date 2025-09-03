@@ -198,7 +198,7 @@ Retrieves server metrics.
 {
   "modelStats": [
     {
-      "name": "hf-hub___timm_ViT-B-16-SigLIP-i18n-256_image_encoder",
+      "name": "hf-hub:timm_ViT-B-16-SigLIP-i18n-256/image_encoder",
       "version": "1",
       "lastInference": null,
       "inferenceCount": null,
@@ -240,7 +240,7 @@ Retrieves server metrics.
       "batchStats": null
     },
     {
-      "name": "hf-hub___timm_ViT-B-16-SigLIP-i18n-256_text_encoder",
+      "name": "hf-hub:timm_ViT-B-16-SigLIP-i18n-256/text_encoder",
       "version": "1",
       "lastInference": "1756351592249",
       "inferenceCount": "48",
