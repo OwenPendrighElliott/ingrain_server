@@ -52,4 +52,4 @@ class ModelStats(CamelModel):
 
 
 class MetricsResponse(CamelModel):
-    modelStats: List[ModelStats]
+    model_stats: List[ModelStats]

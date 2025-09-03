@@ -25,7 +25,7 @@ from ingrain_inference.inference.triton_sentence_transformers.sentence_transform
 from ingrain_inference.inference.triton_timm.timm_inference import (
     TritonTimmInferenceClient,
 )
-from ingrain_common.common import get_model_name
+from ingrain_common.common import get_model_name, get_model_source_name
 from ingrain_inference.inference.model_cache import LRUModelCache
 from threading import Lock
 import tritonclient.grpc as grpcclient
@@ -375,8 +375,28 @@ async def classify_image(
 @app.get("/metrics", response_model=MetricsResponse)
 async def metrics() -> MetricsResponse:
     triton_metrics = TRITON_CLIENT.get_inference_statistics(as_json=True)
-    triton_metrics["modelStats"] = triton_metrics.get("model_stats", [])
-    return MetricsResponse(**triton_metrics)
+
+    keys = triton_metrics["models_stats"].keys()
+
+    stats = {}
+    for key in keys:
+        tower = None
+        if key.endswith("_image_encoder"):
+            tower = "image_encoder"
+            key.replace("_image_encoder", "_text_encoder")
+        elif key.endswith("_text_encoder"):
+            tower = "text_encoder"
+
+        model_dir = os.path.join(TRITON_MODEL_REPOSITORY_PATH, key)
+        source_name = get_model_source_name(model_dir)
+
+        stat_key = source_name
+        if tower is not None:
+            stat_key = f"source_name/{tower}"
+        stats[stat_key]
+        
+
+    return MetricsResponse(**{"model_stats": stats})
 
 
 if __name__ == "__main__":

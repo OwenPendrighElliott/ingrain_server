@@ -29,13 +29,13 @@ def benchmark(thread_id):
     for _ in range(num_requests_per_thread):
         start_time = time.perf_counter()
 
-        response = client.infer(name=model_name, text="Hello, world!")
+        response = client.embed(name=model_name, text="Hello, world!")
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
 
         # Store inference time and response time
-        inference_times.append(response["processingTimeMs"])
+        inference_times.append(response.processing_time_ms)
 
         with response_times_lock:
             response_times.append(elapsed_time)

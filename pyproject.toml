@@ -3,7 +3,9 @@ name = "ingrain-server"
 version = "0.2.1"
 description = "Dev tools for Repo"
 readme = "README.md"
-dependencies = []
+dependencies = [
+    "ingrain>=0.2.0",
+]
 
 [dependency-groups]
 dev = [
