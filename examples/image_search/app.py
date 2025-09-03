@@ -9,7 +9,10 @@ HNSWLIB_SERVER_URL = "http://localhost:8685"
 IMAGE_DIR = "images"
 INDEX_NAME = "image_search"
 CLIP_MODEL_NAME = "hf-hub:timm/PE-Core-B-16"
-MODEL_DIM = 512
+
+client = ingrain.Client()
+client.load_model(CLIP_MODEL_NAME, library="open_clip")
+MODEL_DIM = client.model_embedding_dims(CLIP_MODEL_NAME).embedding_size
 K = 20
 
 # Create Flask app
@@ -26,8 +29,8 @@ def search():
     query_text = request.json["query_text"]
 
     client = ingrain.Client()
-    response = client.infer_text(name=CLIP_MODEL_NAME, text=query_text)
-    query_embedding = response["embeddings"][0]
+    response = client.embed_text(name=CLIP_MODEL_NAME, text=query_text)
+    query_embedding = response.embeddings[0]
 
     # Search the index for similar images
     start_time = time.time()
@@ -48,7 +51,7 @@ def search():
         for h in search_response.json()["metadatas"]
     ]
 
-    inference_time = round(response["processingTimeMs"], 4)
+    inference_time = round(response.processing_time_ms, 4)
     search_time_ms = round((time.time() - start_time) * 1000, 4)
 
     return jsonify(

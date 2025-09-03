@@ -7,8 +7,10 @@ from flask import Flask, render_template, request, jsonify
 
 # Constants
 MODEL = "intfloat/e5-small-v2"
+client = ingrain.Client()
+client.load_model(MODEL, library="sentence_transformers")
+MODEL_DIM = client.model_embedding_dims(MODEL).embedding_size
 INDEX_NAME = "scidocs_index"
-MODEL_DIM = 384
 TOP_K = 50
 HNSWLIB_SERVER_URL = "http://localhost:8685"
 
@@ -36,9 +38,9 @@ def search():
     # Perform inference on query
     client = ingrain.Client(return_numpy=False)
     query = "query: " + query
-    response = client.infer(name=MODEL, text=query)
-    query_embedding = response["textEmbeddings"][0]
-    embedding_time = response["processingTimeMs"]
+    response = client.embed(name=MODEL, text=query)
+    query_embedding = response.text_embeddings[0]
+    embedding_time = response.processing_time_ms
     # Perform search on HNSWLib index
     start_search_time = time.time()
     search_response = requests.post(

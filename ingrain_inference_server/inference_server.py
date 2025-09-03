@@ -394,7 +394,6 @@ async def metrics() -> MetricsResponse:
         if tower is not None:
             stat_key = f"source_name/{tower}"
         stats[stat_key]
-        
 
     return MetricsResponse(**{"model_stats": stats})
 

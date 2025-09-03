@@ -9,7 +9,9 @@ from typing import List
 # Constants
 HNSWLIB_SERVER_URL = "http://localhost:8685"
 MODEL_NAME = "intfloat/e5-small-v2"
-MODEL_DIM = 384
+client = ingrain.Client()
+client.load_model(MODEL_NAME, library="sentence_transformers")
+MODEL_DIM = client.model_embedding_dims(MODEL_NAME).embedding_size
 NUM_THREADS = 10
 BATCH_SIZE = 4
 INDEX_NAME = "scidocs_index"
@@ -40,8 +42,8 @@ def process_batch(corpus_batch: List[dict]):
     client = ingrain.Client(return_numpy=False)
     texts = [PASSAGE_PREFIX + doc["text"] for doc in corpus_batch]
     try:
-        response = client.infer(name=MODEL_NAME, text=texts)
-        embeddings = response["textEmbeddings"]
+        response = client.embed(name=MODEL_NAME, text=texts)
+        embeddings = response.text_embeddings
         ids = [doc["_id"] for doc in corpus_batch]
         return list(zip(ids, embeddings))
     except Exception as e:

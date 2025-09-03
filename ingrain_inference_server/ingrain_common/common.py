@@ -138,6 +138,7 @@ def get_library_name(output_dir: str) -> str:
     with open(library_name_path, "r") as f:
         return f.read().strip()
 
+
 def get_model_source_name(output_dir: str) -> str:
     """Get the model source name from a file.
 
@@ -153,7 +154,8 @@ def get_model_source_name(output_dir: str) -> str:
 
     with open(model_source_name_path, "r") as f:
         return f.read().strip()
-    
+
+
 def is_valid_dir_name(name: str) -> bool:
     invalid_chars = r'<>:"/\\|?*'
     reserved_names = (
