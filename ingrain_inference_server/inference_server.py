@@ -375,25 +375,24 @@ async def classify_image(
 @app.get("/metrics", response_model=MetricsResponse)
 async def metrics() -> MetricsResponse:
     triton_metrics = TRITON_CLIENT.get_inference_statistics(as_json=True)
+    if "model_stats" not in triton_metrics:
+        return MetricsResponse(model_stats=[])
 
-    keys = triton_metrics["models_stats"].keys()
-
-    stats = {}
-    for key in keys:
+    stats = []
+    for model in triton_metrics["model_stats"]:
         tower = None
-        if key.endswith("_image_encoder"):
+        if model["name"].endswith("_image_encoder"):
             tower = "image_encoder"
-            key.replace("_image_encoder", "_text_encoder")
-        elif key.endswith("_text_encoder"):
+            model["name"] = model["name"].replace("_image_encoder", "_text_encoder")
+        elif model["name"].endswith("_text_encoder"):
             tower = "text_encoder"
-
-        model_dir = os.path.join(TRITON_MODEL_REPOSITORY_PATH, key)
+        model_dir = os.path.join(TRITON_MODEL_REPOSITORY_PATH, model["name"])
         source_name = get_model_source_name(model_dir)
 
-        stat_key = source_name
+        model["name"] = source_name
         if tower is not None:
-            stat_key = f"source_name/{tower}"
-        stats[stat_key]
+            model["name"] = f"{source_name}/{tower}"
+        stats.append(model)
 
     return MetricsResponse(**{"model_stats": stats})
 
