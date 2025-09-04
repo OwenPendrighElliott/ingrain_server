@@ -15,7 +15,7 @@ pip install flask tqdm
 Run a HNSWLib Server:
 
 ```bash
-docker run -p 8685:8685 owenpelliott/hnswlib_server
+docker run -p 8685:8685 owenelliottdev/hnswlib_server
 ```
 
 Download the scidocs data:

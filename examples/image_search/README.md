@@ -15,7 +15,7 @@ pip install numpy pillow flask tqdm
 Run a HNSWLib Server:
 
 ```bash
-docker run -p 8685:8685 owenpelliott/hnswlib_server
+docker run -p 8685:8685 owenelliottdev/hnswlib_server
 ```
 
 Then place your images in a folder called `images` and run the following code to index the data:

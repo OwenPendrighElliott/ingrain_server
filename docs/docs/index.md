@@ -10,7 +10,7 @@ The recommended way to run Ingrain locally is via Docker with a docker compose f
 ```yml
 services:
   ingrain-models:
-    image: owenpelliott/ingrain-models:latest
+    image: owenelliottdev/ingrain-models:latest
     container_name: ingrain-models
     ports:
       - "8687:8687"
@@ -25,7 +25,7 @@ services:
       - ./model_repository:/app/model_repository 
       - ${HOME}/.cache/huggingface:/app/model_cache/
   ingrain-inference:
-    image: owenpelliott/ingrain-inference:latest
+    image: owenelliottdev/ingrain-inference:latest
     container_name: ingrain-inference
     ports:
       - "8686:8686"
