@@ -31,8 +31,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            owenpelliott/ingrain-models:latest
-            owenpelliott/ingrain-models:${{ env.VERSION_TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/ingrain-models:latest
+            ${{ secrets.DOCKER_USERNAME }}/ingrain-models:${{ env.VERSION_TAG }}
 
       - name: Build & Push ingrain-inference image
         uses: docker/build-push-action@v5
@@ -42,10 +42,11 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            owenpelliott/ingrain-inference:latest
-            owenpelliott/ingrain-inference:${{ env.VERSION_TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/ingrain-inference:latest
+            ${{ secrets.DOCKER_USERNAME }}/ingrain-inference:${{ env.VERSION_TAG }}
 
       - name: Inspect pushed manifests
         run: |
-          docker buildx imagetools inspect owenpelliott/ingrain-models:${{ env.VERSION_TAG }}
-          docker buildx imagetools inspect owenpelliott/ingrain-inference:${{ env.VERSION_TAG }}
+          docker buildx imagetools inspect ${{ secrets.DOCKER_USERNAME }}/ingrain-models:${{ env.VERSION_TAG }}
+          docker buildx imagetools inspect ${{ secrets.DOCKER_USERNAME }}/ingrain-inference:${{ env.VERSION_TAG }}
+
