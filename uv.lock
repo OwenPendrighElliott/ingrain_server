@@ -317,7 +317,7 @@ wheels = [
 
 [[package]]
 name = "ingrain"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -325,9 +325,9 @@ dependencies = [
     { name = "pycurl" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/7d/83f040c6d18a94ba3f14714c050b34cad15ed9c5a3fb39c6d7e87da88613/ingrain-0.2.1.tar.gz", hash = "sha256:d8622c3b75b7fa23788806236ce5e4884a9912d3659199c082c9848fd271151d", size = 10987, upload-time = "2025-09-03T01:52:54.127Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/e1/39844eeb95b4adc3117255e51d53f08013abc87f9dbc230708bbd0de58ac/ingrain-0.2.2.tar.gz", hash = "sha256:b0119e8f9c369b2f7a5abe65782c3971ac4e0852204095060f324c744fad04f3", size = 11586, upload-time = "2025-09-03T06:06:49.242Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/16/91c199e69f84e8a219d6c6ef61b671cb755efd4dac0a83fed9607e1ab1c7/ingrain-0.2.1-py3-none-any.whl", hash = "sha256:aa71a1682b1b899190bdfdca19bdce743df76fd8a69c5881915c2f59a17fac6e", size = 9320, upload-time = "2025-09-03T01:52:53.145Z" },
+    { url = "https://files.pythonhosted.org/packages/25/be/80166f4c15d00ed84a2a01da91045e61be3d627c95b93345a44ba242963a/ingrain-0.2.2-py3-none-any.whl", hash = "sha256:10089a558e5d0a7236dac72dff755a3525ada3a4713958c7bd939bff1ab25940", size = 9810, upload-time = "2025-09-03T06:06:48.226Z" },
 ]
 
 [[package]]
@@ -370,7 +370,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ingrain", specifier = ">=0.2.0" }]
+requires-dist = [{ name = "ingrain", specifier = ">=0.2.2" }]
 
 [package.metadata.requires-dev]
 dev = [

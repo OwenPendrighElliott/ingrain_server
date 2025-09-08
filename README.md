@@ -50,6 +50,7 @@ services:
     runtime: nvidia # Remove if using a CPU
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so
     shm_size: "256m"
     command: >
       tritonserver

@@ -28,6 +28,9 @@ from ingrain_inference.inference.triton_timm.timm_inference import (
 from ingrain_common.common import get_model_name, get_model_source_name
 from ingrain_inference.inference.model_cache import LRUModelCache
 from threading import Lock
+from tritonclient.utils import (
+    InferenceServerException as TritonInferenceServerException,
+)
 import tritonclient.grpc as grpcclient
 import os
 from typing import Union
@@ -188,7 +191,17 @@ async def embed_text(request: TextEmbeddingRequest) -> TextEmbeddingResponse:
         )
 
     start = time.perf_counter()
-    embedding = client.encode_text(text, normalize=normalize, n_dims=n_dims)
+    try:
+        embedding = client.encode_text(text, normalize=normalize, n_dims=n_dims)
+    except TritonInferenceServerException as e:
+        msg = e.message()
+        status = 500
+        if "request batch-size must be <=" in msg:
+            status = 400
+        raise HTTPException(
+            status_code=status,
+            detail=msg,
+        )
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
@@ -239,7 +252,17 @@ async def embed_image(request: ImageEmbeddingRequest) -> ImageEmbeddingResponse:
         )
 
     start = time.perf_counter()
-    embedding = client.encode_image(image_data, normalize=normalize, n_dims=n_dims)
+    try:
+        embedding = client.encode_image(image_data, normalize=normalize, n_dims=n_dims)
+    except TritonInferenceServerException as e:
+        msg = e.message()
+        status = 500
+        if "request batch-size must be <=" in msg:
+            status = 400
+        raise HTTPException(
+            status_code=status,
+            detail=msg,
+        )
     end = time.perf_counter()
 
     embedding_list = [e.tolist() for e in embedding]
@@ -301,7 +324,17 @@ async def embed(request: EmbeddingRequest) -> EmbeddingResponse:
         )
 
     start = time.perf_counter()
-    results = await asyncio.gather(*tasks)
+    try:
+        results = await asyncio.gather(*tasks)
+    except TritonInferenceServerException as e:
+        msg = e.message()
+        status = 500
+        if "request batch-size must be <=" in msg:
+            status = 400
+        raise HTTPException(
+            status_code=status,
+            detail=msg,
+        )
     end = time.perf_counter()
 
     if texts is not None:
@@ -363,7 +396,17 @@ async def classify_image(
         )
 
     start = time.perf_counter()
-    classifications = client.classify_image(image_data)
+    try:
+        classifications = client.classify_image(image_data)
+    except TritonInferenceServerException as e:
+        msg = e.message()
+        status = 500
+        if "request batch-size must be <=" in msg:
+            status = 400
+        raise HTTPException(
+            status_code=status,
+            detail=msg,
+        )
     end = time.perf_counter()
 
     return ImageClassificationResponse(

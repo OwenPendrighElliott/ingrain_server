@@ -47,12 +47,10 @@ def create_model(
         )
     model = timm.create_model(model_name, pretrained=True)
 
-    model_cfg = timm.get_pretrained_cfg(model_name.split("/")[-1].split(".")[0])
-    if model_cfg is None:
-        model_cfg = timm.models.PretrainedCfg(
-            input_size=model.pretrained_cfg["input_size"],
-            num_classes=model.pretrained_cfg["num_classes"],
-        )
+    if not model.pretrained_cfg:
+        model_cfg = timm.get_pretrained_cfg(model_name.split("/")[-1].split(".")[0])
+    else:
+        model_cfg = timm.models.PretrainedCfg(**model.pretrained_cfg)
 
     data_config = timm.data.resolve_model_data_config(model)
     preprocess = timm.data.create_transform(**data_config, is_training=False)

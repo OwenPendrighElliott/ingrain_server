@@ -4,7 +4,7 @@ version = "0.2.1"
 description = "Dev tools for Repo"
 readme = "README.md"
 dependencies = [
-    "ingrain>=0.2.0",
+    "ingrain>=0.2.2",
 ]
 
 [dependency-groups]
