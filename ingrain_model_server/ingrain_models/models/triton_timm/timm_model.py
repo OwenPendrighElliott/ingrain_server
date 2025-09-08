@@ -82,7 +82,7 @@ def create_model(
 
     if not os.path.exists(image_encoder_path):
         onnx_convert_timm_model(model, preprocess, image_encoder_path)
-        cfg_path = os.path.join(triton_model_repository_path, friendly_name, "1")
+        cfg_path = os.path.join(triton_model_repository_path, friendly_name)
         generate_timm_config(
             cfg_path, friendly_name, model_cfg.input_size, model_cfg.num_classes
         )
